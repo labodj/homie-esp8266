@@ -6,6 +6,7 @@ namespace HomieInternals {
 class Uptime {
  public:
   Uptime();
+  void reset();
   void update();
   uint64_t getSeconds() const;
 

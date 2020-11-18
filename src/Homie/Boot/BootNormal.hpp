@@ -98,6 +98,8 @@ class BootNormal : public Boot {
     size_t currentPropertyIndex;
   } _advertisementProgress;
   Uptime _uptime;
+  Uptime _uptimeWifi;
+  Uptime _uptimeMqtt;
   Timer _statsTimer;
   ExponentialBackoffTimer _mqttReconnectTimer;
   bool _setupFunctionCalled;

@@ -143,6 +143,8 @@ void BootNormal::loop() {
   // here, we finished the advertisement
 
   if (!_mqttConnectNotified) {
+    _uptimeMqtt.reset();
+
     Interface::get().ready = true;
     if (Interface::get().led.enabled) Interface::get().getBlinker().stop();
 
@@ -186,10 +188,21 @@ void BootNormal::loop() {
     uint16_t signalPacketId = Interface::get().getMqttClient().publish(_prefixMqttTopic(PSTR("/$stats/signal")), 1, true, qualityStr);
 
     _uptime.update();
-    char uptimeStr[20 + 1];
-    itoa(_uptime.getSeconds(), uptimeStr, 10);
-    Interface::get().getLogger() << F("  • Uptime: ") << uptimeStr << F("s") << endl;
-    uint16_t uptimePacketId = Interface::get().getMqttClient().publish(_prefixMqttTopic(PSTR("/$stats/uptime")), 1, true, uptimeStr);
+    _uptimeWifi.update();
+    _uptimeMqtt.update();
+    char statusStr[20 + 1];
+    itoa(_uptime.getSeconds(), statusStr, 10);
+    Interface::get().getLogger() << F("  • Uptime: ") << statusStr << F("s") << endl;
+    uint16_t uptimePacketId = Interface::get().getMqttClient().publish(_prefixMqttTopic(PSTR("/$stats/uptime")), 1, true, statusStr);
+
+    itoa(_uptimeWifi.getSeconds(), statusStr, 10);
+    Interface::get().getMqttClient().publish(_prefixMqttTopic(PSTR("/$stats/uptimewifi")), 1, true, statusStr);
+
+    itoa(_uptimeMqtt.getSeconds(), statusStr, 10);
+    Interface::get().getMqttClient().publish(_prefixMqttTopic(PSTR("/$stats/uptimemqtt")), 1, true, statusStr);
+
+    itoa(ESP.getFreeHeap(), statusStr, 10);
+    Interface::get().getMqttClient().publish(_prefixMqttTopic(PSTR("/$stats/freeheap")), 1, true, statusStr);
 
     if (intervalPacketId != 0 && signalPacketId != 0 && uptimePacketId != 0) _statsTimer.tick();
     Interface::get().event.type = HomieEventType::SENDING_STATISTICS;
@@ -331,6 +344,7 @@ void BootNormal::_wifiConnect() {
 
 #ifdef ESP32
 void BootNormal::_onWifiGotIp(WiFiEvent_t event, WiFiEventInfo_t info) {
+  _uptimeWifi.reset();
   if (Interface::get().led.enabled) Interface::get().getBlinker().stop();
   Interface::get().getLogger() << F("✔ Wi-Fi connected, IP: ") << IPAddress(info.got_ip.ip_info.ip.addr) << endl;
   Interface::get().getLogger() << F("Triggering WIFI_CONNECTED event...") << endl;
@@ -347,6 +361,7 @@ void BootNormal::_onWifiGotIp(WiFiEvent_t event, WiFiEventInfo_t info) {
 }
 #elif defined(ESP8266)
 void BootNormal::_onWifiGotIp(const WiFiEventStationModeGotIP& event) {
+  _uptimeWifi.reset();
   if (Interface::get().led.enabled) Interface::get().getBlinker().stop();
   Interface::get().getLogger() << F("✔ Wi-Fi connected, IP: ") << event.ip << endl;
   Interface::get().getLogger() << F("Triggering WIFI_CONNECTED event...") << endl;

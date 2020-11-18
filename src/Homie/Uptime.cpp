@@ -7,6 +7,12 @@ Uptime::Uptime()
 , _lastTick(0) {
 }
 
+void Uptime::reset()
+{
+  _milliseconds = 0;
+  _lastTick = 0; 
+}
+
 void Uptime::update() {
   uint32_t now = millis();
   _milliseconds += (now - _lastTick);
