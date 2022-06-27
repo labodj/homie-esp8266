@@ -27,18 +27,21 @@
     "espressif8266",
     "espressif32"
   ],
-  "dependencies": [
-    {
-      "name": "bblanchon/ArduinoJson"
+  "dependencies": [{
+      "owner": "bblanchon",
+      "name": "ArduinoJson"
     },
     {
-      "name": "ottowinter/AsyncMqttClient-esphome"
+      "owner": "ottowinter",
+      "name": "AsyncMqttClient-esphome"
     },
     {
-      "name": "thomasfredericks/Bounce2"
+      "owner": "ottowinter",
+      "name": "ESPAsyncWebServer-esphome"
     },
     {
-      "name": "ottowinter/ESPAsyncWebServer-esphome"
+      "owner": "thomasfrederick",
+      "name": "Bounce2"
     }
   ],
   "export": {
