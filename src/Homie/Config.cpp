@@ -138,7 +138,7 @@ bool Config::load() {
         setting->set(reqSetting.as<double>());
       } else if (iSetting->isConstChar()) {
         HomieSetting<const char*>* setting = static_cast<HomieSetting<const char*>*>(iSetting);
-        setting->set(strdup(reqSetting.as<const char*>()));
+        setting->set(reqSetting.as<const char*>());
       }
     }
   }
@@ -188,9 +188,9 @@ void Config::setHomieBootModeOnNextBoot(HomieBootMode bootMode) {
       return;
     }
 
-    bootModeFile.printf("#%d", bootMode);
+    bootModeFile.printf("#%d", static_cast<int>(bootMode));
     bootModeFile.close();
-    Interface::get().getLogger().printf("Setting next boot mode to %d\n", bootMode);
+    Interface::get().getLogger().printf("Setting next boot mode to %d\n", static_cast<int>(bootMode));
   }
 }
 
