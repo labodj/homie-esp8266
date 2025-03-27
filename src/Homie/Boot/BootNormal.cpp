@@ -339,10 +339,8 @@ void BootNormal::_wifiConnect() {
     }
 
     #ifdef ESP32
-    WiFi.setAutoConnect(false);
     WiFi.setAutoReconnect(false);
     #elif defined(ESP8266)
-    WiFi.setAutoConnect(true);
     WiFi.setAutoReconnect(true);
     #endif // ESP32
   }
