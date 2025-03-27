@@ -29,15 +29,16 @@
   ],
   "dependencies": [{
       "owner": "bblanchon",
-      "name": "ArduinoJson"
+      "name": "ArduinoJson",
+      "version": "^6.21.5",
     },
     {
-      "owner": "ottowinter",
+      "owner": "heman",
       "name": "AsyncMqttClient-esphome"
     },
     {
-      "owner": "ottowinter",
-      "name": "ESPAsyncWebServer-esphome"
+      "owner": "esp32async",
+      "name": "ESPAsyncWebServer"
     },
     {
       "owner": "thomasfredericks",
