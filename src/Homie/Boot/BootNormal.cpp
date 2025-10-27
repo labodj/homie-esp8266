@@ -384,6 +384,7 @@ void BootNormal::_onWifiGotIp(const WiFiEventStationModeGotIP& event) {
 
 #ifdef ESP32
 void BootNormal::_onWifiDisconnected(WiFiEvent_t event, WiFiEventInfo_t info) {
+  Interface::get().getMqttClient().disconnect(true); // Force MQTT client state cleanup
   Interface::get().ready = false;
   if (Interface::get().led.enabled) Interface::get().getBlinker().start(LED_WIFI_DELAY);
   _statsTimer.deactivate();
@@ -397,6 +398,7 @@ void BootNormal::_onWifiDisconnected(WiFiEvent_t event, WiFiEventInfo_t info) {
 }
 #elif defined(ESP8266)
 void BootNormal::_onWifiDisconnected(const WiFiEventStationModeDisconnected& event) {
+  Interface::get().getMqttClient().disconnect(true); // Force MQTT client state cleanup
   Interface::get().ready = false;
   if (Interface::get().led.enabled) Interface::get().getBlinker().start(LED_WIFI_DELAY);
   _statsTimer.deactivate();
