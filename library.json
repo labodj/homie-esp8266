@@ -17,8 +17,7 @@
       "maintainer": true
     }
   ],
-  "repository":
-  {
+  "repository": {
     "type": "git",
     "url": "https://github.com/homieiot/homie-esp8266.git"
   },
@@ -27,14 +26,16 @@
     "espressif8266",
     "espressif32"
   ],
-  "dependencies": [{
+  "dependencies": [
+    {
       "owner": "bblanchon",
       "name": "ArduinoJson",
       "version": "^6.21.5"
     },
     {
-      "owner": "heman",
-      "name": "AsyncMqttClient-esphome"
+      "owner": "labodj",
+      "name": "AsyncMqttClient",
+      "version": "https://github.com/labodj/async-mqtt-client#update-dependencies"
     },
     {
       "owner": "esp32async",
