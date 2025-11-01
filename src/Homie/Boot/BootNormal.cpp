@@ -7,6 +7,7 @@ BootNormal::BootNormal()
   , _mqttReconnectTimer(MQTT_RECONNECT_INITIAL_INTERVAL, MQTT_RECONNECT_MAX_BACKOFF)
   , _wifiReconnectTimer(MQTT_RECONNECT_INITIAL_INTERVAL, MQTT_RECONNECT_MAX_BACKOFF) 
   , _setupFunctionCalled(false)
+  , _wifiGotIp(false)
   , _mqttConnectNotified(false)
   , _mqttDisconnectNotified(true)
   , _otaOngoing(false)
@@ -354,6 +355,7 @@ void BootNormal::_wifiConnect() {
 
 #ifdef ESP32
 void BootNormal::_onWifiGotIp(WiFiEvent_t event, WiFiEventInfo_t info) {
+  _wifiGotIp = true;
   _wifiReconnectTimer.deactivate();
   _uptimeWifi.reset();
   Interface::get().getMqttClient().disconnect(true); // Force cleanup of previous session state before reconnecting.
@@ -373,6 +375,7 @@ void BootNormal::_onWifiGotIp(WiFiEvent_t event, WiFiEventInfo_t info) {
 }
 #elif defined(ESP8266)
 void BootNormal::_onWifiGotIp(const WiFiEventStationModeGotIP& event) {
+  _wifiGotIp = true;
   _wifiReconnectTimer.deactivate();
   _uptimeWifi.reset();
   Interface::get().getMqttClient().disconnect(true); // Force cleanup of previous session state before reconnecting.
@@ -394,6 +397,7 @@ void BootNormal::_onWifiGotIp(const WiFiEventStationModeGotIP& event) {
 
 #ifdef ESP32
 void BootNormal::_onWifiDisconnected(WiFiEvent_t event, WiFiEventInfo_t info) {
+  _wifiGotIp = false;
   Interface::get().getMqttClient().disconnect(true); // Force MQTT client state cleanup
   WiFi.disconnect();
   Interface::get().ready = false;
@@ -409,6 +413,7 @@ void BootNormal::_onWifiDisconnected(WiFiEvent_t event, WiFiEventInfo_t info) {
 }
 #elif defined(ESP8266)
 void BootNormal::_onWifiDisconnected(const WiFiEventStationModeDisconnected& event) {
+  _wifiGotIp = false;
   Interface::get().getMqttClient().disconnect(true); // Force MQTT client state cleanup
   Interface::get().ready = false;
   if (Interface::get().led.enabled) Interface::get().getBlinker().start(LED_WIFI_DELAY);
@@ -424,6 +429,7 @@ void BootNormal::_onWifiDisconnected(const WiFiEventStationModeDisconnected& eve
 #endif // ESP32
 
 void BootNormal::_mqttConnect() {
+  if (!_wifiGotIp) return;
   if (!Interface::get().disable) {
     if (Interface::get().led.enabled) Interface::get().getBlinker().start(LED_MQTT_DELAY);
     _mqttConnectNotified = false;
