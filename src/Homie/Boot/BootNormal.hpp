@@ -102,6 +102,7 @@ class BootNormal : public Boot {
   Uptime _uptimeMqtt;
   Timer _statsTimer;
   ExponentialBackoffTimer _mqttReconnectTimer;
+  ExponentialBackoffTimer _wifiReconnectTimer;
   bool _setupFunctionCalled;
   #ifdef ESP32
   WiFiEventId_t _wifiGotIpHandler;

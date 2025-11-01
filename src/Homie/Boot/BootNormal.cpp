@@ -5,6 +5,7 @@ using namespace HomieInternals;
 BootNormal::BootNormal()
   : Boot("normal")
   , _mqttReconnectTimer(MQTT_RECONNECT_INITIAL_INTERVAL, MQTT_RECONNECT_MAX_BACKOFF)
+  , _wifiReconnectTimer(MQTT_RECONNECT_INITIAL_INTERVAL, MQTT_RECONNECT_MAX_BACKOFF) 
   , _setupFunctionCalled(false)
   , _mqttConnectNotified(false)
   , _mqttDisconnectNotified(true)
@@ -108,7 +109,7 @@ void BootNormal::setup() {
     iNode->setup();
   }
 
-  _wifiConnect();
+  _wifiReconnectTimer.activate();
 }
 
 void BootNormal::loop() {
@@ -124,6 +125,11 @@ void BootNormal::loop() {
 
   for (HomieNode* iNode : HomieNode::nodes) {
     if (iNode->runLoopDisconnected || Interface::get().ready) iNode->loop();
+  }
+
+  // Handle Wi-Fi reconnection attempts using the backoff timer
+  if (_wifiReconnectTimer.check()) {
+    _wifiConnect();
   }
   if (_mqttReconnectTimer.check()) {
     _mqttConnect();
@@ -341,14 +347,16 @@ void BootNormal::_wifiConnect() {
     #ifdef ESP32
     WiFi.setAutoReconnect(false);
     #elif defined(ESP8266)
-    WiFi.setAutoReconnect(true);
+    WiFi.setAutoReconnect(false);
     #endif // ESP32
   }
 }
 
 #ifdef ESP32
 void BootNormal::_onWifiGotIp(WiFiEvent_t event, WiFiEventInfo_t info) {
+  _wifiReconnectTimer.deactivate();
   _uptimeWifi.reset();
+  Interface::get().getMqttClient().disconnect(true); // Force cleanup of previous session state before reconnecting.
   if (Interface::get().led.enabled) Interface::get().getBlinker().stop();
   Interface::get().getLogger() << F("✔ Wi-Fi connected, IP: ") << IPAddress(info.got_ip.ip_info.ip.addr) << endl;
   Interface::get().getLogger() << F("Triggering WIFI_CONNECTED event...") << endl;
@@ -361,11 +369,13 @@ void BootNormal::_onWifiGotIp(WiFiEvent_t event, WiFiEventInfo_t info) {
   MDNS.begin(Interface::get().getConfig().get().deviceId);
 #endif
 
-  _mqttConnect();
+  _mqttReconnectTimer.activate();
 }
 #elif defined(ESP8266)
 void BootNormal::_onWifiGotIp(const WiFiEventStationModeGotIP& event) {
+  _wifiReconnectTimer.deactivate();
   _uptimeWifi.reset();
+  Interface::get().getMqttClient().disconnect(true); // Force cleanup of previous session state before reconnecting.
   if (Interface::get().led.enabled) Interface::get().getBlinker().stop();
   Interface::get().getLogger() << F("✔ Wi-Fi connected, IP: ") << event.ip << endl;
   Interface::get().getLogger() << F("Triggering WIFI_CONNECTED event...") << endl;
@@ -378,13 +388,14 @@ void BootNormal::_onWifiGotIp(const WiFiEventStationModeGotIP& event) {
   MDNS.begin(Interface::get().getConfig().get().deviceId);
 #endif
 
-  _mqttConnect();
+  _mqttReconnectTimer.activate();
 }
 #endif // ESP32
 
 #ifdef ESP32
 void BootNormal::_onWifiDisconnected(WiFiEvent_t event, WiFiEventInfo_t info) {
   Interface::get().getMqttClient().disconnect(true); // Force MQTT client state cleanup
+  WiFi.disconnect();
   Interface::get().ready = false;
   if (Interface::get().led.enabled) Interface::get().getBlinker().start(LED_WIFI_DELAY);
   _statsTimer.deactivate();
@@ -394,7 +405,7 @@ void BootNormal::_onWifiDisconnected(WiFiEvent_t event, WiFiEventInfo_t info) {
   Interface::get().event.wifiReason = info.wifi_sta_disconnected.reason;
   Interface::get().eventHandler(Interface::get().event);
 
-  _wifiConnect();
+  _wifiReconnectTimer.activate();
 }
 #elif defined(ESP8266)
 void BootNormal::_onWifiDisconnected(const WiFiEventStationModeDisconnected& event) {
@@ -408,7 +419,7 @@ void BootNormal::_onWifiDisconnected(const WiFiEventStationModeDisconnected& eve
   Interface::get().event.wifiReason = event.reason;
   Interface::get().eventHandler(Interface::get().event);
 
-  _wifiConnect();
+  _wifiReconnectTimer.activate();
 }
 #endif // ESP32
 
@@ -798,7 +809,7 @@ void BootNormal::_onMqttDisconnected(AsyncMqttClientDisconnectReason reason) {
       return;
     }
 
-    _mqttConnect();
+    //_mqttConnect();
   }
   _mqttReconnectTimer.activate();
 }
