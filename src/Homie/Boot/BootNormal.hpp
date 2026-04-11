@@ -105,6 +105,12 @@ class BootNormal : public Boot {
   ExponentialBackoffTimer _wifiReconnectTimer;
   bool _setupFunctionCalled;
   bool _wifiGotIp;
+  bool _wifiConnectInProgress;
+  bool _mqttConnectInProgress;
+  bool _recoveryInProgress;
+  uint32_t _wifiConnectAttemptAt;
+  uint32_t _mqttConnectAttemptAt;
+  uint32_t _recoveryStartedAt;
   #ifdef ESP32
   WiFiEventId_t _wifiGotIpHandler;
   WiFiEventId_t _wifiDisconnectedHandler;
@@ -134,6 +140,14 @@ class BootNormal : public Boot {
   std::unique_ptr<char[]> _mqttTopicCopy;
 
   void _wifiConnect();
+  void _markConnectivityRecovering();
+  void _markConnectivityHealthy();
+  void _scheduleRecoveryReboot(const __FlashStringHelper* reason);
+  bool _isWifiConnected() const;
+  void _recoverIfNetworkStateDrifted();
+  void _recoverIfConnectAttemptStalled();
+  void _handleWifiConnected(const IPAddress& ip, const IPAddress& mask, const IPAddress& gateway);
+  void _handleWifiDisconnected(int32_t reason);
   #ifdef ESP32
   void _onWifiGotIp(WiFiEvent_t event, WiFiEventInfo_t info);
   void _onWifiDisconnected(WiFiEvent_t event, WiFiEventInfo_t info);
@@ -142,6 +156,9 @@ class BootNormal : public Boot {
   void _onWifiDisconnected(const WiFiEventStationModeDisconnected& event);
   #endif // ESP32
   void _mqttConnect();
+  void _handleMqttConnected();
+  void _handleMqttDisconnected(AsyncMqttClientDisconnectReason reason);
+  void _resetAdvertisementProgress();
   void _advertise();
   void _onMqttConnected();
   void _onMqttDisconnected(AsyncMqttClientDisconnectReason reason);

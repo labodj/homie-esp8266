@@ -5,9 +5,15 @@ using namespace HomieInternals;
 BootNormal::BootNormal()
   : Boot("normal")
   , _mqttReconnectTimer(MQTT_RECONNECT_INITIAL_INTERVAL, MQTT_RECONNECT_MAX_BACKOFF)
-  , _wifiReconnectTimer(MQTT_RECONNECT_INITIAL_INTERVAL, MQTT_RECONNECT_MAX_BACKOFF) 
+  , _wifiReconnectTimer(MQTT_RECONNECT_INITIAL_INTERVAL, MQTT_RECONNECT_MAX_BACKOFF)
   , _setupFunctionCalled(false)
   , _wifiGotIp(false)
+  , _wifiConnectInProgress(false)
+  , _mqttConnectInProgress(false)
+  , _recoveryInProgress(false)
+  , _wifiConnectAttemptAt(0)
+  , _mqttConnectAttemptAt(0)
+  , _recoveryStartedAt(0)
   , _mqttConnectNotified(false)
   , _mqttDisconnectNotified(true)
   , _otaOngoing(false)
@@ -110,6 +116,8 @@ void BootNormal::setup() {
     iNode->setup();
   }
 
+  _resetAdvertisementProgress();
+  _markConnectivityRecovering();
   _wifiReconnectTimer.activate();
 }
 
@@ -128,11 +136,23 @@ void BootNormal::loop() {
     if (iNode->runLoopDisconnected || Interface::get().ready) iNode->loop();
   }
 
-  // Handle Wi-Fi reconnection attempts using the backoff timer
-  if (_wifiReconnectTimer.check()) {
+  // Self-heal missed async events and stalled connect attempts before scheduling new work.
+  _recoverIfNetworkStateDrifted();
+  _recoverIfConnectAttemptStalled();
+
+  if (_recoveryInProgress
+      && !Interface::get().disable
+      && !Interface::get().flaggedForSleep
+      && !_otaOngoing
+      && !_flaggedForReboot
+      && (millis() - _recoveryStartedAt >= CONNECTIVITY_RECOVERY_REBOOT_TIMEOUT)) {
+    _scheduleRecoveryReboot(F("connectivity recovery timed out"));
+  }
+
+  if (!_wifiConnectInProgress && _wifiReconnectTimer.check()) {
     _wifiConnect();
   }
-  if (_mqttReconnectTimer.check()) {
+  if (!_mqttConnectInProgress && _mqttReconnectTimer.check()) {
     _mqttConnect();
     return;
   }
@@ -151,6 +171,7 @@ void BootNormal::loop() {
 
   if (!_mqttConnectNotified) {
     _uptimeMqtt.reset();
+    _markConnectivityHealthy();
 
     Interface::get().ready = true;
     if (Interface::get().led.enabled) Interface::get().getBlinker().stop();
@@ -207,9 +228,6 @@ void BootNormal::loop() {
 
     itoa(_uptimeMqtt.getSeconds(), statusStr, 10);
     Interface::get().getMqttClient().publish(_prefixMqttTopic(PSTR("/$stats/uptimemqtt")), 1, true, statusStr);
-
-    itoa(ESP.getFreeHeap(), statusStr, 10);
-    Interface::get().getMqttClient().publish(_prefixMqttTopic(PSTR("/$stats/freeheap")), 1, true, statusStr);
 
     uint32_t freeHeap = ESP.getFreeHeap();
     char freeHeapStr[20 + 1];
@@ -302,139 +320,285 @@ void BootNormal::_endOtaUpdate(bool success, uint8_t update_error) {
   _otaOngoing = false;
 }
 
-void BootNormal::_wifiConnect() {
-  if (!Interface::get().disable) {
-    if (Interface::get().led.enabled) Interface::get().getBlinker().start(LED_WIFI_DELAY);
-    Interface::get().getLogger() << F("↕ Attempting to connect to Wi-Fi...") << endl;
+void BootNormal::_markConnectivityRecovering() {
+  if (_recoveryInProgress) return;
 
-    if (WiFi.getMode() != WIFI_STA) WiFi.mode(WIFI_STA);
+  _recoveryInProgress = true;
+  _recoveryStartedAt = millis();
+}
 
-    #ifdef ESP32
-    WiFi.setHostname(Interface::get().getConfig().get().deviceId);
-    #elif defined(ESP8266)
-    WiFi.hostname(Interface::get().getConfig().get().deviceId);
-    #endif // ESP32
-    if (strcmp_P(Interface::get().getConfig().get().wifi.ip, PSTR("")) != 0) {  // on _validateConfigWifi there is a requirement for mask and gateway
-      IPAddress convertedIp;
-      convertedIp.fromString(Interface::get().getConfig().get().wifi.ip);
-      IPAddress convertedMask;
-      convertedMask.fromString(Interface::get().getConfig().get().wifi.mask);
-      IPAddress convertedGateway;
-      convertedGateway.fromString(Interface::get().getConfig().get().wifi.gw);
+void BootNormal::_markConnectivityHealthy() {
+  _recoveryInProgress = false;
+  _recoveryStartedAt = 0;
+}
 
-      if (strcmp_P(Interface::get().getConfig().get().wifi.dns1, PSTR("")) != 0) {
-        IPAddress convertedDns1;
-        convertedDns1.fromString(Interface::get().getConfig().get().wifi.dns1);
-        if ((strcmp_P(Interface::get().getConfig().get().wifi.dns2, PSTR("")) != 0)) {  // on _validateConfigWifi there is requirement that we need dns1 if we want to define dns2
-          IPAddress convertedDns2;
-          convertedDns2.fromString(Interface::get().getConfig().get().wifi.dns2);
-          WiFi.config(convertedIp, convertedGateway, convertedMask, convertedDns1, convertedDns2);
-        } else {
-          WiFi.config(convertedIp, convertedGateway, convertedMask, convertedDns1);
-        }
-      } else {
-        WiFi.config(convertedIp, convertedGateway, convertedMask);
-      }
+void BootNormal::_scheduleRecoveryReboot(const __FlashStringHelper* reason) {
+  if (_flaggedForReboot) return;
+
+  Interface::get().getLogger() << F("✖ Recovery watchdog expired: ") << reason << endl;
+  Interface::get().getLogger() << F("↻ Scheduling reboot to recover network stack...") << endl;
+  Interface::get().disable = true;
+  _flaggedForReboot = true;
+}
+
+bool BootNormal::_isWifiConnected() const {
+  return WiFi.status() == WL_CONNECTED;
+}
+
+void BootNormal::_recoverIfNetworkStateDrifted() {
+  if (_isWifiConnected()) {
+    if (!_wifiGotIp) {
+      Interface::get().getLogger() << F("! Wi-Fi is connected but state was stale. Recovering...") << endl;
+      _handleWifiConnected(WiFi.localIP(), WiFi.subnetMask(), WiFi.gatewayIP());
     }
-
-    if (strcmp_P(Interface::get().getConfig().get().wifi.bssid, PSTR("")) != 0) {
-      byte bssidBytes[6];
-      Helpers::stringToBytes(Interface::get().getConfig().get().wifi.bssid, ':', bssidBytes, 6, 16);
-      WiFi.begin(Interface::get().getConfig().get().wifi.ssid, Interface::get().getConfig().get().wifi.password, Interface::get().getConfig().get().wifi.channel, bssidBytes);
-    } else {
-      WiFi.begin(Interface::get().getConfig().get().wifi.ssid, Interface::get().getConfig().get().wifi.password);
-    }
-
-    #ifdef ESP32
-    WiFi.setAutoReconnect(false);
-    #elif defined(ESP8266)
-    WiFi.setAutoReconnect(false);
-    #endif // ESP32
+  } else if (_wifiGotIp) {
+    Interface::get().getLogger() << F("! Wi-Fi disconnect event was missed. Recovering...") << endl;
+    _handleWifiDisconnected(0);
   }
+
+  if (Interface::get().getMqttClient().connected()) {
+    if (_mqttDisconnectNotified || _mqttConnectInProgress) {
+      Interface::get().getLogger() << F("! MQTT is connected but state was stale. Recovering...") << endl;
+      _handleMqttConnected();
+    }
+  } else if (!_mqttDisconnectNotified && _wifiGotIp) {
+    Interface::get().getLogger() << F("! MQTT disconnect event was missed. Recovering...") << endl;
+    _handleMqttDisconnected(AsyncMqttClientDisconnectReason::TCP_DISCONNECTED);
+  }
+}
+
+void BootNormal::_recoverIfConnectAttemptStalled() {
+  const uint32_t now = millis();
+
+  if (_wifiConnectInProgress && !_isWifiConnected() && (now - _wifiConnectAttemptAt >= WIFI_CONNECT_ATTEMPT_TIMEOUT)) {
+    Interface::get().getLogger() << F("✖ Wi-Fi connect attempt timed out. Forcing a fresh retry...") << endl;
+    _wifiConnectInProgress = false;
+    WiFi.disconnect();
+    _wifiReconnectTimer.deactivate();
+    _wifiReconnectTimer.activate();
+  }
+
+  if (_mqttConnectInProgress && !Interface::get().getMqttClient().connected() && (now - _mqttConnectAttemptAt >= MQTT_CONNECT_ATTEMPT_TIMEOUT)) {
+    Interface::get().getLogger() << F("✖ MQTT connect attempt timed out. Forcing a fresh retry...") << endl;
+    _mqttConnectInProgress = false;
+    Interface::get().getMqttClient().disconnect(true);
+    _handleMqttDisconnected(AsyncMqttClientDisconnectReason::TCP_DISCONNECTED);
+    if (_wifiGotIp) {
+      _mqttReconnectTimer.deactivate();
+      _mqttReconnectTimer.activate();
+    }
+  }
+}
+
+void BootNormal::_handleWifiConnected(const IPAddress& ip, const IPAddress& mask, const IPAddress& gateway) {
+  if (_wifiGotIp && !_wifiReconnectTimer.isActive()) return;
+
+  _markConnectivityRecovering();
+  _wifiGotIp = true;
+  _wifiConnectInProgress = false;
+  _wifiReconnectTimer.deactivate();
+  _uptimeWifi.reset();
+
+  if (!_mqttDisconnectNotified || _mqttConnectInProgress || Interface::get().getMqttClient().connected()) {
+    Interface::get().getMqttClient().disconnect(true);
+  }
+  _handleMqttDisconnected(AsyncMqttClientDisconnectReason::TCP_DISCONNECTED);
+  _mqttReconnectTimer.deactivate();
+
+  if (Interface::get().led.enabled) Interface::get().getBlinker().stop();
+  Interface::get().getLogger() << F("✔ Wi-Fi connected, IP: ") << ip << endl;
+  Interface::get().getLogger() << F("Triggering WIFI_CONNECTED event...") << endl;
+  Interface::get().event.type = HomieEventType::WIFI_CONNECTED;
+  Interface::get().event.ip = ip;
+  Interface::get().event.mask = mask;
+  Interface::get().event.gateway = gateway;
+  Interface::get().eventHandler(Interface::get().event);
+#if HOMIE_MDNS
+  MDNS.begin(Interface::get().getConfig().get().deviceId);
+#endif
+
+  _mqttReconnectTimer.activate();
+}
+
+void BootNormal::_handleWifiDisconnected(int32_t reason) {
+  if (!_wifiGotIp && !_wifiConnectInProgress && _wifiReconnectTimer.isActive()) return;
+
+  _markConnectivityRecovering();
+  _wifiGotIp = false;
+  _wifiConnectInProgress = false;
+  Interface::get().getMqttClient().disconnect(true);
+  _handleMqttDisconnected(AsyncMqttClientDisconnectReason::TCP_DISCONNECTED);
+  _mqttReconnectTimer.deactivate();
+
+  if (Interface::get().led.enabled) Interface::get().getBlinker().start(LED_WIFI_DELAY);
+  Interface::get().getLogger() << F("✖ Wi-Fi disconnected, reason: ") << reason << endl;
+  Interface::get().getLogger() << F("Triggering WIFI_DISCONNECTED event...") << endl;
+  Interface::get().event.type = HomieEventType::WIFI_DISCONNECTED;
+#ifdef ESP32
+  Interface::get().event.wifiReason = static_cast<uint8_t>(reason);
+#elif defined(ESP8266)
+  Interface::get().event.wifiReason = static_cast<WiFiDisconnectReason>(reason);
+#endif
+  Interface::get().eventHandler(Interface::get().event);
+
+  _wifiReconnectTimer.activate();
+}
+
+void BootNormal::_wifiConnect() {
+  if (Interface::get().disable || _wifiGotIp || _wifiConnectInProgress) return;
+  if (_isWifiConnected()) {
+    _handleWifiConnected(WiFi.localIP(), WiFi.subnetMask(), WiFi.gatewayIP());
+    return;
+  }
+
+  _markConnectivityRecovering();
+  _wifiConnectInProgress = true;
+  _wifiConnectAttemptAt = millis();
+
+  if (Interface::get().led.enabled) Interface::get().getBlinker().start(LED_WIFI_DELAY);
+  Interface::get().getLogger() << F("↕ Attempting to connect to Wi-Fi...") << endl;
+
+  if (WiFi.getMode() != WIFI_STA) WiFi.mode(WIFI_STA);
+
+  #ifdef ESP32
+  WiFi.setHostname(Interface::get().getConfig().get().deviceId);
+  #elif defined(ESP8266)
+  WiFi.hostname(Interface::get().getConfig().get().deviceId);
+  #endif // ESP32
+  if (strcmp_P(Interface::get().getConfig().get().wifi.ip, PSTR("")) != 0) {  // on _validateConfigWifi there is a requirement for mask and gateway
+    IPAddress convertedIp;
+    convertedIp.fromString(Interface::get().getConfig().get().wifi.ip);
+    IPAddress convertedMask;
+    convertedMask.fromString(Interface::get().getConfig().get().wifi.mask);
+    IPAddress convertedGateway;
+    convertedGateway.fromString(Interface::get().getConfig().get().wifi.gw);
+
+    if (strcmp_P(Interface::get().getConfig().get().wifi.dns1, PSTR("")) != 0) {
+      IPAddress convertedDns1;
+      convertedDns1.fromString(Interface::get().getConfig().get().wifi.dns1);
+      if ((strcmp_P(Interface::get().getConfig().get().wifi.dns2, PSTR("")) != 0)) {  // on _validateConfigWifi there is requirement that we need dns1 if we want to define dns2
+        IPAddress convertedDns2;
+        convertedDns2.fromString(Interface::get().getConfig().get().wifi.dns2);
+        WiFi.config(convertedIp, convertedGateway, convertedMask, convertedDns1, convertedDns2);
+      } else {
+        WiFi.config(convertedIp, convertedGateway, convertedMask, convertedDns1);
+      }
+    } else {
+      WiFi.config(convertedIp, convertedGateway, convertedMask);
+    }
+  }
+
+  if (strcmp_P(Interface::get().getConfig().get().wifi.bssid, PSTR("")) != 0) {
+    byte bssidBytes[6];
+    Helpers::stringToBytes(Interface::get().getConfig().get().wifi.bssid, ':', bssidBytes, 6, 16);
+    WiFi.begin(Interface::get().getConfig().get().wifi.ssid, Interface::get().getConfig().get().wifi.password, Interface::get().getConfig().get().wifi.channel, bssidBytes);
+  } else {
+    WiFi.begin(Interface::get().getConfig().get().wifi.ssid, Interface::get().getConfig().get().wifi.password);
+  }
+
+  #ifdef ESP32
+  WiFi.setAutoReconnect(false);
+  #elif defined(ESP8266)
+  WiFi.setAutoReconnect(false);
+  #endif // ESP32
 }
 
 #ifdef ESP32
 void BootNormal::_onWifiGotIp(WiFiEvent_t event, WiFiEventInfo_t info) {
-  _wifiGotIp = true;
-  _wifiReconnectTimer.deactivate();
-  _uptimeWifi.reset();
-  Interface::get().getMqttClient().disconnect(true); // Force cleanup of previous session state before reconnecting.
-  if (Interface::get().led.enabled) Interface::get().getBlinker().stop();
-  Interface::get().getLogger() << F("✔ Wi-Fi connected, IP: ") << IPAddress(info.got_ip.ip_info.ip.addr) << endl;
-  Interface::get().getLogger() << F("Triggering WIFI_CONNECTED event...") << endl;
-  Interface::get().event.type = HomieEventType::WIFI_CONNECTED;
-  Interface::get().event.ip = IPAddress(info.got_ip.ip_info.ip.addr);
-  Interface::get().event.mask = IPAddress(info.got_ip.ip_info.netmask.addr);
-  Interface::get().event.gateway = IPAddress(info.got_ip.ip_info.gw.addr);
-  Interface::get().eventHandler(Interface::get().event);
-#if HOMIE_MDNS
-  MDNS.begin(Interface::get().getConfig().get().deviceId);
-#endif
-
-  _mqttReconnectTimer.activate();
+  _handleWifiConnected(
+    IPAddress(info.got_ip.ip_info.ip.addr),
+    IPAddress(info.got_ip.ip_info.netmask.addr),
+    IPAddress(info.got_ip.ip_info.gw.addr));
 }
 #elif defined(ESP8266)
 void BootNormal::_onWifiGotIp(const WiFiEventStationModeGotIP& event) {
-  _wifiGotIp = true;
-  _wifiReconnectTimer.deactivate();
-  _uptimeWifi.reset();
-  Interface::get().getMqttClient().disconnect(true); // Force cleanup of previous session state before reconnecting.
-  if (Interface::get().led.enabled) Interface::get().getBlinker().stop();
-  Interface::get().getLogger() << F("✔ Wi-Fi connected, IP: ") << event.ip << endl;
-  Interface::get().getLogger() << F("Triggering WIFI_CONNECTED event...") << endl;
-  Interface::get().event.type = HomieEventType::WIFI_CONNECTED;
-  Interface::get().event.ip = event.ip;
-  Interface::get().event.mask = event.mask;
-  Interface::get().event.gateway = event.gw;
-  Interface::get().eventHandler(Interface::get().event);
-#if HOMIE_MDNS
-  MDNS.begin(Interface::get().getConfig().get().deviceId);
-#endif
-
-  _mqttReconnectTimer.activate();
+  _handleWifiConnected(event.ip, event.mask, event.gw);
 }
 #endif // ESP32
 
 #ifdef ESP32
 void BootNormal::_onWifiDisconnected(WiFiEvent_t event, WiFiEventInfo_t info) {
-  _wifiGotIp = false;
-  Interface::get().getMqttClient().disconnect(true); // Force MQTT client state cleanup
-  WiFi.disconnect();
-  Interface::get().ready = false;
-  if (Interface::get().led.enabled) Interface::get().getBlinker().start(LED_WIFI_DELAY);
-  _statsTimer.deactivate();
-  Interface::get().getLogger() << F("✖ Wi-Fi disconnected, reason: ") << info.wifi_sta_disconnected.reason << endl;
-  Interface::get().getLogger() << F("Triggering WIFI_DISCONNECTED event...") << endl;
-  Interface::get().event.type = HomieEventType::WIFI_DISCONNECTED;
-  Interface::get().event.wifiReason = info.wifi_sta_disconnected.reason;
-  Interface::get().eventHandler(Interface::get().event);
-
-  _wifiReconnectTimer.activate();
+  _handleWifiDisconnected(info.wifi_sta_disconnected.reason);
 }
 #elif defined(ESP8266)
 void BootNormal::_onWifiDisconnected(const WiFiEventStationModeDisconnected& event) {
-  _wifiGotIp = false;
-  Interface::get().getMqttClient().disconnect(true); // Force MQTT client state cleanup
-  Interface::get().ready = false;
-  if (Interface::get().led.enabled) Interface::get().getBlinker().start(LED_WIFI_DELAY);
-  _statsTimer.deactivate();
-  Interface::get().getLogger() << F("✖ Wi-Fi disconnected, reason: ") << event.reason << endl;
-  Interface::get().getLogger() << F("Triggering WIFI_DISCONNECTED event...") << endl;
-  Interface::get().event.type = HomieEventType::WIFI_DISCONNECTED;
-  Interface::get().event.wifiReason = event.reason;
-  Interface::get().eventHandler(Interface::get().event);
-
-  _wifiReconnectTimer.activate();
+  _handleWifiDisconnected(event.reason);
 }
 #endif // ESP32
 
 void BootNormal::_mqttConnect() {
-  if (!_wifiGotIp) return;
-  if (!Interface::get().disable) {
-    if (Interface::get().led.enabled) Interface::get().getBlinker().start(LED_MQTT_DELAY);
-    _mqttConnectNotified = false;
-    Interface::get().getLogger() << F("↕ Attempting to connect to MQTT...") << endl;
-    Interface::get().getMqttClient().connect();
+  if (!_wifiGotIp || Interface::get().disable || _mqttConnectInProgress) return;
+  if (Interface::get().getMqttClient().connected()) {
+    _handleMqttConnected();
+    return;
+  }
+
+  _markConnectivityRecovering();
+  _mqttConnectInProgress = true;
+  _mqttConnectAttemptAt = millis();
+
+  if (Interface::get().led.enabled) Interface::get().getBlinker().start(LED_MQTT_DELAY);
+  _mqttConnectNotified = false;
+  Interface::get().getLogger() << F("↕ Attempting to connect to MQTT...") << endl;
+  Interface::get().getMqttClient().connect();
+}
+
+void BootNormal::_resetAdvertisementProgress() {
+  _advertisementProgress.done = false;
+  _advertisementProgress.globalStep = AdvertisementProgress::GlobalStep::PUB_INIT;
+  _advertisementProgress.nodeStep = AdvertisementProgress::NodeStep::PUB_NAME;
+  _advertisementProgress.propertyStep = AdvertisementProgress::PropertyStep::PUB_NAME;
+  _advertisementProgress.currentNodeIndex = 0;
+  _advertisementProgress.currentArrayNodeIndex = 0;
+  _advertisementProgress.currentPropertyIndex = 0;
+}
+
+void BootNormal::_handleMqttConnected() {
+  if (!_mqttDisconnectNotified && !_mqttConnectInProgress) return;
+
+  _mqttConnectInProgress = false;
+  _mqttDisconnectNotified = false;
+  _mqttReconnectTimer.deactivate();
+  _statsTimer.activate();
+
+  Update.end();
+
+  Interface::get().getLogger() << F("Sending initial information...") << endl;
+
+  _advertise();
+}
+
+void BootNormal::_handleMqttDisconnected(AsyncMqttClientDisconnectReason reason) {
+  Interface::get().ready = false;
+  _mqttConnectNotified = false;
+  _mqttConnectInProgress = false;
+  _resetAdvertisementProgress();
+  _statsTimer.deactivate();
+
+  if (!_mqttDisconnectNotified) {
+    Interface::get().getLogger() << F("✖ MQTT disconnected, reason: ") << (int8_t)reason << endl;
+    Interface::get().getLogger() << F("Triggering MQTT_DISCONNECTED event...") << endl;
+    Interface::get().event.type = HomieEventType::MQTT_DISCONNECTED;
+    Interface::get().event.mqttReason = reason;
+    Interface::get().eventHandler(Interface::get().event);
+
+    _mqttDisconnectNotified = true;
+
+    if (Interface::get().flaggedForSleep) {
+      _mqttOfflineMessageId = 0;
+      Interface::get().getLogger() << F("Triggering READY_TO_SLEEP event...") << endl;
+      Interface::get().event.type = HomieEventType::READY_TO_SLEEP;
+      Interface::get().eventHandler(Interface::get().event);
+
+      return;
+    }
+  }
+
+  _markConnectivityRecovering();
+  if (_wifiGotIp) {
+    _mqttReconnectTimer.activate();
+  } else {
+    _mqttReconnectTimer.deactivate();
   }
 }
 
@@ -481,7 +645,7 @@ void BootNormal::_advertise() {
       break;
     }
     case AdvertisementProgress::GlobalStep::PUB_STATS:
-      packetId = Interface::get().getMqttClient().publish(_prefixMqttTopic(PSTR("/$stats")), 1, true, "uptime");
+      packetId = Interface::get().getMqttClient().publish(_prefixMqttTopic(PSTR("/$stats")), 1, true, "uptime,uptimewifi,uptimemqtt,freeheap");
       if (packetId != 0) _advertisementProgress.globalStep = AdvertisementProgress::GlobalStep::PUB_STATS_INTERVAL;
       break;
     case AdvertisementProgress::GlobalStep::PUB_STATS_INTERVAL:
@@ -776,48 +940,11 @@ void BootNormal::_advertise() {
 }
 
 void BootNormal::_onMqttConnected() {
-  _mqttDisconnectNotified = false;
-  _mqttReconnectTimer.deactivate();
-  _statsTimer.activate();
-
-  Update.end();
-
-  Interface::get().getLogger() << F("Sending initial information...") << endl;
-
-  _advertise();
+  _handleMqttConnected();
 }
 
 void BootNormal::_onMqttDisconnected(AsyncMqttClientDisconnectReason reason) {
-  Interface::get().ready = false;
-  _mqttConnectNotified = false;
-  _advertisementProgress.done = false;
-  _advertisementProgress.globalStep = AdvertisementProgress::GlobalStep::PUB_INIT;
-  _advertisementProgress.nodeStep = AdvertisementProgress::NodeStep::PUB_NAME;
-  _advertisementProgress.propertyStep = AdvertisementProgress::PropertyStep::PUB_NAME;
-  _advertisementProgress.currentNodeIndex = 0;
-  _advertisementProgress.currentPropertyIndex = 0;
-  if (!_mqttDisconnectNotified) {
-    _statsTimer.deactivate();
-    Interface::get().getLogger() << F("✖ MQTT disconnected, reason: ") << (int8_t)reason << endl;
-    Interface::get().getLogger() << F("Triggering MQTT_DISCONNECTED event...") << endl;
-    Interface::get().event.type = HomieEventType::MQTT_DISCONNECTED;
-    Interface::get().event.mqttReason = reason;
-    Interface::get().eventHandler(Interface::get().event);
-
-    _mqttDisconnectNotified = true;
-
-    if (Interface::get().flaggedForSleep) {
-      _mqttOfflineMessageId = 0;
-      Interface::get().getLogger() << F("Triggering READY_TO_SLEEP event...") << endl;
-      Interface::get().event.type = HomieEventType::READY_TO_SLEEP;
-      Interface::get().eventHandler(Interface::get().event);
-
-      return;
-    }
-
-    //_mqttConnect();
-  }
-  _mqttReconnectTimer.activate();
+  _handleMqttDisconnected(reason);
 }
 
 void BootNormal::_onMqttMessage(char* topic, char* payload, AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total) {

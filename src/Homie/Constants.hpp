@@ -29,6 +29,12 @@ namespace HomieInternals {
   const uint32_t STATS_SEND_INTERVAL_SEC = 1 * 60;
   const uint16_t MQTT_RECONNECT_INITIAL_INTERVAL = 1000;
   const uint8_t MQTT_RECONNECT_MAX_BACKOFF = 6;
+  // If an async connect attempt does not complete within this window, treat it as stuck
+  // and restart that leg of the recovery sequence from a clean state.
+  const uint32_t WIFI_CONNECT_ATTEMPT_TIMEOUT = 30 * 1000UL;
+  const uint32_t MQTT_CONNECT_ATTEMPT_TIMEOUT = 30 * 1000UL;
+  // If the device never reaches full MQTT-ready state again, fall back to a reboot.
+  const uint32_t CONNECTIVITY_RECOVERY_REBOOT_TIMEOUT = 15 * 60 * 1000UL;
 
   const float LED_WIFI_DELAY = 1;
   const float LED_MQTT_DELAY = 0.2;

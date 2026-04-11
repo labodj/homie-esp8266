@@ -26,7 +26,7 @@ bool ExponentialBackoffTimer::check() {
 }
 
 void ExponentialBackoffTimer::activate() {
-  // if (_timer.isActive()) return;
+  if (_timer.isActive()) return;
 
   _timer.setInterval(_initialInterval, false);
   _timer.activate();
