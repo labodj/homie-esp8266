@@ -1,10 +1,10 @@
-[![Build Status](https://img.shields.io/circleci/project/github/homieiot/homie-esp8266/develop.svg?style=flat-square)](https://circleci.com/gh/homieiot/homie-esp8266) [![Latest Release](https://img.shields.io/badge/release-v3.0.0-yellow.svg?style=flat-square)](https://github.com/homieiot/homie-esp8266/releases) [![Gitter](https://img.shields.io/gitter/room/Homie/ESP8266.svg?style=flat-square)](https://gitter.im/homie-iot/ESP8266) [![PlatformIO](https://img.shields.io/badge/Powered-PlatformIO-blue.png)](https://platformio.org/lib/show/555/Homie)
-
 # Homie for ESP8266 / ESP32
 
 ![homie-esp8266 banner](banner.png)
 
 An Arduino for ESP8266 / ESP32 implementation of [Homie](https://github.com/homieiot/convention), an MQTT convention for the IoT.
+
+This fork keeps the original Homie 3.0.1 API and behavior as intact as possible, with targeted fixes and maintenance work for newer ESP32 / ESP8266 Arduino environments.
 
 This branch of Homie for ESP8266 implements [Homie 3.0.1](https://github.com/homieiot/convention/releases/tag/v3.0.1) and adds support for ESP32.
 
@@ -12,8 +12,19 @@ This branch of Homie for ESP8266 implements [Homie 3.0.1](https://github.com/hom
 
 ## Download
 
-The Git repository contains the development version of Homie for ESP8266.
-Stable releases are available [on the releases page](https://github.com/homieiot/homie-esp8266/releases).
+This repository contains the maintained development branch of the fork.
+Use the git dependency snippets below to consume it from PlatformIO.
+
+## Recovery Policy
+
+The normal-mode flow stays close to upstream Homie, but reconnect handling is stricter on this fork:
+
+* Wi-Fi and MQTT reconnect attempts are driven by explicit backoff timers instead of relying on the network stack alone
+* Missed Wi-Fi or MQTT disconnect/connect callbacks are reconciled against the current client state, so the internal Homie state can self-heal
+* A Wi-Fi or MQTT connect attempt that stays pending for more than 30 seconds is treated as stuck and restarted from a clean state
+* If the device cannot get back to full `MQTT_READY` state for 15 minutes, it schedules a reboot to recover the network stack
+
+These values are defined in `src/Homie/Constants.hpp`.
 
 
 ## Using with PlatformIO
@@ -24,7 +35,7 @@ Stable releases are available [on the releases page](https://github.com/homieiot
 2. Create new project using "PlatformIO Home > New Project"
 3. Open [Project Configuration File `platformio.ini`](http://docs.platformio.org/page/projectconf.html)
 
-### Stable version
+### Maintained fork
 
 4. Add "Homie" to project using `platformio.ini` and [lib_deps](http://docs.platformio.org/page/projectconf/section_env_library.html#lib-deps) option:
 ```ini
@@ -33,12 +44,12 @@ platform = espressif8266
 board = ...
 framework = arduino
 build_flags = -D PIO_FRAMEWORK_ARDUINO_LWIP2_LOW_MEMORY
-lib_deps = Homie
+lib_deps = https://github.com/labodj/homie-esp8266.git#develop
 ```
 
 Add the `PIO_FRAMEWORK_ARDUINO_LWIP2_LOW_MEMORY` build flag to ensure reliable OTA updates.
 
-### Development version
+### Tracking branch
 
 4. Update dev/platform to staging version:
    - [Instruction for Espressif 8266](http://docs.platformio.org/en/latest/platforms/espressif8266.html#using-arduino-framework-with-staging-version)
@@ -54,7 +65,7 @@ framework = arduino
 build_flags = -D PIO_FRAMEWORK_ARDUINO_LWIP2_LOW_MEMORY
 
 ; the latest development branch (convention V3.0.x)
-lib_deps = https://github.com/homieiot/homie-esp8266.git#develop
+lib_deps = https://github.com/labodj/homie-esp8266.git#develop
 
 ```
 

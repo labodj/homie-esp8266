@@ -1,5 +1,7 @@
 This *Getting Started* guide assumes you have an ESP8266 board with an user-configurable LED, and an user programmable button, like a NodeMCU DevKit 1.0, for example. These restrictions can be lifted (see next pages).
 
+This page intentionally stays close to the original upstream guide, so several examples remain ESP8266-centric. This fork is maintained primarily against current ESP32 Arduino cores while keeping the Homie 3.0.1 API and flow as close as possible to the original library.
+
 To use Homie for ESP8266, you will need:
 
 * An ESP8266
@@ -33,13 +35,13 @@ Some of them are available through the Arduino IDE, with **Sketch → Include Li
 
 ### 1b. With [PlatformIO](http://platformio.org)
 
-In a terminal, run `platformio lib install 555`.
+Add this to your `platformio.ini`:
 
 !!! warning "Not yet released as stable"
-    The above command is for when the v2 is stable and released. Currently, the latest stable version is 1.5. In the meantime, use the develop branch to get started with the v2, add this in your **platformio.ini**:
+    This fork is consumed through a git dependency. Add this in your **platformio.ini**:
 
     ```
-    lib_deps = git+https://github.com/homieiot/homie-esp8266.git#develop
+    lib_deps = https://github.com/labodj/homie-esp8266.git#develop
     ```
 
 Dependencies are installed automatically.

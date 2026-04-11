@@ -274,6 +274,7 @@ This returns a reference to `SendingPromise`, on which you can call:
 ```c++
 SendingPromise& setQos(uint8_t qos);  // defaults to 1
 SendingPromise& setRetained(bool retained);  // defaults to true
+SendingPromise& setSetRetained(bool retained);  // defaults to true, controls only the echoed /set topic when overwriteSetter(true) is used
 SendingPromise& overwriteSetter(bool overwrite);  // defaults to false
 SendingPromise& setRange(const HomieRange& range);  // defaults to not a range
 SendingPromise& setRange(uint16_t rangeIndex);  // defaults to not a range
@@ -281,6 +282,7 @@ uint16_t send(const String& value);  // finally send the property, return the pa
 ```
 
 Method names should be self-explanatory.
+`setSetRetained()` is a fork extension and only affects the mirrored `/set` topic published by `overwriteSetter(true)`.
 
 # HomieSetting
 
