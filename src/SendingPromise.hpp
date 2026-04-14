@@ -22,6 +22,7 @@ class SendingPromise {
   uint16_t send(const String& value);
 
  private:
+  SendingPromise& reset();
   SendingPromise& setNode(const HomieNode& node);
   SendingPromise& setProperty(const String& property);
   const HomieNode* getNode() const;

@@ -12,6 +12,17 @@ SendingPromise::SendingPromise()
 , _range { .isRange = false, .index = 0 } {
 }
 
+SendingPromise& SendingPromise::reset() {
+  _node = nullptr;
+  _property = nullptr;
+  _qos = 0;
+  _retained = false;
+  _setRetained = true;
+  _overwriteSetter = false;
+  _range = { .isRange = false, .index = 0 };
+  return *this;
+}
+
 SendingPromise& SendingPromise::setQos(uint8_t qos) {
   _qos = qos;
   return *this;
