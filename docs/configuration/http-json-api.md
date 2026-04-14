@@ -49,7 +49,7 @@ Get some information on the device.
     ```json
     {
       "hardware_device_id": "52a8fa5d",
-      "homie_esp8266_version": "2.0.0",
+      "homie_esp8266_version": "3.1.0",
       "firmware": {
         "name": "awesome-device",
         "version": "1.0.0"

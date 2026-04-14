@@ -1,6 +1,6 @@
 {
   "name": "Homie",
-  "version": "3.0.1",
+  "version": "3.1.0",
   "keywords": "iot, home, automation, mqtt, esp8266, async, sensor",
   "description": "Maintained Homie fork for ESP8266 / ESP32 with targeted fixes for newer Arduino cores",
   "homepage": "https://github.com/labodj/homie-esp8266",
