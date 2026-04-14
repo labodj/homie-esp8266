@@ -29,7 +29,7 @@ These values are defined in `src/Homie/Constants.hpp`.
 
 ## Using with PlatformIO
 
-[PlatformIO](http://platformio.org) is an open source ecosystem for IoT development with cross platform build system, library manager and full support for Espressif ESP8266 development. It works on the popular host OS: Mac OS X, Windows, Linux 32/64, Linux ARM (like Raspberry Pi, BeagleBone, CubieBoard).
+[PlatformIO](http://platformio.org) is an open source ecosystem for IoT development with a cross-platform build system, library manager and full support for Espressif Arduino development on both ESP8266 and ESP32. It works on the popular host OS: Mac OS X, Windows, Linux 32/64, Linux ARM (like Raspberry Pi, BeagleBone, CubieBoard).
 
 1. Install [PlatformIO IDE](http://platformio.org/platformio-ide)
 2. Create new project using "PlatformIO Home > New Project"
@@ -40,25 +40,26 @@ These values are defined in `src/Homie/Constants.hpp`.
 4. Add "Homie" to project using `platformio.ini` and [lib_deps](http://docs.platformio.org/page/projectconf/section_env_library.html#lib-deps) option:
 ```ini
 [env:myboard]
-platform = espressif8266
+platform = https://github.com/pioarduino/platform-espressif32/releases/download/stable/platform-espressif32.zip
 board = ...
 framework = arduino
-build_flags = -D PIO_FRAMEWORK_ARDUINO_LWIP2_LOW_MEMORY
 lib_deps = https://github.com/labodj/homie-esp8266.git#develop
 ```
 
-Add the `PIO_FRAMEWORK_ARDUINO_LWIP2_LOW_MEMORY` build flag to ensure reliable OTA updates.
+For ESP8266 consumers, keep using the ESP8266 PlatformIO platform and add
+`PIO_FRAMEWORK_ARDUINO_LWIP2_LOW_MEMORY` if your network stack needs it for
+reliable OTA behavior. That flag is not part of the maintained ESP32 path.
 
 If you need reproducible builds, pin a commit SHA instead of the branch name in `lib_deps`.
 
 ## Features
 
 * Automatic connection/reconnection to Wi-Fi/MQTT
-* [JSON configuration file](https://homieiot.github.io/homie-esp8266/docs/stable/configuration/json-configuration-file) to configure the device
-* [Cute HTTP API / Web UI / App](https://homieiot.github.io/homie-esp8266/docs/stable/configuration/http-json-api) to remotely send the configuration to the device and get information about it
-* [Custom settings](https://homieiot.github.io/homie-esp8266/docs/stable/advanced-usage/custom-settings)
-* [OTA over MQTT](https://homieiot.github.io/homie-esp8266/docs/stable/others/ota-configuration-updates)
-* [Magic bytes](https://homieiot.github.io/homie-esp8266/docs/stable/advanced-usage/magic-bytes)
+* [JSON configuration file](./docs/configuration/json-configuration-file.md) to configure the device
+* [Cute HTTP API / Web UI / App](./docs/configuration/http-json-api.md) to remotely send the configuration to the device and get information about it
+* [Custom settings](./docs/advanced-usage/custom-settings.md)
+* [OTA over MQTT](./docs/others/ota-configuration-updates.md)
+* [Magic bytes](./docs/advanced-usage/magic-bytes.md)
 * Pretty [straightforward sketches](./examples), a simple light for example: (**TODO**: adapt to V3)
 
 ```c++
@@ -87,7 +88,7 @@ void setup() {
 
   Homie_setFirmware("awesome-relay", "1.0.0");
 
-  lightNode.advertise("on", "On", "boolean").settable(lightOnHandler);
+  lightNode.advertise("on").setName("On").setDatatype("boolean").settable(lightOnHandler);
 
   Homie.setup();
 }
@@ -100,6 +101,13 @@ void loop() {
 ## Requirements, installation and usage
 
 The project documentation in this repository is still derived from upstream Homie and is being updated incrementally for this fork. For the maintained path today, prefer the PlatformIO git dependency described above.
+
+Fork-specific behavior already documented in this repository includes:
+
+* stricter Wi-Fi / MQTT recovery on ESP32 and ESP8266
+* ESP32-aware `$implementation` reporting (`esp32` on ESP32 builds, `esp8266` on ESP8266 builds)
+* OTA delivery hardening for QoS 1 retransmits and MQTT disconnects
+* fork-specific statistics such as `$stats/uptimewifi` and `$stats/uptimemqtt`
 
 ## Donate
 

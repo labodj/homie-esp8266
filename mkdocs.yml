@@ -1,9 +1,10 @@
 site_name: Homie for ESP8266
-site_description: The Homie for ESP8266 documentation.
-site_author: Marvin ROGER
+site_description: Documentation for the maintained Homie 3.0.1 fork used by the LSH ecosystem.
+site_author: Marvin ROGER, Jacopo Labardi
+site_url: https://labodj.github.io/homie-esp8266/
 
-repo_name: "homieiot/homie-esp8266"
-repo_url: "https://github.com/homieiot/homie-esp8266"
+repo_name: "labodj/homie-esp8266"
+repo_url: "https://github.com/labodj/homie-esp8266"
 
 edit_uri: edit/develop/docs
 
@@ -53,8 +54,8 @@ theme:
 
 extra:
   social:
-    - type: cog
-      link: http://homieiot.github.io/homie-esp8266/configurators/v2/
+    - icon: material/cog
+      link: https://labodj.github.io/homie-esp8266/configurators/v2/
 
 markdown_extensions:
   - meta

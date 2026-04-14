@@ -20,11 +20,19 @@ There are two ways to install Homie for ESP8266.
 Add this to your `platformio.ini`:
 
 !!! warning "Maintained path for this fork"
-    This fork is consumed through a git dependency. Add this in your **platformio.ini**:
+    This fork is consumed through a git dependency. The primary maintained target
+    today is ESP32 on `pioarduino/platform-espressif32`:
 
     ```
+    platform = https://github.com/pioarduino/platform-espressif32/releases/download/stable/platform-espressif32.zip
+    framework = arduino
+    board = esp32dev
     lib_deps = https://github.com/labodj/homie-esp8266.git#develop
     ```
+
+    ESP8266 can still work on a best-effort basis, but it is not the main validation target
+    of this fork. If you use ESP8266, keep the ESP8266 platform and add
+    `PIO_FRAMEWORK_ARDUINO_LWIP2_LOW_MEMORY` when needed for reliable OTA behavior.
 
 If you need reproducible builds, pin a commit SHA instead of the branch name.
 

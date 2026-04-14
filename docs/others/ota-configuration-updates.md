@@ -4,7 +4,8 @@ Homie for ESP8266 supports OTA (Over the Air), if enabled in the configuration, 
 
 There's a script that does just that:
 
-[![GitHub logo](../assets/github.png) ota_updater.py](https://github.com/homieiot/homie-esp8266/blob/develop/scripts/ota_updater)
+[![GitHub logo](../assets/github.png) ota_updater.py](https://github.com/labodj/homie-esp8266/blob/develop/scripts/ota_updater/ota_updater.py)
+[![GitHub logo](../assets/github.png) OTA updater README](https://github.com/labodj/homie-esp8266/blob/develop/scripts/ota_updater/README.md)
 
 It works this way:
 
@@ -17,6 +18,10 @@ It works this way:
   * The firmware is updating. Homie for ESP8266 reports progress with `206 <bytes written>/<bytes total>`
   * When all bytes are flashed, the firmware is verified (including the MD5 if one was set)
     * Homie for ESP8266 either reports `200` on success, `400` if the firmware in invalid or `500` if there's an internal error
+4. On this fork, the maintained OTA helper publishes firmware with MQTT QoS 1
+  * Duplicate retransmissions of the same firmware are tolerated safely
+  * Overlapping retransmitted chunks are trimmed before they reach flash
+  * If MQTT disconnects during OTA, the update is aborted cleanly and must be retried
 5. Homie for ESP8266 reboots on success as soon as the device is idle
 
 See [Homie implementation specifics](homie-implementation-specifics.md) for more details on status codes.

@@ -35,3 +35,9 @@ build_flags =
 ```
 
 The additional flag `PIO_FRAMEWORK_ARDUINO_LWIP2_HIGHER_BANDWITH` is necessary for SSL encryptions to work properly.
+
+## ESP8266-only networking flags
+
+Flags such as `PIO_FRAMEWORK_ARDUINO_LWIP2_LOW_MEMORY` and
+`PIO_FRAMEWORK_ARDUINO_LWIP2_HIGHER_BANDWIDTH` are relevant to the ESP8266
+Arduino core. They are not part of the maintained ESP32 path of this fork.
