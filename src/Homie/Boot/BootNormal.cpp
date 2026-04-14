@@ -87,10 +87,14 @@ BootNormal::BootNormal()
   , _otaOngoing(false)
   , _flaggedForReboot(false)
   , _mqttOfflineMessageId(0)
+  , _otaRequestedChecksum{0}
   , _otaIsBase64(false)
   , _otaBase64Pads(0)
   , _otaSizeTotal(0)
   , _otaSizeDone(0)
+  , _otaPayloadTotal(0)
+  , _otaPayloadProcessed(0)
+  , _otaProgressPublishCounter(0)
   , _mqttTopic(nullptr)
   , _mqttClientId(nullptr)
   , _mqttWillTopic(nullptr)
@@ -362,6 +366,47 @@ bool BootNormal::_publishOtaStatus(int status, const char* info) {
             topic.get(), 0, true, payload.c_str()) != 0;
 }
 
+void BootNormal::_resetOtaTransferState(bool preserveRequestedChecksum) {
+  _otaOngoing = false;
+  if (!preserveRequestedChecksum) _otaRequestedChecksum[0] = '\0';
+  _otaIsBase64 = false;
+  _otaBase64Pads = 0;
+  _otaSizeTotal = 0;
+  _otaSizeDone = 0;
+  _otaPayloadTotal = 0;
+  _otaPayloadProcessed = 0;
+  _otaProgressPublishCounter = 0;
+}
+
+void BootNormal::_failOtaUpdate(int status, const char* info, const __FlashStringHelper* reason) {
+  _publishOtaStatus(status, info);
+
+  Interface::get().getLogger() << F("✖ OTA failed (") << status;
+  if (info && info[0] != '\0') {
+    Interface::get().getLogger() << F(" ") << info;
+  }
+  Interface::get().getLogger() << F(")") << endl;
+  Interface::get().getLogger() << reason << endl;
+
+  _otaFailedPending.store(true);
+  _resetOtaTransferState();
+}
+
+void BootNormal::_abortOtaUpdateOnDisconnect() {
+  if (!_otaOngoing) return;
+
+  Interface::get().getLogger() << F("✖ MQTT disconnected during OTA, aborting update") << endl;
+
+  #ifdef ESP32
+  if (Update.isRunning()) Update.abort();
+  #elif defined(ESP8266)
+  if (Update.isRunning()) Update.end(false);
+  #endif // ESP32
+
+  _otaFailedPending.store(true);
+  _resetOtaTransferState();
+}
+
 void BootNormal::_endOtaUpdate(bool success, uint8_t update_error) {
   if (success) {
     Interface::get().getLogger() << F("✔ OTA succeeded") << endl;
@@ -407,7 +452,7 @@ void BootNormal::_endOtaUpdate(bool success, uint8_t update_error) {
     Interface::get().getLogger() << F("✖ OTA failed (") << code << F(" ") << info << F(")") << endl;
     _otaFailedPending.store(true);
   }
-  _otaOngoing = false;
+  _resetOtaTransferState(success);
 }
 
 void BootNormal::_markConnectivityRecovering() {
@@ -862,6 +907,8 @@ void BootNormal::_handleMqttConnected() {
 }
 
 void BootNormal::_handleMqttDisconnected(AsyncMqttClientDisconnectReason reason) {
+  _abortOtaUpdateOnDisconnect();
+
   Interface::get().ready = false;
   _mqttConnectNotified = false;
   _mqttConnectInProgress = false;
@@ -1324,7 +1371,15 @@ bool HomieInternals::BootNormal::__handleOTAUpdates(char* topic, char* payload, 
     && strcmp_P(topicLevels[2], PSTR("ota")) == 0
     && strcmp_P(topicLevels[3], PSTR("firmware")) == 0
     ) {
-    if (index == 0) {
+    char* firmwareMd5 = topicLevels[4];
+
+    if (index == 0 && !_otaOngoing) {
+      if (_flaggedForReboot && _otaRequestedChecksum[0] != '\0' && strcmp(firmwareMd5, _otaRequestedChecksum) == 0) {
+        Interface::get().getLogger() << F("! Ignoring duplicate OTA payload for firmware already flashed; reboot pending") << endl;
+        _publishOtaStatus(200);  // repeat terminal success for a retransmitted QoS1 publish
+        return true;
+      }
+
       Interface::get().getLogger() << F("Receiving OTA payload") << endl;
       if (!Interface::get().getConfig().get().ota.enabled) {
         _publishOtaStatus(403);  // 403 Forbidden
@@ -1332,7 +1387,6 @@ bool HomieInternals::BootNormal::__handleOTAUpdates(char* topic, char* payload, 
         return true;
       }
 
-      char* firmwareMd5 = topicLevels[4];
       if (!Helpers::validateMd5(firmwareMd5)) {
         _endOtaUpdate(false, UPDATE_ERROR_MD5);
         Interface::get().getLogger() << F("✖ Aborting, invalid MD5") << endl;
@@ -1343,6 +1397,11 @@ bool HomieInternals::BootNormal::__handleOTAUpdates(char* topic, char* payload, 
         return true;
       } else {
         Update.setMD5(firmwareMd5);
+        strlcpy(_otaRequestedChecksum, firmwareMd5, sizeof(_otaRequestedChecksum));
+        _otaRequestedChecksum[sizeof(_otaRequestedChecksum) - 1] = '\0';
+        _otaPayloadTotal = total;
+        _otaPayloadProcessed = 0;
+        _otaProgressPublishCounter = 0;
         _publishOtaStatus(202);
         _otaOngoing = true;
 
@@ -1351,6 +1410,42 @@ bool HomieInternals::BootNormal::__handleOTAUpdates(char* topic, char* payload, 
       }
     } else if (!_otaOngoing) {
       return true; // we've not validated the checksum
+    }
+
+    if (strcmp(firmwareMd5, _otaRequestedChecksum) != 0) {
+      _failOtaUpdate(400, "NOT_REQUESTED", F("✖ Aborting, received OTA data for a different firmware request"));
+      return true;
+    }
+
+    if (total != _otaPayloadTotal) {
+      _failOtaUpdate(500, "INTERNAL_ERROR", F("✖ Aborting, OTA payload size changed mid-transfer"));
+      return true;
+    }
+
+    const size_t rawChunkEnd = index + len;
+    size_t skipRawPrefix = 0;
+
+    if (index < _otaPayloadProcessed) {
+      skipRawPrefix = _otaPayloadProcessed - index;
+      if (skipRawPrefix >= len) {
+        Interface::get().getLogger() << F("! Ignoring duplicate OTA chunk at offset ") << index;
+        if (properties.dup) Interface::get().getLogger() << F(" (dup)");
+        Interface::get().getLogger() << endl;
+        return true;
+      }
+
+      Interface::get().getLogger() << F("! Trimming duplicate OTA bytes up to offset ") << _otaPayloadProcessed;
+      if (properties.dup) Interface::get().getLogger() << F(" (dup)");
+      Interface::get().getLogger() << endl;
+
+      payload += skipRawPrefix;
+      len -= skipRawPrefix;
+      index += skipRawPrefix;
+    }
+
+    if (index != _otaPayloadProcessed) {
+      _failOtaUpdate(500, "INTERNAL_ERROR", F("✖ Aborting, OTA chunk arrived out of sequence"));
+      return true;
     }
 
     // here, we need to flash the payload
@@ -1464,30 +1559,32 @@ bool HomieInternals::BootNormal::__handleOTAUpdates(char* topic, char* payload, 
         _otaProgressSizeTotal.store(_otaSizeTotal);
         _otaProgressPending.store(true);
 
-        static int count = 0;
-        if (count == 100) {
+        if (_otaProgressPublishCounter == 100) {
           _publishOtaStatus(206, progress.c_str());  // 206 Partial Content
-          count = 0;
+          _otaProgressPublishCounter = 0;
         }
-        ++count;
-
-                                                  //  Done with the update?
-        if (index + len == total) {
-          // With base64-coded firmware, we may have provided a length off by one or two
-          // to Update.begin() because the base64-coded firmware may use padding (one or
-          // two "=") at the end. In case of base64, total length was adjusted above.
-          // Check the real length here and ask Update::end() to skip this test.
-          if ((_otaIsBase64) && (_otaSizeDone != _otaSizeTotal)) {
-            _endOtaUpdate(false, UPDATE_ERROR_SIZE);
-            return true;
-          }
-          success = Update.end(_otaIsBase64);
-          _endOtaUpdate(success, Update.getError());
-        }
+        ++_otaProgressPublishCounter;
       } else {
         // Error erasing or writing flash
         _endOtaUpdate(false, Update.getError());
+        return true;
       }
+    }
+
+    _otaPayloadProcessed = rawChunkEnd;
+
+    // Done with the update?
+    if (rawChunkEnd == total) {
+      // With base64-coded firmware, we may have provided a length off by one or two
+      // to Update.begin() because the base64-coded firmware may use padding (one or
+      // two "=") at the end. In case of base64, total length was adjusted above.
+      // Check the real length here and ask Update::end() to skip this test.
+      if ((_otaIsBase64) && (_otaSizeDone != _otaSizeTotal)) {
+        _endOtaUpdate(false, UPDATE_ERROR_SIZE);
+        return true;
+      }
+      bool success = Update.end(_otaIsBase64);
+      _endOtaUpdate(success, Update.getError());
     }
     return true;
   }

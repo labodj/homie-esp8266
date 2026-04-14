@@ -155,11 +155,15 @@ class BootNormal : public Boot {
   bool _flaggedForReboot;
   uint16_t _mqttOfflineMessageId;
   char _fwChecksum[32 + 1];
+  char _otaRequestedChecksum[32 + 1];
   bool _otaIsBase64;
   base64_decodestate _otaBase64State;
   size_t _otaBase64Pads;
   size_t _otaSizeTotal;
   size_t _otaSizeDone;
+  size_t _otaPayloadTotal;
+  size_t _otaPayloadProcessed;
+  uint16_t _otaProgressPublishCounter;
 
   std::unique_ptr<char[]> _mqttTopic;
 
@@ -209,6 +213,9 @@ class BootNormal : public Boot {
   void _prefixMqttTopic();
   char* _prefixMqttTopic(PGM_P topic);
   bool _publishOtaStatus(int status, const char* info = nullptr);
+  void _resetOtaTransferState(bool preserveRequestedChecksum = false);
+  void _failOtaUpdate(int status, const char* info, const __FlashStringHelper* reason);
+  void _abortOtaUpdateOnDisconnect();
   void _endOtaUpdate(bool success, uint8_t update_error = UPDATE_ERROR_OK);
 
   // _onMqttMessage Helpers
