@@ -3,6 +3,8 @@
 
 #include "Arduino.h"
 
+#include <array>
+#include <atomic>
 #include <functional>
 #include <libb64/cdecode.h>
 
@@ -48,6 +50,9 @@ class BootNormal : public Boot {
   void loop();
 
  private:
+  static constexpr uint8_t PENDING_MQTT_MESSAGE_QUEUE_SIZE = 16;
+  static constexpr uint8_t PENDING_MQTT_ACK_QUEUE_SIZE = 16;
+
   struct AdvertisementProgress {
     bool done = false;
     enum class GlobalStep {
@@ -97,6 +102,11 @@ class BootNormal : public Boot {
     size_t currentArrayNodeIndex;
     size_t currentPropertyIndex;
   } _advertisementProgress;
+  struct PendingMqttMessage {
+    std::unique_ptr<char[]> topic;
+    std::unique_ptr<char[]> payload;
+    AsyncMqttClientMessageProperties properties{};
+  };
   Uptime _uptime;
   Uptime _uptimeWifi;
   Uptime _uptimeMqtt;
@@ -108,9 +118,30 @@ class BootNormal : public Boot {
   bool _wifiConnectInProgress;
   bool _mqttConnectInProgress;
   bool _recoveryInProgress;
+  bool _hostnameConfigured;
+  bool _mdnsStarted;
   uint32_t _wifiConnectAttemptAt;
   uint32_t _mqttConnectAttemptAt;
   uint32_t _recoveryStartedAt;
+  std::atomic<bool> _wifiEventPending;
+  std::atomic<int32_t> _wifiDisconnectReasonPending;
+  std::atomic<bool> _mqttEventPending;
+  std::atomic<int32_t> _mqttDisconnectReasonPending;
+  std::atomic<uint8_t> _pendingMqttMessageReadIndex;
+  std::atomic<uint8_t> _pendingMqttMessageWriteIndex;
+  std::atomic<uint8_t> _pendingMqttMessageCount;
+  std::atomic<uint16_t> _pendingMqttMessagesDropped;
+  std::atomic<bool> _pendingMqttMessageQueueLocked;
+  std::atomic<uint8_t> _pendingMqttAckReadIndex;
+  std::atomic<uint8_t> _pendingMqttAckWriteIndex;
+  std::atomic<uint8_t> _pendingMqttAckCount;
+  std::atomic<uint16_t> _pendingMqttAcksDropped;
+  std::atomic<bool> _otaStartedPending;
+  std::atomic<bool> _otaProgressPending;
+  std::atomic<size_t> _otaProgressSizeDone;
+  std::atomic<size_t> _otaProgressSizeTotal;
+  std::atomic<bool> _otaSuccessfulPending;
+  std::atomic<bool> _otaFailedPending;
   #ifdef ESP32
   WiFiEventId_t _wifiGotIpHandler;
   WiFiEventId_t _wifiDisconnectedHandler;
@@ -138,12 +169,23 @@ class BootNormal : public Boot {
   std::unique_ptr<char*[]> _mqttTopicLevels;
   uint8_t _mqttTopicLevelsCount;
   std::unique_ptr<char[]> _mqttTopicCopy;
+  std::array<PendingMqttMessage, PENDING_MQTT_MESSAGE_QUEUE_SIZE> _pendingMqttMessages;
+  std::array<uint16_t, PENDING_MQTT_ACK_QUEUE_SIZE> _pendingMqttAckIds;
 
   void _wifiConnect();
   void _markConnectivityRecovering();
   void _markConnectivityHealthy();
   void _scheduleRecoveryReboot(const __FlashStringHelper* reason);
   bool _isWifiConnected() const;
+  void _processPendingAsyncEvents();
+  void _processPendingEventNotifications();
+  void _lockPendingMqttMessageQueue();
+  void _unlockPendingMqttMessageQueue();
+  void _processPendingMqttMessages();
+  void _flushPendingMqttMessages();
+  bool _enqueuePendingMqttAck(uint16_t id);
+  bool _enqueuePendingMqttMessage(const char* topic, const char* payload, const AsyncMqttClientMessageProperties& properties);
+  void _handleQueuedMqttMessage(std::unique_ptr<char[]> topicCopy, std::unique_ptr<char[]> payloadBuffer, const AsyncMqttClientMessageProperties& properties);
   void _recoverIfNetworkStateDrifted();
   void _recoverIfConnectAttemptStalled();
   void _handleWifiConnected(const IPAddress& ip, const IPAddress& mask, const IPAddress& gateway);
@@ -170,12 +212,12 @@ class BootNormal : public Boot {
   void _endOtaUpdate(bool success, uint8_t update_error = UPDATE_ERROR_OK);
 
   // _onMqttMessage Helpers
-  void __splitTopic(char* topic);
-  bool __fillPayloadBuffer(char* topic, char* payload, const AsyncMqttClientMessageProperties& properties, size_t len, size_t index, size_t total);
-  bool __handleOTAUpdates(char* topic, char* payload, const AsyncMqttClientMessageProperties& properties, size_t len, size_t index, size_t total);
-  bool __handleBroadcasts(char* topic, char* payload, const AsyncMqttClientMessageProperties& properties, size_t len, size_t index, size_t total);
-  bool __handleResets(char* topic, char* payload, const AsyncMqttClientMessageProperties& properties, size_t len, size_t index, size_t total);
-  bool __handleConfig(char* topic, char* payload, const AsyncMqttClientMessageProperties& properties, size_t len, size_t index, size_t total);
-  bool __handleNodeProperty(char* topic, char* payload, const AsyncMqttClientMessageProperties& properties, size_t len, size_t index, size_t total);
+  void __splitTopic(char* topic, std::unique_ptr<char*[]>& topicLevels, uint8_t& topicLevelsCount);
+  bool __fillPayloadBuffer(std::unique_ptr<char[]>& payloadBuffer, char* payload, size_t len, size_t index, size_t total);
+  bool __handleOTAUpdates(char* topic, char* payload, const AsyncMqttClientMessageProperties& properties, size_t len, size_t index, size_t total, char* const* topicLevels, uint8_t topicLevelsCount);
+  bool __handleBroadcasts(char* topic, char* payload, const AsyncMqttClientMessageProperties& properties, size_t len, size_t index, size_t total, char* const* topicLevels, uint8_t topicLevelsCount);
+  bool __handleResets(char* topic, char* payload, const AsyncMqttClientMessageProperties& properties, size_t len, size_t index, size_t total, char* const* topicLevels, uint8_t topicLevelsCount);
+  bool __handleConfig(char* topic, char* payload, const AsyncMqttClientMessageProperties& properties, size_t len, size_t index, size_t total, char* const* topicLevels, uint8_t topicLevelsCount);
+  bool __handleNodeProperty(char* topic, char* payload, const AsyncMqttClientMessageProperties& properties, size_t len, size_t index, size_t total, char* const* topicLevels, uint8_t topicLevelsCount);
 };
 }  // namespace HomieInternals

@@ -2,6 +2,18 @@
 
 using namespace HomieInternals;
 
+namespace {
+HomieEvent makeEvent(HomieEventType type) {
+  HomieEvent event{};
+  event.type = type;
+  return event;
+}
+
+void dispatchEvent(const HomieEvent& event) {
+  Interface::get().eventHandler(event);
+}
+}  // namespace
+
 HomieClass::HomieClass()
   : _setupCalled(false)
   , _firmwareSet(false)
@@ -147,18 +159,18 @@ void HomieClass::setup() {
   // run selected mode
   if (_selectedHomieBootMode == HomieBootMode::NORMAL) {
     _boot = &_bootNormal;
-    Interface::get().event.type = HomieEventType::NORMAL_MODE;
-    Interface::get().eventHandler(Interface::get().event);
+    const HomieEvent event = makeEvent(HomieEventType::NORMAL_MODE);
+    dispatchEvent(event);
 #if HOMIE_CONFIG
   } else if (_selectedHomieBootMode == HomieBootMode::CONFIGURATION) {
     _boot = &_bootConfig;
-    Interface::get().event.type = HomieEventType::CONFIGURATION_MODE;
-    Interface::get().eventHandler(Interface::get().event);
+    const HomieEvent event = makeEvent(HomieEventType::CONFIGURATION_MODE);
+    dispatchEvent(event);
 #endif
   } else if (_selectedHomieBootMode == HomieBootMode::STANDALONE) {
     _boot = &_bootStandalone;
-    Interface::get().event.type = HomieEventType::STANDALONE_MODE;
-    Interface::get().eventHandler(Interface::get().event);
+    const HomieEvent event = makeEvent(HomieEventType::STANDALONE_MODE);
+    dispatchEvent(event);
   } else {
     Helpers::abort(F("✖ Boot mode invalid"));
     return;  // never reached, here for clarity
@@ -175,8 +187,8 @@ void HomieClass::loop() {
   if (_flaggedForReboot && Interface::get().reset.idle) {
     Interface::get().getLogger() << F("Device is idle") << endl;
     Interface::get().getLogger() << F("Triggering ABOUT_TO_RESET event...") << endl;
-    Interface::get().event.type = HomieEventType::ABOUT_TO_RESET;
-    Interface::get().eventHandler(Interface::get().event);
+    const HomieEvent event = makeEvent(HomieEventType::ABOUT_TO_RESET);
+    dispatchEvent(event);
 
     Interface::get().getLogger() << F("↻ Rebooting device...") << endl;
     Serial.flush();
@@ -365,8 +377,8 @@ void HomieClass::prepareToSleep() {
   } else {
     Interface::get().disable = true;
     Interface::get().getLogger() << F("Triggering READY_TO_SLEEP event...") << endl;
-    Interface::get().event.type = HomieEventType::READY_TO_SLEEP;
-    Interface::get().eventHandler(Interface::get().event);
+    const HomieEvent event = makeEvent(HomieEventType::READY_TO_SLEEP);
+    dispatchEvent(event);
   }
 }
 

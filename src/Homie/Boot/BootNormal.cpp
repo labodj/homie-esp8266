@@ -2,6 +2,53 @@
 
 using namespace HomieInternals;
 
+namespace {
+HomieEvent makeEvent(HomieEventType type) {
+  HomieEvent event{};
+  event.type = type;
+  return event;
+}
+
+void dispatchEvent(const HomieEvent& event) {
+  Interface::get().eventHandler(event);
+}
+
+bool isValidHomieId(const char* value) {
+  if (!value || value[0] == '\0') return false;
+
+  const size_t length = strlen(value);
+  if (value[0] == '-' || value[length - 1] == '-') return false;
+
+  for (size_t i = 0; i < length; i++) {
+    const char c = value[i];
+    const bool isLowerAlpha = c >= 'a' && c <= 'z';
+    const bool isDigitChar = c >= '0' && c <= '9';
+    if (!isLowerAlpha && !isDigitChar && c != '-') {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+void warnIfInvalidHomieId(const __FlashStringHelper* scope, const char* value) {
+  if (isValidHomieId(value)) return;
+
+  Interface::get().getLogger() << F("! ") << scope << F(" \"") << value
+                               << F("\" is not Homie 3.0.1 ID-compliant; keeping it for backward compatibility")
+                               << endl;
+}
+
+void warnIfInvalidPropertyId(const char* nodeId, const char* propertyId) {
+  if (isValidHomieId(propertyId)) return;
+
+  Interface::get().getLogger() << F("! Property ID \"") << propertyId
+                               << F("\" on node \"") << nodeId
+                               << F("\" is not Homie 3.0.1 ID-compliant; keeping it for backward compatibility")
+                               << endl;
+}
+}  // namespace
+
 BootNormal::BootNormal()
   : Boot("normal")
   , _mqttReconnectTimer(MQTT_RECONNECT_INITIAL_INTERVAL, MQTT_RECONNECT_MAX_BACKOFF)
@@ -11,9 +58,30 @@ BootNormal::BootNormal()
   , _wifiConnectInProgress(false)
   , _mqttConnectInProgress(false)
   , _recoveryInProgress(false)
+  , _hostnameConfigured(false)
+  , _mdnsStarted(false)
   , _wifiConnectAttemptAt(0)
   , _mqttConnectAttemptAt(0)
   , _recoveryStartedAt(0)
+  , _wifiEventPending(false)
+  , _wifiDisconnectReasonPending(0)
+  , _mqttEventPending(false)
+  , _mqttDisconnectReasonPending(0)
+  , _pendingMqttMessageReadIndex(0)
+  , _pendingMqttMessageWriteIndex(0)
+  , _pendingMqttMessageCount(0)
+  , _pendingMqttMessagesDropped(0)
+  , _pendingMqttMessageQueueLocked(false)
+  , _pendingMqttAckReadIndex(0)
+  , _pendingMqttAckWriteIndex(0)
+  , _pendingMqttAckCount(0)
+  , _pendingMqttAcksDropped(0)
+  , _otaStartedPending(false)
+  , _otaProgressPending(false)
+  , _otaProgressSizeDone(0)
+  , _otaProgressSizeTotal(0)
+  , _otaSuccessfulPending(false)
+  , _otaFailedPending(false)
   , _mqttConnectNotified(false)
   , _mqttDisconnectNotified(true)
   , _otaOngoing(false)
@@ -111,8 +179,13 @@ void BootNormal::setup() {
 #endif
 
   Interface::get().getConfig().log();
+  warnIfInvalidHomieId(F("Device ID"), Interface::get().getConfig().get().deviceId);
 
   for (HomieNode* iNode : HomieNode::nodes) {
+    warnIfInvalidHomieId(F("Node ID"), iNode->getId());
+    for (Property* iProperty : iNode->getProperties()) {
+      warnIfInvalidPropertyId(iNode->getId(), iProperty->getId());
+    }
     iNode->setup();
   }
 
@@ -123,6 +196,9 @@ void BootNormal::setup() {
 
 void BootNormal::loop() {
   Boot::loop();
+
+  _processPendingAsyncEvents();
+  _processPendingEventNotifications();
 
   if (_flaggedForReboot && Interface::get().reset.idle) {
     Interface::get().getLogger() << F("Device is idle") << endl;
@@ -159,6 +235,13 @@ void BootNormal::loop() {
 
   if (!Interface::get().getMqttClient().connected()) return;
 
+  const uint16_t droppedMessages = _pendingMqttMessagesDropped.exchange(0);
+  if (droppedMessages != 0) {
+    Interface::get().getLogger() << F("✖ MQTT inbound queue full, dropped ") << droppedMessages << F(" message(s)") << endl;
+  }
+
+  _processPendingMqttMessages();
+
   // here, we are connected to the broker
 
   if (!_advertisementProgress.done) {
@@ -178,8 +261,8 @@ void BootNormal::loop() {
 
     Interface::get().getLogger() << F("✔ MQTT ready") << endl;
     Interface::get().getLogger() << F("Triggering MQTT_READY event...") << endl;
-    Interface::get().event.type = HomieEventType::MQTT_READY;
-    Interface::get().eventHandler(Interface::get().event);
+    const HomieEvent event = makeEvent(HomieEventType::MQTT_READY);
+    dispatchEvent(event);
 
     for (HomieNode* iNode : HomieNode::nodes) {
       iNode->onReadyToOperate();
@@ -203,10 +286,10 @@ void BootNormal::loop() {
   }
 
   if (_statsTimer.check()) {
-    char statsIntervalStr[3 + 1];
-    itoa(Interface::get().getConfig().get().deviceStatsInterval+5, statsIntervalStr, 10);
+    char statsIntervalStr[5 + 1];
+    utoa(Interface::get().getConfig().get().deviceStatsInterval, statsIntervalStr, 10);
     Interface::get().getLogger() << F("〽 Sending statistics...") << endl;
-    Interface::get().getLogger() << F("  • Interval: ") << statsIntervalStr << F("s (") << Interface::get().getConfig().get().deviceStatsInterval << F("s including 5s grace time)") << endl;
+    Interface::get().getLogger() << F("  • Interval: ") << statsIntervalStr << F("s") << endl;
     uint16_t intervalPacketId = Interface::get().getMqttClient().publish(_prefixMqttTopic(PSTR("/$stats/interval")), 1, true, statsIntervalStr);
 
     uint8_t quality = Helpers::rssiToPercentage(WiFi.RSSI());
@@ -224,10 +307,10 @@ void BootNormal::loop() {
     uint16_t uptimePacketId = Interface::get().getMqttClient().publish(_prefixMqttTopic(PSTR("/$stats/uptime")), 1, true, statusStr);
 
     itoa(_uptimeWifi.getSeconds(), statusStr, 10);
-    Interface::get().getMqttClient().publish(_prefixMqttTopic(PSTR("/$stats/uptimewifi")), 1, true, statusStr);
+    uint16_t uptimeWifiPacketId = Interface::get().getMqttClient().publish(_prefixMqttTopic(PSTR("/$stats/uptimewifi")), 1, true, statusStr);
 
     itoa(_uptimeMqtt.getSeconds(), statusStr, 10);
-    Interface::get().getMqttClient().publish(_prefixMqttTopic(PSTR("/$stats/uptimemqtt")), 1, true, statusStr);
+    uint16_t uptimeMqttPacketId = Interface::get().getMqttClient().publish(_prefixMqttTopic(PSTR("/$stats/uptimemqtt")), 1, true, statusStr);
 
     uint32_t freeHeap = ESP.getFreeHeap();
     char freeHeapStr[20 + 1];
@@ -235,9 +318,14 @@ void BootNormal::loop() {
     Interface::get().getLogger() << F("  • FreeHeap: ") << freeHeapStr << F("b") << endl;
     uint16_t freeHeapPacketId = Interface::get().getMqttClient().publish(_prefixMqttTopic(PSTR("/$stats/freeheap")), 1, true, freeHeapStr);
 
-    if (intervalPacketId != 0 && signalPacketId != 0 && uptimePacketId != 0 && freeHeapPacketId != 0) _statsTimer.tick();
-    Interface::get().event.type = HomieEventType::SENDING_STATISTICS;
-    Interface::get().eventHandler(Interface::get().event);
+    if (intervalPacketId != 0
+        && signalPacketId != 0
+        && uptimePacketId != 0
+        && uptimeWifiPacketId != 0
+        && uptimeMqttPacketId != 0
+        && freeHeapPacketId != 0) _statsTimer.tick();
+    const HomieEvent event = makeEvent(HomieEventType::SENDING_STATISTICS);
+    dispatchEvent(event);
   }
 
   Interface::get().loopFunction();
@@ -262,17 +350,22 @@ bool BootNormal::_publishOtaStatus(int status, const char* info) {
     payload.concat(info);
   }
 
+  const size_t topicLength = strlen(Interface::get().getConfig().get().mqtt.baseTopic)
+                           + strlen(Interface::get().getConfig().get().deviceId)
+                           + strlen_P(PSTR("/$implementation/ota/status"));
+  std::unique_ptr<char[]> topic(new char[topicLength + 1]);
+  strcpy(topic.get(), Interface::get().getConfig().get().mqtt.baseTopic);
+  strcat(topic.get(), Interface::get().getConfig().get().deviceId);
+  strcat_P(topic.get(), PSTR("/$implementation/ota/status"));
+
   return Interface::get().getMqttClient().publish(
-            _prefixMqttTopic(PSTR("/$implementation/ota/status")), 0, true, payload.c_str()) != 0;
+            topic.get(), 0, true, payload.c_str()) != 0;
 }
 
 void BootNormal::_endOtaUpdate(bool success, uint8_t update_error) {
   if (success) {
     Interface::get().getLogger() << F("✔ OTA succeeded") << endl;
-    Interface::get().getLogger() << F("Triggering OTA_SUCCESSFUL event...") << endl;
-    Interface::get().event.type = HomieEventType::OTA_SUCCESSFUL;
-    Interface::get().eventHandler(Interface::get().event);
-
+    _otaSuccessfulPending.store(true);
     _publishOtaStatus(200);  // 200 OK
     _flaggedForReboot = true;
   } else {
@@ -312,10 +405,7 @@ void BootNormal::_endOtaUpdate(bool success, uint8_t update_error) {
     _publishOtaStatus(code, info.c_str());
 
     Interface::get().getLogger() << F("✖ OTA failed (") << code << F(" ") << info << F(")") << endl;
-
-    Interface::get().getLogger() << F("Triggering OTA_FAILED event...") << endl;
-    Interface::get().event.type = HomieEventType::OTA_FAILED;
-    Interface::get().eventHandler(Interface::get().event);
+    _otaFailedPending.store(true);
   }
   _otaOngoing = false;
 }
@@ -343,6 +433,193 @@ void BootNormal::_scheduleRecoveryReboot(const __FlashStringHelper* reason) {
 
 bool BootNormal::_isWifiConnected() const {
   return WiFi.status() == WL_CONNECTED;
+}
+
+void BootNormal::_processPendingAsyncEvents() {
+  if (_wifiEventPending.exchange(false)) {
+    if (_isWifiConnected()) {
+      _handleWifiConnected(WiFi.localIP(), WiFi.subnetMask(), WiFi.gatewayIP());
+    } else {
+      _handleWifiDisconnected(_wifiDisconnectReasonPending.load());
+    }
+  }
+
+  if (_mqttEventPending.exchange(false)) {
+    if (Interface::get().getMqttClient().connected()) {
+      _handleMqttConnected();
+    } else {
+      _handleMqttDisconnected(static_cast<AsyncMqttClientDisconnectReason>(_mqttDisconnectReasonPending.load()));
+    }
+  }
+}
+
+void BootNormal::_processPendingEventNotifications() {
+  if (_otaStartedPending.exchange(false)) {
+    Interface::get().getLogger() << F("Triggering OTA_STARTED event...") << endl;
+    const HomieEvent event = makeEvent(HomieEventType::OTA_STARTED);
+    dispatchEvent(event);
+  }
+
+  if (_otaProgressPending.exchange(false)) {
+    HomieEvent event = makeEvent(HomieEventType::OTA_PROGRESS);
+    event.sizeDone = _otaProgressSizeDone.load();
+    event.sizeTotal = _otaProgressSizeTotal.load();
+    dispatchEvent(event);
+  }
+
+  if (_otaSuccessfulPending.exchange(false)) {
+    Interface::get().getLogger() << F("Triggering OTA_SUCCESSFUL event...") << endl;
+    const HomieEvent event = makeEvent(HomieEventType::OTA_SUCCESSFUL);
+    dispatchEvent(event);
+  }
+
+  if (_otaFailedPending.exchange(false)) {
+    Interface::get().getLogger() << F("Triggering OTA_FAILED event...") << endl;
+    const HomieEvent event = makeEvent(HomieEventType::OTA_FAILED);
+    dispatchEvent(event);
+  }
+
+  while (_pendingMqttAckCount.load() > 0) {
+    const uint8_t readIndex = _pendingMqttAckReadIndex.load();
+    const uint16_t id = _pendingMqttAckIds[readIndex];
+
+    _pendingMqttAckReadIndex.store((readIndex + 1) % PENDING_MQTT_ACK_QUEUE_SIZE);
+    _pendingMqttAckCount.fetch_sub(1);
+
+    HomieEvent event = makeEvent(HomieEventType::MQTT_PACKET_ACKNOWLEDGED);
+    event.packetId = id;
+    dispatchEvent(event);
+
+    if (Interface::get().flaggedForSleep && id == _mqttOfflineMessageId) {
+      Interface::get().getLogger() << F("Offline message acknowledged. Disconnecting MQTT...") << endl;
+      Interface::get().getMqttClient().disconnect();
+      break;
+    }
+  }
+
+  const uint16_t droppedAcks = _pendingMqttAcksDropped.exchange(0);
+  if (droppedAcks != 0) {
+    Interface::get().getLogger() << F("✖ MQTT ACK queue full, dropped ") << droppedAcks << F(" acknowledgement event(s)") << endl;
+  }
+}
+
+void BootNormal::_lockPendingMqttMessageQueue() {
+  while (_pendingMqttMessageQueueLocked.exchange(true, std::memory_order_acquire)) {
+  }
+}
+
+void BootNormal::_unlockPendingMqttMessageQueue() {
+  _pendingMqttMessageQueueLocked.store(false, std::memory_order_release);
+}
+
+bool BootNormal::_enqueuePendingMqttAck(uint16_t id) {
+  if (_pendingMqttAckCount.load() >= PENDING_MQTT_ACK_QUEUE_SIZE) {
+    return false;
+  }
+
+  const uint8_t writeIndex = _pendingMqttAckWriteIndex.load();
+  _pendingMqttAckIds[writeIndex] = id;
+  _pendingMqttAckWriteIndex.store((writeIndex + 1) % PENDING_MQTT_ACK_QUEUE_SIZE);
+  _pendingMqttAckCount.fetch_add(1);
+  return true;
+}
+
+bool BootNormal::_enqueuePendingMqttMessage(const char* topic, const char* payload, const AsyncMqttClientMessageProperties& properties) {
+  const size_t topicLength = strlen(topic);
+  std::unique_ptr<char[]> topicCopy(new char[topicLength + 1]);
+  memcpy(topicCopy.get(), topic, topicLength + 1);
+
+  const size_t payloadLength = strlen(payload);
+  std::unique_ptr<char[]> payloadCopy(new char[payloadLength + 1]);
+  memcpy(payloadCopy.get(), payload, payloadLength + 1);
+
+  _lockPendingMqttMessageQueue();
+  if (_pendingMqttMessageCount.load() >= PENDING_MQTT_MESSAGE_QUEUE_SIZE) {
+    _unlockPendingMqttMessageQueue();
+    return false;
+  }
+
+  const uint8_t writeIndex = _pendingMqttMessageWriteIndex.load();
+  PendingMqttMessage& slot = _pendingMqttMessages[writeIndex];
+  slot.topic = std::move(topicCopy);
+  slot.payload = std::move(payloadCopy);
+  slot.properties = properties;
+  _pendingMqttMessageWriteIndex.store((writeIndex + 1) % PENDING_MQTT_MESSAGE_QUEUE_SIZE);
+  _pendingMqttMessageCount.fetch_add(1);
+  _unlockPendingMqttMessageQueue();
+  return true;
+}
+
+void BootNormal::_flushPendingMqttMessages() {
+  _lockPendingMqttMessageQueue();
+  for (PendingMqttMessage& slot : _pendingMqttMessages) {
+    slot.topic.reset();
+    slot.payload.reset();
+  }
+
+  _pendingMqttMessageReadIndex.store(0);
+  _pendingMqttMessageWriteIndex.store(0);
+  _pendingMqttMessageCount.store(0);
+  _unlockPendingMqttMessageQueue();
+}
+
+void BootNormal::_handleQueuedMqttMessage(std::unique_ptr<char[]> topicCopy, std::unique_ptr<char[]> payloadBuffer, const AsyncMqttClientMessageProperties& properties) {
+  std::unique_ptr<char*[]> topicLevels;
+  uint8_t topicLevelsCount = 0;
+  __splitTopic(topicCopy.get(), topicLevels, topicLevelsCount);
+
+  const size_t payloadLength = strlen(payloadBuffer.get());
+
+  if (__handleBroadcasts(topicCopy.get(), payloadBuffer.get(), properties, payloadLength, 0, payloadLength, topicLevels.get(), topicLevelsCount))
+    return;
+
+  if (strcmp(topicLevels.get()[0], Interface::get().getConfig().get().deviceId) != 0)
+    return;
+
+  if (__handleResets(topicCopy.get(), payloadBuffer.get(), properties, payloadLength, 0, payloadLength, topicLevels.get(), topicLevelsCount))
+    return;
+
+  if (__handleConfig(topicCopy.get(), payloadBuffer.get(), properties, payloadLength, 0, payloadLength, topicLevels.get(), topicLevelsCount))
+    return;
+
+  __handleNodeProperty(topicCopy.get(), payloadBuffer.get(), properties, payloadLength, 0, payloadLength, topicLevels.get(), topicLevelsCount);
+}
+
+void BootNormal::_processPendingMqttMessages() {
+  while (_pendingMqttMessageCount.load() > 0) {
+    std::unique_ptr<char[]> topicCopy;
+    std::unique_ptr<char[]> payloadBuffer;
+    AsyncMqttClientMessageProperties properties{};
+
+    _lockPendingMqttMessageQueue();
+    if (_pendingMqttMessageCount.load() == 0) {
+      _unlockPendingMqttMessageQueue();
+      return;
+    }
+
+    const uint8_t readIndex = _pendingMqttMessageReadIndex.load();
+    PendingMqttMessage& slot = _pendingMqttMessages[readIndex];
+    _pendingMqttMessageReadIndex.store((readIndex + 1) % PENDING_MQTT_MESSAGE_QUEUE_SIZE);
+    _pendingMqttMessageCount.fetch_sub(1);
+
+    if (slot.topic && slot.payload) {
+      topicCopy = std::move(slot.topic);
+      payloadBuffer = std::move(slot.payload);
+      properties = slot.properties;
+    }
+    _unlockPendingMqttMessageQueue();
+
+    if (!topicCopy || !payloadBuffer) {
+      continue;
+    }
+
+    _handleQueuedMqttMessage(std::move(topicCopy), std::move(payloadBuffer), properties);
+
+    if (!Interface::get().getMqttClient().connected()) {
+      _flushPendingMqttMessages();
+      return;
+    }
+  }
 }
 
 void BootNormal::_recoverIfNetworkStateDrifted() {
@@ -408,13 +685,15 @@ void BootNormal::_handleWifiConnected(const IPAddress& ip, const IPAddress& mask
   if (Interface::get().led.enabled) Interface::get().getBlinker().stop();
   Interface::get().getLogger() << F("✔ Wi-Fi connected, IP: ") << ip << endl;
   Interface::get().getLogger() << F("Triggering WIFI_CONNECTED event...") << endl;
-  Interface::get().event.type = HomieEventType::WIFI_CONNECTED;
-  Interface::get().event.ip = ip;
-  Interface::get().event.mask = mask;
-  Interface::get().event.gateway = gateway;
-  Interface::get().eventHandler(Interface::get().event);
+  HomieEvent event = makeEvent(HomieEventType::WIFI_CONNECTED);
+  event.ip = ip;
+  event.mask = mask;
+  event.gateway = gateway;
+  dispatchEvent(event);
 #if HOMIE_MDNS
-  MDNS.begin(Interface::get().getConfig().get().deviceId);
+  if (!_mdnsStarted && MDNS.begin(Interface::get().getConfig().get().deviceId)) {
+    _mdnsStarted = true;
+  }
 #endif
 
   _mqttReconnectTimer.activate();
@@ -426,6 +705,12 @@ void BootNormal::_handleWifiDisconnected(int32_t reason) {
   _markConnectivityRecovering();
   _wifiGotIp = false;
   _wifiConnectInProgress = false;
+#if HOMIE_MDNS
+  if (_mdnsStarted) {
+    MDNS.end();
+    _mdnsStarted = false;
+  }
+#endif
   Interface::get().getMqttClient().disconnect(true);
   _handleMqttDisconnected(AsyncMqttClientDisconnectReason::TCP_DISCONNECTED);
   _mqttReconnectTimer.deactivate();
@@ -433,13 +718,13 @@ void BootNormal::_handleWifiDisconnected(int32_t reason) {
   if (Interface::get().led.enabled) Interface::get().getBlinker().start(LED_WIFI_DELAY);
   Interface::get().getLogger() << F("✖ Wi-Fi disconnected, reason: ") << reason << endl;
   Interface::get().getLogger() << F("Triggering WIFI_DISCONNECTED event...") << endl;
-  Interface::get().event.type = HomieEventType::WIFI_DISCONNECTED;
+  HomieEvent event = makeEvent(HomieEventType::WIFI_DISCONNECTED);
 #ifdef ESP32
-  Interface::get().event.wifiReason = static_cast<uint8_t>(reason);
+  event.wifiReason = static_cast<uint8_t>(reason);
 #elif defined(ESP8266)
-  Interface::get().event.wifiReason = static_cast<WiFiDisconnectReason>(reason);
+  event.wifiReason = static_cast<WiFiDisconnectReason>(reason);
 #endif
-  Interface::get().eventHandler(Interface::get().event);
+  dispatchEvent(event);
 
   _wifiReconnectTimer.activate();
 }
@@ -458,11 +743,16 @@ void BootNormal::_wifiConnect() {
   if (Interface::get().led.enabled) Interface::get().getBlinker().start(LED_WIFI_DELAY);
   Interface::get().getLogger() << F("↕ Attempting to connect to Wi-Fi...") << endl;
 
+  #ifdef ESP32
+  if (!_hostnameConfigured) {
+    WiFi.setHostname(Interface::get().getConfig().get().deviceId);
+    _hostnameConfigured = true;
+  }
+  #endif // ESP32
+
   if (WiFi.getMode() != WIFI_STA) WiFi.mode(WIFI_STA);
 
-  #ifdef ESP32
-  WiFi.setHostname(Interface::get().getConfig().get().deviceId);
-  #elif defined(ESP8266)
+  #ifdef ESP8266
   WiFi.hostname(Interface::get().getConfig().get().deviceId);
   #endif // ESP32
   if (strcmp_P(Interface::get().getConfig().get().wifi.ip, PSTR("")) != 0) {  // on _validateConfigWifi there is a requirement for mask and gateway
@@ -505,24 +795,27 @@ void BootNormal::_wifiConnect() {
 
 #ifdef ESP32
 void BootNormal::_onWifiGotIp(WiFiEvent_t event, WiFiEventInfo_t info) {
-  _handleWifiConnected(
-    IPAddress(info.got_ip.ip_info.ip.addr),
-    IPAddress(info.got_ip.ip_info.netmask.addr),
-    IPAddress(info.got_ip.ip_info.gw.addr));
+  (void)event;
+  (void)info;
+  _wifiEventPending.store(true);
 }
 #elif defined(ESP8266)
 void BootNormal::_onWifiGotIp(const WiFiEventStationModeGotIP& event) {
-  _handleWifiConnected(event.ip, event.mask, event.gw);
+  (void)event;
+  _wifiEventPending.store(true);
 }
 #endif // ESP32
 
 #ifdef ESP32
 void BootNormal::_onWifiDisconnected(WiFiEvent_t event, WiFiEventInfo_t info) {
-  _handleWifiDisconnected(info.wifi_sta_disconnected.reason);
+  (void)event;
+  _wifiDisconnectReasonPending.store(static_cast<int32_t>(info.wifi_sta_disconnected.reason));
+  _wifiEventPending.store(true);
 }
 #elif defined(ESP8266)
 void BootNormal::_onWifiDisconnected(const WiFiEventStationModeDisconnected& event) {
-  _handleWifiDisconnected(event.reason);
+  _wifiDisconnectReasonPending.store(static_cast<int32_t>(event.reason));
+  _wifiEventPending.store(true);
 }
 #endif // ESP32
 
@@ -573,22 +866,23 @@ void BootNormal::_handleMqttDisconnected(AsyncMqttClientDisconnectReason reason)
   _mqttConnectNotified = false;
   _mqttConnectInProgress = false;
   _resetAdvertisementProgress();
+  _flushPendingMqttMessages();
   _statsTimer.deactivate();
 
   if (!_mqttDisconnectNotified) {
     Interface::get().getLogger() << F("✖ MQTT disconnected, reason: ") << (int8_t)reason << endl;
     Interface::get().getLogger() << F("Triggering MQTT_DISCONNECTED event...") << endl;
-    Interface::get().event.type = HomieEventType::MQTT_DISCONNECTED;
-    Interface::get().event.mqttReason = reason;
-    Interface::get().eventHandler(Interface::get().event);
+    HomieEvent event = makeEvent(HomieEventType::MQTT_DISCONNECTED);
+    event.mqttReason = reason;
+    dispatchEvent(event);
 
     _mqttDisconnectNotified = true;
 
     if (Interface::get().flaggedForSleep) {
       _mqttOfflineMessageId = 0;
       Interface::get().getLogger() << F("Triggering READY_TO_SLEEP event...") << endl;
-      Interface::get().event.type = HomieEventType::READY_TO_SLEEP;
-      Interface::get().eventHandler(Interface::get().event);
+      const HomieEvent sleepEvent = makeEvent(HomieEventType::READY_TO_SLEEP);
+      dispatchEvent(sleepEvent);
 
       return;
     }
@@ -645,12 +939,12 @@ void BootNormal::_advertise() {
       break;
     }
     case AdvertisementProgress::GlobalStep::PUB_STATS:
-      packetId = Interface::get().getMqttClient().publish(_prefixMqttTopic(PSTR("/$stats")), 1, true, "uptime,uptimewifi,uptimemqtt,freeheap");
+      packetId = Interface::get().getMqttClient().publish(_prefixMqttTopic(PSTR("/$stats")), 1, true, "signal,uptime,uptimewifi,uptimemqtt,freeheap");
       if (packetId != 0) _advertisementProgress.globalStep = AdvertisementProgress::GlobalStep::PUB_STATS_INTERVAL;
       break;
     case AdvertisementProgress::GlobalStep::PUB_STATS_INTERVAL:
-      char statsIntervalStr[3 + 1];
-      itoa(Interface::get().getConfig().get().deviceStatsInterval+5, statsIntervalStr, 10);
+      char statsIntervalStr[5 + 1];
+      utoa(Interface::get().getConfig().get().deviceStatsInterval, statsIntervalStr, 10);
       packetId = Interface::get().getMqttClient().publish(_prefixMqttTopic(PSTR("/$stats/interval")), 1, true, statsIntervalStr);
       if (packetId != 0) _advertisementProgress.globalStep = AdvertisementProgress::GlobalStep::PUB_FW_NAME;
       break;
@@ -940,11 +1234,12 @@ void BootNormal::_advertise() {
 }
 
 void BootNormal::_onMqttConnected() {
-  _handleMqttConnected();
+  _mqttEventPending.store(true);
 }
 
 void BootNormal::_onMqttDisconnected(AsyncMqttClientDisconnectReason reason) {
-  _handleMqttDisconnected(reason);
+  _mqttDisconnectReasonPending.store(static_cast<int32_t>(reason));
+  _mqttEventPending.store(true);
 }
 
 void BootNormal::_onMqttMessage(char* topic, char* payload, AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total) {
@@ -958,98 +1253,76 @@ void BootNormal::_onMqttMessage(char* topic, char* payload, AsyncMqttClientMessa
     _mqttTopicCopy.get()[topicLength] = '\0';
 
     // Split the topic copy on each "/"
-    __splitTopic(_mqttTopicCopy.get());
+    __splitTopic(_mqttTopicCopy.get(), _mqttTopicLevels, _mqttTopicLevelsCount);
   }
 
   // 1. Handle OTA firmware (not copied to payload buffer)
-  if (__handleOTAUpdates(_mqttTopicCopy.get(), payload, properties, len, index, total))
+  if (__handleOTAUpdates(_mqttTopicCopy.get(), payload, properties, len, index, total, _mqttTopicLevels.get(), _mqttTopicLevelsCount))
     return;
 
   // 2. Fill Payload Buffer
-  if (__fillPayloadBuffer(_mqttTopicCopy.get(), payload, properties, len, index, total))
+  if (__fillPayloadBuffer(_mqttPayloadBuffer, payload, len, index, total))
     return;
 
-  /* Arrived here, the payload is complete */
-
-  // 3. handle broadcasts
-  if (__handleBroadcasts(_mqttTopicCopy.get(), payload, properties, len, index, total))
-    return;
-
-  // 4.all following messages are only for this deviceId
-  if (strcmp(_mqttTopicLevels.get()[0], Interface::get().getConfig().get().deviceId) != 0)
-    return;
-
-  // 5. handle reset
-  if (__handleResets(_mqttTopicCopy.get(), payload, properties, len, index, total))
-    return;
-
-  // 6. handle config set
-  if (__handleConfig(_mqttTopicCopy.get(), payload, properties, len, index, total))
-    return;
-
-  // 7. here, we're sure we have a node property
-  if (__handleNodeProperty(_mqttTopicCopy.get(), payload, properties, len, index, total))
-    return;
+  if (!_enqueuePendingMqttMessage(topic, _mqttPayloadBuffer.get(), properties)) {
+    _pendingMqttMessagesDropped.fetch_add(1);
+  }
 }
 
 void BootNormal::_onMqttPublish(uint16_t id) {
-  Interface::get().event.type = HomieEventType::MQTT_PACKET_ACKNOWLEDGED;
-  Interface::get().event.packetId = id;
-  Interface::get().eventHandler(Interface::get().event);
-
-  if (Interface::get().flaggedForSleep && id == _mqttOfflineMessageId) {
-    Interface::get().getLogger() << F("Offline message acknowledged. Disconnecting MQTT...") << endl;
-    Interface::get().getMqttClient().disconnect();
+  if (!_enqueuePendingMqttAck(id)) {
+    _pendingMqttAcksDropped.fetch_add(1);
   }
 }
 
 // _onMqttMessage Helpers
 
-void BootNormal::__splitTopic(char* topic) {
+void BootNormal::__splitTopic(char* topic, std::unique_ptr<char*[]>& topicLevels, uint8_t& topicLevelsCount) {
   // split topic on each "/"
   char* afterBaseTopic = topic + strlen(Interface::get().getConfig().get().mqtt.baseTopic);
 
-  uint8_t topicLevelsCount = 1;
+  uint8_t levelsCount = 1;
   for (uint8_t i = 0; i < strlen(afterBaseTopic); i++) {
-    if (afterBaseTopic[i] == '/') topicLevelsCount++;
+    if (afterBaseTopic[i] == '/') levelsCount++;
   }
 
-  _mqttTopicLevels = std::unique_ptr<char*[]>(new char*[topicLevelsCount]);
-  _mqttTopicLevelsCount = topicLevelsCount;
+  topicLevels = std::unique_ptr<char*[]>(new char*[levelsCount]);
+  topicLevelsCount = levelsCount;
 
   const char* delimiter = "/";
   uint8_t topicLevelIndex = 0;
+  char* saveptr = nullptr;
 
-  char* token = strtok(afterBaseTopic, delimiter);
+  char* token = strtok_r(afterBaseTopic, delimiter, &saveptr);
   while (token != nullptr) {
-    _mqttTopicLevels[topicLevelIndex++] = token;
+    topicLevels[topicLevelIndex++] = token;
 
-    token = strtok(nullptr, delimiter);
+    token = strtok_r(nullptr, delimiter, &saveptr);
   }
 }
 
-bool HomieInternals::BootNormal::__fillPayloadBuffer(char * topic, char * payload, const AsyncMqttClientMessageProperties& properties, size_t len, size_t index, size_t total) {
+bool HomieInternals::BootNormal::__fillPayloadBuffer(std::unique_ptr<char[]>& payloadBuffer, char* payload, size_t len, size_t index, size_t total) {
   // Reallocate Buffer everytime a new message is received
-  if (_mqttPayloadBuffer == nullptr || index == 0) _mqttPayloadBuffer = std::unique_ptr<char[]>(new char[total + 1]);
+  if (payloadBuffer == nullptr || index == 0) payloadBuffer = std::unique_ptr<char[]>(new char[total + 1]);
 
   // copy payload into buffer
-  memcpy(_mqttPayloadBuffer.get() + index, payload, len);
+  memcpy(payloadBuffer.get() + index, payload, len);
 
   // return if payload buffer is not complete
   if (index + len != total)
     return true;
   // terminate buffer
-  _mqttPayloadBuffer.get()[total] = '\0';
+  payloadBuffer.get()[total] = '\0';
   return false;
 }
 
-bool HomieInternals::BootNormal::__handleOTAUpdates(char* topic, char* payload, const AsyncMqttClientMessageProperties& properties, size_t len, size_t index, size_t total) {
+bool HomieInternals::BootNormal::__handleOTAUpdates(char* topic, char* payload, const AsyncMqttClientMessageProperties& properties, size_t len, size_t index, size_t total, char* const* topicLevels, uint8_t topicLevelsCount) {
   if (
-    _mqttTopicLevelsCount == 5
-    && strcmp(_mqttTopicLevels.get()[0], Interface::get().getConfig().get().deviceId) == 0
-    && strcmp_P(_mqttTopicLevels.get()[1], PSTR("$implementation")) == 0
-    && strcmp_P(_mqttTopicLevels.get()[2], PSTR("ota")) == 0
-    && strcmp_P(_mqttTopicLevels.get()[3], PSTR("firmware")) == 0
+    topicLevelsCount == 5
+    && strcmp(topicLevels[0], Interface::get().getConfig().get().deviceId) == 0
+    && strcmp_P(topicLevels[1], PSTR("$implementation")) == 0
+    && strcmp_P(topicLevels[2], PSTR("ota")) == 0
+    && strcmp_P(topicLevels[3], PSTR("firmware")) == 0
     ) {
     if (index == 0) {
       Interface::get().getLogger() << F("Receiving OTA payload") << endl;
@@ -1059,7 +1332,7 @@ bool HomieInternals::BootNormal::__handleOTAUpdates(char* topic, char* payload, 
         return true;
       }
 
-      char* firmwareMd5 = _mqttTopicLevels.get()[4];
+      char* firmwareMd5 = topicLevels[4];
       if (!Helpers::validateMd5(firmwareMd5)) {
         _endOtaUpdate(false, UPDATE_ERROR_MD5);
         Interface::get().getLogger() << F("✖ Aborting, invalid MD5") << endl;
@@ -1074,9 +1347,7 @@ bool HomieInternals::BootNormal::__handleOTAUpdates(char* topic, char* payload, 
         _otaOngoing = true;
 
         Interface::get().getLogger() << F("↕ OTA started") << endl;
-        Interface::get().getLogger() << F("Triggering OTA_STARTED event...") << endl;
-        Interface::get().event.type = HomieEventType::OTA_STARTED;
-        Interface::get().eventHandler(Interface::get().event);
+        _otaStartedPending.store(true);
       }
     } else if (!_otaOngoing) {
       return true; // we've not validated the checksum
@@ -1189,10 +1460,9 @@ bool HomieInternals::BootNormal::__handleOTAUpdates(char* topic, char* payload, 
         progress.concat(_otaSizeTotal);
         Interface::get().getLogger() << F("Receiving OTA firmware (") << progress << F(")...") << endl;
 
-        Interface::get().event.type = HomieEventType::OTA_PROGRESS;
-        Interface::get().event.sizeDone = _otaSizeDone;
-        Interface::get().event.sizeTotal = _otaSizeTotal;
-        Interface::get().eventHandler(Interface::get().event);
+        _otaProgressSizeDone.store(_otaSizeDone);
+        _otaProgressSizeTotal.store(_otaSizeTotal);
+        _otaProgressPending.store(true);
 
         static int count = 0;
         if (count == 100) {
@@ -1224,30 +1494,30 @@ bool HomieInternals::BootNormal::__handleOTAUpdates(char* topic, char* payload, 
   return false;
 }
 
-bool HomieInternals::BootNormal::__handleBroadcasts(char * topic, char * payload, const AsyncMqttClientMessageProperties & properties, size_t len, size_t index, size_t total) {
+bool HomieInternals::BootNormal::__handleBroadcasts(char * topic, char * payload, const AsyncMqttClientMessageProperties & properties, size_t len, size_t index, size_t total, char* const* topicLevels, uint8_t topicLevelsCount) {
   if (
-    _mqttTopicLevelsCount == 2
-    && strcmp_P(_mqttTopicLevels.get()[0], PSTR("$broadcast")) == 0
+    topicLevelsCount == 2
+    && strcmp_P(topicLevels[0], PSTR("$broadcast")) == 0
     ) {
-    String broadcastLevel(_mqttTopicLevels.get()[1]);
+    String broadcastLevel(topicLevels[1]);
     Interface::get().getLogger() << F("📢 Calling broadcast handler...") << endl;
-    bool handled = Interface::get().broadcastHandler(broadcastLevel, _mqttPayloadBuffer.get());
+    bool handled = Interface::get().broadcastHandler(broadcastLevel, payload);
     if (!handled) {
       Interface::get().getLogger() << F("The following broadcast was not handled:") << endl;
       Interface::get().getLogger() << F("  • Level: ") << broadcastLevel << endl;
-      Interface::get().getLogger() << F("  • Value: ") << _mqttPayloadBuffer.get() << endl;
+      Interface::get().getLogger() << F("  • Value: ") << payload << endl;
     }
     return true;
   }
   return false;
 }
 
-bool HomieInternals::BootNormal::__handleResets(char * topic, char * payload, const AsyncMqttClientMessageProperties& properties, size_t len, size_t index, size_t total) {
+bool HomieInternals::BootNormal::__handleResets(char * topic, char * payload, const AsyncMqttClientMessageProperties& properties, size_t len, size_t index, size_t total, char* const* topicLevels, uint8_t topicLevelsCount) {
   if (
-    _mqttTopicLevelsCount == 3
-    && strcmp_P(_mqttTopicLevels.get()[1], PSTR("$implementation")) == 0
-    && strcmp_P(_mqttTopicLevels.get()[2], PSTR("reset")) == 0
-    && strcmp_P(_mqttPayloadBuffer.get(), PSTR("true")) == 0
+    topicLevelsCount == 3
+    && strcmp_P(topicLevels[1], PSTR("$implementation")) == 0
+    && strcmp_P(topicLevels[2], PSTR("reset")) == 0
+    && strcmp_P(payload, PSTR("true")) == 0
     ) {
     Interface::get().getMqttClient().publish(_prefixMqttTopic(PSTR("/$implementation/reset")), 1, true, "false");
     Interface::get().getLogger() << F("Flagged for reset by network") << endl;
@@ -1258,15 +1528,15 @@ bool HomieInternals::BootNormal::__handleResets(char * topic, char * payload, co
   return false;
 }
 
-bool HomieInternals::BootNormal::__handleConfig(char * topic, char * payload, const AsyncMqttClientMessageProperties& properties, size_t len, size_t index, size_t total) {
+bool HomieInternals::BootNormal::__handleConfig(char * topic, char * payload, const AsyncMqttClientMessageProperties& properties, size_t len, size_t index, size_t total, char* const* topicLevels, uint8_t topicLevelsCount) {
   if (
-    _mqttTopicLevelsCount == 4
-    && strcmp_P(_mqttTopicLevels.get()[1], PSTR("$implementation")) == 0
-    && strcmp_P(_mqttTopicLevels.get()[2], PSTR("config")) == 0
-    && strcmp_P(_mqttTopicLevels.get()[3], PSTR("set")) == 0
+    topicLevelsCount == 4
+    && strcmp_P(topicLevels[1], PSTR("$implementation")) == 0
+    && strcmp_P(topicLevels[2], PSTR("config")) == 0
+    && strcmp_P(topicLevels[3], PSTR("set")) == 0
     ) {
     Interface::get().getMqttClient().publish(_prefixMqttTopic(PSTR("/$implementation/config/set")), 1, true, "");
-    if (Interface::get().getConfig().patch(_mqttPayloadBuffer.get())) {
+    if (Interface::get().getConfig().patch(payload)) {
       Interface::get().getLogger() << F("✔ Configuration updated") << endl;
       _flaggedForReboot = true;
       Interface::get().getLogger() << F("Flagged for reboot") << endl;
@@ -1278,14 +1548,14 @@ bool HomieInternals::BootNormal::__handleConfig(char * topic, char * payload, co
   return false;
 }
 
-bool HomieInternals::BootNormal::__handleNodeProperty(char * topic, char * payload, const AsyncMqttClientMessageProperties& properties, size_t len, size_t index, size_t total) {
+bool HomieInternals::BootNormal::__handleNodeProperty(char * topic, char * payload, const AsyncMqttClientMessageProperties& properties, size_t len, size_t index, size_t total, char* const* topicLevels, uint8_t topicLevelsCount) {
   // initialize HomieRange
   HomieRange range;
   range.isRange = false;
   range.index = 0;
 
-  char* node = _mqttTopicLevels.get()[1];
-  char* property = _mqttTopicLevels.get()[2];
+  char* node = topicLevels[1];
+  char* property = topicLevels[2];
 
   int16_t rangeSeparator = -1;
   for (uint16_t i = 0; i < strlen(node); i++) {
@@ -1343,19 +1613,19 @@ bool HomieInternals::BootNormal::__handleNodeProperty(char * topic, char * paylo
   #ifdef DEBUG
     Interface::get().getLogger() << F("Calling global input handler...") << endl;
   #endif // DEBUG
-  bool handled = Interface::get().globalInputHandler(*homieNode, range, String(property), String(_mqttPayloadBuffer.get()));
+  bool handled = Interface::get().globalInputHandler(*homieNode, range, String(property), String(payload));
   if (handled) return true;
 
   #ifdef DEBUG
     Interface::get().getLogger() << F("Calling node input handler...") << endl;
   #endif // DEBUG
-  handled = homieNode->handleInput(range, String(property), String(_mqttPayloadBuffer.get()));
+  handled = homieNode->handleInput(range, String(property), String(payload));
   if (handled) return true;
 
   #ifdef DEBUG
     Interface::get().getLogger() << F("Calling property input handler...") << endl;
   #endif // DEBUG
-  handled = propertyObject->getInputHandler()(range, String(_mqttPayloadBuffer.get()));
+  handled = propertyObject->getInputHandler()(range, String(payload));
 
   if (!handled) {
     Interface::get().getLogger() << F("No handlers handled the following packet:") << endl;
@@ -1367,7 +1637,7 @@ bool HomieInternals::BootNormal::__handleNodeProperty(char * topic, char * paylo
       Interface::get().getLogger() << F("no") << endl;
     }
     Interface::get().getLogger() << F("  • Property: ") << property << endl;
-    Interface::get().getLogger() << F("  • Value: ") << _mqttPayloadBuffer.get() << endl;
+    Interface::get().getLogger() << F("  • Value: ") << payload << endl;
   }
 
   return false;

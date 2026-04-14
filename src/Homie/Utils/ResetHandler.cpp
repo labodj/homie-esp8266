@@ -3,6 +3,18 @@
 #if HOMIE_CONFIG
 using namespace HomieInternals;
 
+namespace {
+HomieEvent makeEvent(HomieEventType type) {
+  HomieEvent event{};
+  event.type = type;
+  return event;
+}
+
+void dispatchEvent(const HomieEvent& event) {
+  Interface::get().eventHandler(event);
+}
+}  // namespace
+
 Ticker ResetHandler::_resetBTNTicker;
 Bounce ResetHandler::_resetBTNDebouncer;
 Ticker ResetHandler::_resetTicker;
@@ -41,8 +53,8 @@ void ResetHandler::_handleReset() {
     Interface::get().getConfig().setHomieBootModeOnNextBoot(HomieBootMode::CONFIGURATION);
 
     Interface::get().getLogger() << F("Triggering ABOUT_TO_RESET event...") << endl;
-    Interface::get().event.type = HomieEventType::ABOUT_TO_RESET;
-    Interface::get().eventHandler(Interface::get().event);
+    const HomieEvent event = makeEvent(HomieEventType::ABOUT_TO_RESET);
+    dispatchEvent(event);
 
     Interface::get().getLogger() << F("↻ Rebooting into config mode...") << endl;
     Serial.flush();
