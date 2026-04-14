@@ -13,8 +13,8 @@ The Homie `$implementation` identifier is platform-dependent on this fork:
 
 # Configuration
 
-* `$implementation/config`: The `configuration.json` is published there, with `wifi.password`, `mqtt.username` and `mqtt.password` fields stripped
-* `$implementation/config/set`: You can update the `configuration.json` by sending incremental JSON on this topic
+* `$implementation/config`: The `config.json` is published there, with `wifi.password`, `mqtt.username` and `mqtt.password` fields stripped
+* `$implementation/config/set`: You can update the `config.json` by sending incremental JSON on this topic
 
 # OTA
 

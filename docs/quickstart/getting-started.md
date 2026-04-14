@@ -1,13 +1,15 @@
-This *Getting Started* guide assumes you have an ESP8266 board with an user-configurable LED, and an user programmable button, like a NodeMCU DevKit 1.0, for example. These restrictions can be lifted (see next pages).
+This *Getting Started* guide assumes you have a board with a user-configurable LED
+and a user-programmable button, like a NodeMCU DevKit 1.0 or a typical ESP32 dev
+board. These restrictions can be lifted (see next pages).
 
 This page intentionally stays close to the original upstream guide, so several examples remain ESP8266-centric. This fork is maintained primarily against current ESP32 Arduino cores while keeping the Homie 3.0.1 API and flow as close as possible to the original library.
 
 The maintained installation path for this fork is PlatformIO with a git dependency. The Arduino IDE / ZIP flow below is legacy upstream documentation and is not the recommended path for this fork.
 
-To use Homie for ESP8266, you will need:
+To use this fork, you will typically need:
 
-* An ESP8266
-* The Arduino IDE for ESP8266 (version 2.3.0 minimum)
+* An ESP32 or ESP8266 board
+* PlatformIO for the maintained path, or the Arduino IDE for legacy upstream-style setups
 * Basic knowledge of the Arduino environment (upload a sketch, import libraries, ...)
 * To understand [the Homie convention](https://github.com/homieiot/convention)
 
@@ -83,13 +85,13 @@ This is the bare minimum needed for Homie for ESP8266 to work correctly.
 
 !!! tip "LED"
     ![Solid LED](../assets/led_solid.gif)
-    If you upload this sketch, you will notice the LED of the ESP8266 will light on. This is because you are in `configuration` mode.
+    If you upload this sketch, you will notice the LED on the board will light on. This is because you are in `configuration` mode.
 
 Homie for ESP8266 has 3 modes of operation:
 
 1. By default, the `configuration` mode is the initial one. It spawns an AP and an HTTP webserver exposing a JSON API. To interact with it, you have to connect to the AP. Then, an HTTP client can get the list of available Wi-Fi networks and send the configuration (like the Wi-Fi SSID, the Wi-Fi password, some settings...). Once the device receives the credentials, it boots into `normal` mode.
 
-2. The `normal` mode is the mode the device will be most of the time. It connects to the Wi-Fi, to the MQTT, it sends initial informations to the Homie server (like the local IP, the version of the firmware currently running...) and it subscribes to the needed MQTT topics. It automatically reconnects to the Wi-Fi and the MQTT when the connection is lost. It also handle the OTA. The device can return to `configuration` mode in different ways (press of a button or custom function, see [Resetting](../advanced-usage/resetting.md)).
+2. The `normal` mode is the mode the device will be in most of the time. It connects to Wi-Fi and MQTT, sends initial information to the Homie server (like the local IP and the version of the firmware currently running), and subscribes to the needed MQTT topics. It automatically reconnects to Wi-Fi and MQTT when the connection is lost. It also handles OTA. The device can return to `configuration` mode in different ways (button press or custom function, see [Resetting](../advanced-usage/resetting.md)).
 
 3. The `standalone` mode. See [Standalone mode](../advanced-usage/standalone-mode.md).
 
@@ -128,7 +130,7 @@ Although the sketch looks like it does not do anything, it actually does quite a
 * It automatically connects to the Wi-Fi and MQTT broker. No more network boilerplate code
 * It exposes the Homie device on MQTT (as `<base topic>/<device ID>`, e.g. `homie/c631f278df44`)
 * It subscribes to the special OTA and configuration topics, automatically flashing a sketch if available or updating the configuration
-* It checks for a button press on the ESP8266, to return to `configuration` mode
+* It checks for the configured reset trigger on the board to return to `configuration` mode
 
 ## Creating an useful sketch
 

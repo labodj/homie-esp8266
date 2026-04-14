@@ -1,4 +1,4 @@
-Resetting the device means erasing the stored configuration and rebooting from `normal` mode to `configuration` mode. By default, you can do it by pressing for 5 seconds the `FLASH` button of your ESP8266 board.
+Resetting the device means erasing the stored configuration and rebooting from `normal` mode to `configuration` mode. By default, you can do it by holding the configured reset trigger for 5 seconds. On many dev boards this is the `FLASH` or `BOOT` button.
 
 This behavior is configurable:
 

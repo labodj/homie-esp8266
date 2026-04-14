@@ -7,6 +7,7 @@ repo_name: "labodj/homie-esp8266"
 repo_url: "https://github.com/labodj/homie-esp8266"
 
 edit_uri: edit/develop/docs
+exclude_docs: README.md
 
 nav:
   - Welcome: index.md
