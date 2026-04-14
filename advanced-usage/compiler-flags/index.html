@@ -12,29 +12,31 @@
         <meta name="author" content="Marvin ROGER, Jacopo Labardi">
       
       
-        <link rel="canonical" href="https://labodj.github.io/homie-esp8266/">
+        <link rel="canonical" href="https://labodj.github.io/homie-esp8266/advanced-usage/compiler-flags/">
       
       
+        <link rel="prev" href="../resetting/">
       
-        <link rel="next" href="quickstart/what-is-it/">
+      
+        <link rel="next" href="../standalone-mode/">
       
       
         
       
       
-      <link rel="icon" href="assets/images/favicon.png">
+      <link rel="icon" href="../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
     
     
       
-        <title>Homie for ESP8266</title>
+        <title>Compiler-Flags - Homie for ESP8266</title>
       
     
     
-      <link rel="stylesheet" href="assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
       
         
-        <link rel="stylesheet" href="assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -53,7 +55,7 @@
       
     
     
-    <script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -75,6 +77,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#esp8266-only-networking-flags" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -87,9 +94,9 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="." title="Homie for ESP8266" class="md-header__button md-logo" aria-label="Homie for ESP8266" data-md-component="logo">
+    <a href="../.." title="Homie for ESP8266" class="md-header__button md-logo" aria-label="Homie for ESP8266" data-md-component="logo">
       
-  <img src="assets/logo.png" alt="logo">
+  <img src="../../assets/logo.png" alt="logo">
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
@@ -106,7 +113,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Welcome
+              Compiler-Flags
             
           </span>
         </div>
@@ -196,9 +203,9 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="." title="Homie for ESP8266" class="md-nav__button md-logo" aria-label="Homie for ESP8266" data-md-component="logo">
+    <a href="../.." title="Homie for ESP8266" class="md-nav__button md-logo" aria-label="Homie for ESP8266" data-md-component="logo">
       
-  <img src="assets/logo.png" alt="logo">
+  <img src="../../assets/logo.png" alt="logo">
 
     </a>
     Homie for ESP8266
@@ -222,17 +229,10 @@
       
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-      
-      <a href="." class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
         
   
   
@@ -248,7 +248,6 @@
   
 
       </a>
-      
     </li>
   
 
@@ -307,7 +306,7 @@
   
   
     <li class="md-nav__item">
-      <a href="quickstart/what-is-it/" class="md-nav__link">
+      <a href="../../quickstart/what-is-it/" class="md-nav__link">
         
   
   
@@ -335,7 +334,7 @@
   
   
     <li class="md-nav__item">
-      <a href="quickstart/getting-started/" class="md-nav__link">
+      <a href="../../quickstart/getting-started/" class="md-nav__link">
         
   
   
@@ -367,18 +366,20 @@
       
   
   
+    
   
   
+  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
         
           
           <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
@@ -399,7 +400,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_3">
             <span class="md-nav__icon md-icon"></span>
             
@@ -417,7 +418,7 @@
   
   
     <li class="md-nav__item">
-      <a href="advanced-usage/built-in-led/" class="md-nav__link">
+      <a href="../built-in-led/" class="md-nav__link">
         
   
   
@@ -445,7 +446,7 @@
   
   
     <li class="md-nav__item">
-      <a href="advanced-usage/branding/" class="md-nav__link">
+      <a href="../branding/" class="md-nav__link">
         
   
   
@@ -473,7 +474,7 @@
   
   
     <li class="md-nav__item">
-      <a href="advanced-usage/events/" class="md-nav__link">
+      <a href="../events/" class="md-nav__link">
         
   
   
@@ -501,7 +502,7 @@
   
   
     <li class="md-nav__item">
-      <a href="advanced-usage/logging/" class="md-nav__link">
+      <a href="../logging/" class="md-nav__link">
         
   
   
@@ -529,7 +530,7 @@
   
   
     <li class="md-nav__item">
-      <a href="advanced-usage/streaming-operator/" class="md-nav__link">
+      <a href="../streaming-operator/" class="md-nav__link">
         
   
   
@@ -557,7 +558,7 @@
   
   
     <li class="md-nav__item">
-      <a href="advanced-usage/input-handlers/" class="md-nav__link">
+      <a href="../input-handlers/" class="md-nav__link">
         
   
   
@@ -585,7 +586,7 @@
   
   
     <li class="md-nav__item">
-      <a href="advanced-usage/broadcast/" class="md-nav__link">
+      <a href="../broadcast/" class="md-nav__link">
         
   
   
@@ -613,7 +614,7 @@
   
   
     <li class="md-nav__item">
-      <a href="advanced-usage/custom-settings/" class="md-nav__link">
+      <a href="../custom-settings/" class="md-nav__link">
         
   
   
@@ -641,7 +642,7 @@
   
   
     <li class="md-nav__item">
-      <a href="advanced-usage/resetting/" class="md-nav__link">
+      <a href="../resetting/" class="md-nav__link">
         
   
   
@@ -666,10 +667,35 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="advanced-usage/compiler-flags/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Compiler-Flags
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -685,6 +711,35 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#esp8266-only-networking-flags" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ESP8266-only networking flags
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -697,7 +752,7 @@
   
   
     <li class="md-nav__item">
-      <a href="advanced-usage/standalone-mode/" class="md-nav__link">
+      <a href="../standalone-mode/" class="md-nav__link">
         
   
   
@@ -725,7 +780,7 @@
   
   
     <li class="md-nav__item">
-      <a href="advanced-usage/magic-bytes/" class="md-nav__link">
+      <a href="../magic-bytes/" class="md-nav__link">
         
   
   
@@ -753,7 +808,7 @@
   
   
     <li class="md-nav__item">
-      <a href="advanced-usage/range-properties/" class="md-nav__link">
+      <a href="../range-properties/" class="md-nav__link">
         
   
   
@@ -781,7 +836,7 @@
   
   
     <li class="md-nav__item">
-      <a href="advanced-usage/deep-sleep/" class="md-nav__link">
+      <a href="../deep-sleep/" class="md-nav__link">
         
   
   
@@ -809,7 +864,7 @@
   
   
     <li class="md-nav__item">
-      <a href="advanced-usage/miscellaneous/" class="md-nav__link">
+      <a href="../miscellaneous/" class="md-nav__link">
         
   
   
@@ -837,7 +892,7 @@
   
   
     <li class="md-nav__item">
-      <a href="advanced-usage/ui-bundle/" class="md-nav__link">
+      <a href="../ui-bundle/" class="md-nav__link">
         
   
   
@@ -919,7 +974,7 @@
   
   
     <li class="md-nav__item">
-      <a href="configuration/json-configuration-file/" class="md-nav__link">
+      <a href="../../configuration/json-configuration-file/" class="md-nav__link">
         
   
   
@@ -947,7 +1002,7 @@
   
   
     <li class="md-nav__item">
-      <a href="configuration/http-json-api/" class="md-nav__link">
+      <a href="../../configuration/http-json-api/" class="md-nav__link">
         
   
   
@@ -1029,7 +1084,7 @@
   
   
     <li class="md-nav__item">
-      <a href="others/ota-configuration-updates/" class="md-nav__link">
+      <a href="../../others/ota-configuration-updates/" class="md-nav__link">
         
   
   
@@ -1057,7 +1112,7 @@
   
   
     <li class="md-nav__item">
-      <a href="others/homie-implementation-specifics/" class="md-nav__link">
+      <a href="../../others/homie-implementation-specifics/" class="md-nav__link">
         
   
   
@@ -1085,7 +1140,7 @@
   
   
     <li class="md-nav__item">
-      <a href="others/limitations-and-known-issues/" class="md-nav__link">
+      <a href="../../others/limitations-and-known-issues/" class="md-nav__link">
         
   
   
@@ -1113,7 +1168,7 @@
   
   
     <li class="md-nav__item">
-      <a href="others/troubleshooting/" class="md-nav__link">
+      <a href="../../others/troubleshooting/" class="md-nav__link">
         
   
   
@@ -1141,7 +1196,7 @@
   
   
     <li class="md-nav__item">
-      <a href="others/cpp-api-reference/" class="md-nav__link">
+      <a href="../../others/cpp-api-reference/" class="md-nav__link">
         
   
   
@@ -1169,7 +1224,7 @@
   
   
     <li class="md-nav__item">
-      <a href="others/upgrade-guide-from-v1-to-v2/" class="md-nav__link">
+      <a href="../../others/upgrade-guide-from-v1-to-v2/" class="md-nav__link">
         
   
   
@@ -1197,7 +1252,7 @@
   
   
     <li class="md-nav__item">
-      <a href="others/upgrade-guide-from-v2-to-v3/" class="md-nav__link">
+      <a href="../../others/upgrade-guide-from-v2-to-v3/" class="md-nav__link">
         
   
   
@@ -1225,7 +1280,7 @@
   
   
     <li class="md-nav__item">
-      <a href="others/community-projects/" class="md-nav__link">
+      <a href="../../others/community-projects/" class="md-nav__link">
         
   
   
@@ -1271,6 +1326,25 @@
   
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#esp8266-only-networking-flags" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ESP8266-only networking flags
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -1289,9 +1363,32 @@
   
 
 
-  <h1>Welcome</h1>
+  <h1>Compiler-Flags</h1>
 
-<p>Welcome on the Homie for ESP8266 docs.</p>
+<p>Compiler flags can be used to add or remove certain functionality from homie-esp8266.</p>
+<p>Removing functionality can become useful if your firmware gets too large in size and is not upgradable any more over OTA. On the other hand these compiler flags allow to remove features from homie-esp8266, that you do not require or do not use.</p>
+<p>Adding functionality or features is useful to enable only partly implemented features or unstable or experimental features.</p>
+<p><strong>HOMIE_CONFIG</strong></p>
+<p>This compiler flag allows to disable the configuration mode completely. To configure your homie-esp8266, you need to upload the configuration to the SPIFFS before starting the device. Without a proper configuration the device will just restart after writing the error message about the missing configuration to the logger. Add the following to your platformio.ini file:</p>
+<div class="highlight"><pre><span></span><code>build_flags = -D HOMIE_CONFIG=0
+</code></pre></div>
+<p>This reduces the firmware size by about 50000 bytes.</p>
+<p><strong>HOMIE_MDNS</strong></p>
+<p>This compiler flag allows to disable the publishing of the device identifier via mDNS protocol. Add the following to your platformio.ini file:</p>
+<div class="highlight"><pre><span></span><code>build_flags = -D HOMIE_MDNS=0
+</code></pre></div>
+<p>This reduces the firmware size by about 6400 bytes.</p>
+<p><strong>ASYNC_TCP_SSL_ENABLED</strong></p>
+<p>This compiler flag allows to use SSL encryption for MQTT connections. All other network connections still can not be encrypted like HTTP or OTA.</p>
+<div class="highlight"><pre><span></span><code>build_flags =
+  -D ASYNC_TCP_SSL_ENABLED=1
+  -D PIO_FRAMEWORK_ARDUINO_LWIP2_HIGHER_BANDWIDTH
+</code></pre></div>
+<p>The additional flag <code>PIO_FRAMEWORK_ARDUINO_LWIP2_HIGHER_BANDWITH</code> is necessary for SSL encryptions to work properly.</p>
+<h2 id="esp8266-only-networking-flags">ESP8266-only networking flags<a class="headerlink" href="#esp8266-only-networking-flags" title="Permanent link">&para;</a></h2>
+<p>Flags such as <code>PIO_FRAMEWORK_ARDUINO_LWIP2_LOW_MEMORY</code> and
+<code>PIO_FRAMEWORK_ARDUINO_LWIP2_HIGHER_BANDWIDTH</code> are relevant to the ESP8266
+Arduino core. They are not part of the maintained ESP32 path of this fork.</p>
 
 
 
@@ -1357,10 +1454,10 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": ".", "features": [], "search": "assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": [], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
     
   </body>

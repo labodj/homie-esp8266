@@ -1,0 +1,1639 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Documentation for the maintained Homie 3.0.1 fork used by the LSH ecosystem.">
+      
+      
+        <meta name="author" content="Marvin ROGER, Jacopo Labardi">
+      
+      
+        <link rel="canonical" href="https://labodj.github.io/homie-esp8266/configuration/http-json-api/">
+      
+      
+        <link rel="prev" href="../json-configuration-file/">
+      
+      
+        <link rel="next" href="../../others/ota-configuration-updates/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>HTTP JSON API - Homie for ESP8266</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="red" data-md-color-accent="red">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#error-handling" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Homie for ESP8266" class="md-header__button md-logo" aria-label="Homie for ESP8266" data-md-component="logo">
+      
+  <img src="../../assets/logo.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Homie for ESP8266
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              HTTP JSON API
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/labodj/homie-esp8266" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    labodj/homie-esp8266
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Homie for ESP8266" class="md-nav__button md-logo" aria-label="Homie for ESP8266" data-md-component="logo">
+      
+  <img src="../../assets/logo.png" alt="logo">
+
+    </a>
+    Homie for ESP8266
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/labodj/homie-esp8266" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    labodj/homie-esp8266
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Welcome
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quickstart
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Quickstart
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../quickstart/what-is-it/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What is it?
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../quickstart/getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Advanced usage
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Advanced usage
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../advanced-usage/built-in-led/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Built-in LED
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../advanced-usage/branding/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Branding
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../advanced-usage/events/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Events
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../advanced-usage/logging/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Logging
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../advanced-usage/streaming-operator/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Streaming operator
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../advanced-usage/input-handlers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Input handlers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../advanced-usage/broadcast/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Broadcast
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../advanced-usage/custom-settings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Custom settings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../advanced-usage/resetting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Resetting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../advanced-usage/compiler-flags/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Compiler-Flags
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../advanced-usage/standalone-mode/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Standalone mode
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../advanced-usage/magic-bytes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Magic bytes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../advanced-usage/range-properties/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Range properties
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../advanced-usage/deep-sleep/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deep sleep
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../advanced-usage/miscellaneous/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Miscellaneous
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../advanced-usage/ui-bundle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    UI Bundle
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Configuration
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../json-configuration-file/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    JSON configuration file
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    HTTP JSON API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Others
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Others
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../others/ota-configuration-updates/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    OTA/configuration updates
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../others/homie-implementation-specifics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Homie implementation specifics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../others/limitations-and-known-issues/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Limitations and known issues
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../others/troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../others/cpp-api-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    C++ API reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../others/upgrade-guide-from-v1-to-v2/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Upgrade guide from v1 to v2
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../others/upgrade-guide-from-v2-to-v3/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Upgrade guide from v2 to v3
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../others/community-projects/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Community projects
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<p>When in <code>configuration</code> mode, the device exposes a HTTP JSON API to send the configuration to it. When you send a valid configuration to the <code>/config</code> endpoint, the configuration file is stored in the filesystem at <code>/homie/config.json</code>.</p>
+<p>If you don't want to mess with JSON, you have a Web UI / app available:</p>
+<ul>
+<li>At <a href="http://homieiot.github.io/homie-esp8266/configurators/v2/">http://homieiot.github.io/homie-esp8266/configurators/v2/</a></li>
+<li>As an <a href="https://build.phonegap.com/apps/1906578/share">Android app</a></li>
+</ul>
+<p><strong>Quick instructions to use the Web UI / app</strong>:</p>
+<ol>
+<li>Open the Web UI / app</li>
+<li>Disconnect from your current Wi-Fi AP, and connect to the <code>Homie-xxxxxxxxxxxx</code> AP spawned in <code>configuration</code> mode</li>
+<li>Follow the instructions</li>
+</ol>
+<p>You can see the sources of the Web UI <a href="https://github.com/homieiot/homie-esp8266-setup">here</a>.</p>
+<p>Alternatively, you can use this <code>curl</code> command to send the configuration to the device. You must connect to the device in <code>configuration</code> mode (i.e. the device is an Access Point). This method will not work if not in <code>configuration</code> mode:</p>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-X<span class="w"> </span>PUT<span class="w"> </span>http://192.168.123.1/config<span class="w"> </span>--header<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span>-d<span class="w"> </span>@config.json
+</code></pre></div>
+<p>This will send the <code>./config.json</code> file to the device.</p>
+<h1 id="error-handling">Error handling<a class="headerlink" href="#error-handling" title="Permanent link">&para;</a></h1>
+<p>When everything went fine, a <code>2xx</code> HTTP code is returned, such as <code>200 OK</code>, <code>202 Accepted</code>, <code>204 No Content</code> and so on.
+If anything goes wrong, a return code != 2xx will be returned, with a JSON <code>error</code> field indicating the error, such as <code>500 Internal Server error</code>, <code>400 Bad request</code> and so on.</p>
+<h1 id="endpoints">Endpoints<a class="headerlink" href="#endpoints" title="Permanent link">&para;</a></h1>
+<p><strong>API base address:</strong> <code>http://192.168.123.1</code></p>
+<details class="summary">
+<summary>GET <code>/heart</code></summary>
+</details>
+<p>This is useful to ensure we are connected to the device AP.</p>
+<div class="codehilite"><pre><span></span><code>## Response
+
+`204 No Content`
+</code></pre></div>
+
+<hr />
+<details class="summary">
+<summary>GET <code>/device-info</code></summary>
+</details>
+<p>Get some information on the device.</p>
+<div class="codehilite"><pre><span></span><code><span class="c1">## Response</span>
+
+<span class="n n-Quoted">`200 OK (application/json)`</span>
+
+<span class="n n-Quoted">`</span><span class="n n-Quoted n-Quoted-Escape">``</span><span class="n n-Quoted">json</span>
+<span class="n n-Quoted">{</span>
+<span class="n n-Quoted">  &quot;hardware_device_id&quot;: &quot;52a8fa5d&quot;,</span>
+<span class="n n-Quoted">  &quot;homie_esp8266_version&quot;: &quot;2.0.0&quot;,</span>
+<span class="n n-Quoted">  &quot;firmware&quot;: {</span>
+<span class="n n-Quoted">    &quot;name&quot;: &quot;awesome-device&quot;,</span>
+<span class="n n-Quoted">    &quot;version&quot;: &quot;1.0.0&quot;</span>
+<span class="n n-Quoted">  },</span>
+<span class="n n-Quoted">  &quot;nodes&quot;: [</span>
+<span class="n n-Quoted">    {</span>
+<span class="n n-Quoted">      &quot;id&quot;: &quot;light&quot;,</span>
+<span class="n n-Quoted">      &quot;type&quot;: &quot;light&quot;</span>
+<span class="n n-Quoted">    }</span>
+<span class="n n-Quoted">  ],</span>
+<span class="n n-Quoted">  &quot;settings&quot;: [</span>
+<span class="n n-Quoted">    {</span>
+<span class="n n-Quoted">      &quot;name&quot;: &quot;timeout&quot;,</span>
+<span class="n n-Quoted">      &quot;description&quot;: &quot;Timeout in seconds&quot;,</span>
+<span class="n n-Quoted">      &quot;type&quot;: &quot;ulong&quot;,</span>
+<span class="n n-Quoted">      &quot;required&quot;: false,</span>
+<span class="n n-Quoted">      &quot;default&quot;: 10</span>
+<span class="n n-Quoted">    }</span>
+<span class="n n-Quoted">  ]</span>
+<span class="n n-Quoted">}</span>
+<span class="n n-Quoted n-Quoted-Escape">``</span><span class="n n-Quoted">`</span>
+
+<span class="n n-Quoted">`type`</span><span class="w"> </span><span class="n">can</span><span class="w"> </span><span class="n">be</span><span class="w"> </span><span class="k">one</span><span class="w"> </span><span class="k">of</span><span class="w"> </span><span class="n">the</span><span class="w"> </span><span class="k">following</span><span class="o">:</span>
+
+<span class="o">*</span><span class="w"> </span><span class="n n-Quoted">`bool`</span><span class="o">:</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="kt">boolean</span>
+<span class="o">*</span><span class="w"> </span><span class="n n-Quoted">`ulong`</span><span class="o">:</span><span class="w"> </span><span class="n">an</span><span class="w"> </span><span class="k">unsigned</span><span class="w"> </span><span class="kt">long</span>
+<span class="o">*</span><span class="w"> </span><span class="n n-Quoted">`long`</span><span class="o">:</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="kt">long</span>
+<span class="o">*</span><span class="w"> </span><span class="n n-Quoted">`double`</span><span class="o">:</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="kt">double</span>
+<span class="o">*</span><span class="w"> </span><span class="n n-Quoted">`string`</span><span class="o">:</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="k">string</span>
+
+<span class="o">!!!</span><span class="w"> </span><span class="n">note</span><span class="w"> </span><span class="s2">&quot;Note about settings&quot;</span>
+<span class="w">    </span><span class="k">If</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="k">set</span><span class="n">ting</span><span class="w"> </span><span class="k">is</span><span class="w"> </span><span class="k">not</span><span class="w"> </span><span class="n">required</span><span class="p">,</span><span class="w"> </span><span class="n">the</span><span class="w"> </span><span class="n n-Quoted">`default`</span><span class="w"> </span><span class="n">field</span><span class="w"> </span><span class="n">will</span><span class="w"> </span><span class="k">always</span><span class="w"> </span><span class="n">be</span><span class="w"> </span><span class="k">set</span><span class="p">.</span>
+</code></pre></div>
+
+<hr />
+<details class="summary">
+<summary>GET <code>/networks</code></summary>
+</details>
+<p>Retrieve the Wi-Fi networks the device can see.</p>
+<div class="codehilite"><pre><span></span><code><span class="gu">##</span> Response
+
+!!! success &quot;In case of success&quot;
+    <span class="sb">`200 OK (application/json)`</span>
+
+    ```json
+    {
+      &quot;networks&quot;: [
+        { &quot;ssid&quot;: &quot;Network_2&quot;, &quot;rssi&quot;: -82, &quot;encryption&quot;: &quot;wep&quot; },
+        { &quot;ssid&quot;: &quot;Network_1&quot;, &quot;rssi&quot;: -57, &quot;encryption&quot;: &quot;wpa&quot; },
+        { &quot;ssid&quot;: &quot;Network_3&quot;, &quot;rssi&quot;: -65, &quot;encryption&quot;: &quot;wpa2&quot; },
+        { &quot;ssid&quot;: &quot;Network_5&quot;, &quot;rssi&quot;: -94, &quot;encryption&quot;: &quot;none&quot; },
+        { &quot;ssid&quot;: &quot;Network_4&quot;, &quot;rssi&quot;: -89, &quot;encryption&quot;: &quot;auto&quot; }
+      ]
+    }
+    ```
+
+!!! failure &quot;In case the initial Wi-Fi scan is not finished on the device&quot;
+    <span class="sb">`503 Service Unavailable (application/json)`</span>
+
+    ```json
+    {
+      &quot;error&quot;: &quot;Initial Wi-Fi scan not finished yet&quot;
+    }
+    ```
+</code></pre></div>
+
+<hr />
+<details class="summary">
+<summary>PUT <code>/config</code></summary>
+</details>
+<p>Save the config to the device.</p>
+<div class="codehilite"><pre><span></span><code><span class="c1">## Request body</span>
+
+<span class="err">`</span><span class="p">(</span><span class="n">application</span><span class="o">/</span><span class="n">json</span><span class="p">)</span><span class="err">`</span>
+
+<span class="n">See</span><span class="w"> </span><span class="p">[</span><span class="n">JSON</span><span class="w"> </span><span class="n">configuration</span><span class="w"> </span><span class="n">file</span><span class="p">](</span><span class="n">json</span><span class="o">-</span><span class="n">configuration</span><span class="o">-</span><span class="n">file</span><span class="o">.</span><span class="n">md</span><span class="p">)</span><span class="o">.</span>
+
+<span class="c1">## Response</span>
+
+<span class="o">!!!</span><span class="w"> </span><span class="n">success</span><span class="w"> </span><span class="s2">&quot;In case of success&quot;</span>
+<span class="w">    </span><span class="err">`</span><span class="mi">200</span><span class="w"> </span><span class="n">OK</span><span class="w"> </span><span class="p">(</span><span class="n">application</span><span class="o">/</span><span class="n">json</span><span class="p">)</span><span class="err">`</span>
+
+<span class="w">    </span><span class="err">```</span><span class="n">json</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">      </span><span class="s2">&quot;success&quot;</span><span class="p">:</span><span class="w"> </span><span class="bp">true</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="err">```</span>
+
+<span class="o">!!!</span><span class="w"> </span><span class="n">failure</span><span class="w"> </span><span class="s2">&quot;In case of error in the payload&quot;</span>
+<span class="w">    </span><span class="err">`</span><span class="mi">400</span><span class="w"> </span><span class="n">Bad</span><span class="w"> </span><span class="n">Request</span><span class="w"> </span><span class="p">(</span><span class="n">application</span><span class="o">/</span><span class="n">json</span><span class="p">)</span><span class="err">`</span>
+
+<span class="w">    </span><span class="err">```</span><span class="n">json</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">      </span><span class="s2">&quot;success&quot;</span><span class="p">:</span><span class="w"> </span><span class="bp">false</span><span class="p">,</span>
+<span class="w">      </span><span class="s2">&quot;error&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Reason why the payload is invalid&quot;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="err">```</span>
+
+<span class="o">!!!</span><span class="w"> </span><span class="n">failure</span><span class="w"> </span><span class="s2">&quot;In case the device already received a valid configuration and is waiting for reboot&quot;</span>
+<span class="w">    </span><span class="err">`</span><span class="mi">403</span><span class="w"> </span><span class="n">Forbidden</span><span class="w"> </span><span class="p">(</span><span class="n">application</span><span class="o">/</span><span class="n">json</span><span class="p">)</span><span class="err">`</span>
+
+<span class="w">    </span><span class="err">```</span><span class="n">json</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">      </span><span class="s2">&quot;success&quot;</span><span class="p">:</span><span class="w"> </span><span class="bp">false</span><span class="p">,</span>
+<span class="w">      </span><span class="s2">&quot;error&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Device already configured&quot;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="err">```</span>
+</code></pre></div>
+
+<hr />
+<details class="summary">
+<summary>PUT <code>/wifi/connect</code></summary>
+</details>
+<p>Initiates the connection of the device to the Wi-Fi network while in configuation mode. This request is not synchronous and the result (Wi-Fi connected or not) must be obtained by with <code>GET /wifi/status</code>.</p>
+<div class="codehilite"><pre><span></span><code><span class="c1">## Request body</span>
+
+<span class="err">`</span><span class="p">(</span><span class="n">application</span><span class="o">/</span><span class="n">json</span><span class="p">)</span><span class="err">`</span>
+
+<span class="err">```</span><span class="n">json</span>
+<span class="p">{</span>
+<span class="w">  </span><span class="s2">&quot;ssid&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;My_SSID&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="s2">&quot;password&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;my-passw0rd&quot;</span>
+<span class="p">}</span>
+<span class="err">```</span>
+
+<span class="c1">## Response</span>
+
+<span class="o">!!!</span><span class="w"> </span><span class="n">success</span><span class="w"> </span><span class="s2">&quot;In case of success&quot;</span>
+<span class="w">    </span><span class="err">`</span><span class="mi">202</span><span class="w"> </span><span class="n">Accepted</span><span class="w"> </span><span class="p">(</span><span class="n">application</span><span class="o">/</span><span class="n">json</span><span class="p">)</span><span class="err">`</span>
+
+<span class="w">    </span><span class="err">```</span><span class="n">json</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">      </span><span class="s2">&quot;success&quot;</span><span class="p">:</span><span class="w"> </span><span class="bp">true</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="err">```</span>
+
+<span class="o">!!!</span><span class="w"> </span><span class="n">failure</span><span class="w"> </span><span class="s2">&quot;In case of error in the payload&quot;</span>
+<span class="w">    </span><span class="err">`</span><span class="mi">400</span><span class="w"> </span><span class="n">Bad</span><span class="w"> </span><span class="n">Request</span><span class="w"> </span><span class="p">(</span><span class="n">application</span><span class="o">/</span><span class="n">json</span><span class="p">)</span><span class="err">`</span>
+
+<span class="w">    </span><span class="err">```</span><span class="n">json</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">      </span><span class="s2">&quot;success&quot;</span><span class="p">:</span><span class="w"> </span><span class="bp">false</span><span class="p">,</span>
+<span class="w">      </span><span class="s2">&quot;error&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Reason why the payload is invalid&quot;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="err">```</span>
+</code></pre></div>
+
+<hr />
+<details class="summary">
+<summary>GET <code>/wifi/status</code></summary>
+</details>
+<p>Returns the current Wi-Fi connection status.</p>
+<div class="codehilite"><pre><span></span><code><span class="n">Helpful</span><span class="w"> </span><span class="k">when</span><span class="w"> </span><span class="n">monitoring</span><span class="w"> </span><span class="n">Wi</span><span class="o">-</span><span class="n">Fi</span><span class="w"> </span><span class="n">connectivity</span><span class="w"> </span><span class="k">after</span><span class="w"> </span><span class="n n-Quoted">`PUT /wifi/connect`</span><span class="p">.</span>
+
+<span class="c1">## Response</span>
+
+<span class="n n-Quoted">`200 OK (application/json)`</span>
+
+<span class="n n-Quoted">`</span><span class="n n-Quoted n-Quoted-Escape">``</span><span class="n n-Quoted">json</span>
+<span class="n n-Quoted">{</span>
+<span class="n n-Quoted">  &quot;status&quot;: &quot;connected&quot;</span>
+<span class="n n-Quoted">}</span>
+<span class="n n-Quoted n-Quoted-Escape">``</span><span class="n n-Quoted">`</span>
+
+<span class="n n-Quoted">`status`</span><span class="w"> </span><span class="n">might</span><span class="w"> </span><span class="n">be</span><span class="w"> </span><span class="k">one</span><span class="w"> </span><span class="k">of</span><span class="w"> </span><span class="n">the</span><span class="w"> </span><span class="k">following</span><span class="o">:</span>
+
+<span class="o">*</span><span class="w"> </span><span class="n n-Quoted">`idle`</span>
+<span class="o">*</span><span class="w"> </span><span class="n n-Quoted">`connect_failed`</span>
+<span class="o">*</span><span class="w"> </span><span class="n n-Quoted">`connection_lost`</span>
+<span class="o">*</span><span class="w"> </span><span class="n n-Quoted">`no_ssid_available`</span>
+<span class="o">*</span><span class="w"> </span><span class="n n-Quoted">`connected`</span><span class="w"> </span><span class="n">along</span><span class="w"> </span><span class="k">with</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="n n-Quoted">`local_ip`</span><span class="w"> </span><span class="n">field</span>
+<span class="o">*</span><span class="w"> </span><span class="n n-Quoted">`disconnected`</span>
+</code></pre></div>
+
+<hr />
+<details class="summary">
+<summary>PUT <code>/proxy/control</code></summary>
+</details>
+<p>Enable/disable the device to act as a transparent proxy between AP and Station networks.</p>
+<div class="codehilite"><pre><span></span><code><span class="k">All</span><span class="w"> </span><span class="n">requests</span><span class="w"> </span><span class="n">that</span><span class="w"> </span><span class="n">don</span><span class="s1">&#39;t collide with existing API paths will be bridged to the destination according to the `Host` HTTP header. The destination host is called using the existing Wi-Fi connection (established after a `PUT /wifi/connect`) and all contents are bridged back to the connection made to the AP side.</span>
+
+<span class="s1">This feature can be used to help captive portals to perform cloud API calls during device enrollment using the ESP8266 Wi-Fi AP connection without having to patch the Homie firmware. By using the transparent proxy, all operations can be performed by the custom JavaScript running on the browser (in SPIFFS location `/data/homie/ui_bundle.gz`).</span>
+
+<span class="s1">HTTPS is not supported.</span>
+
+<span class="s1">**Important**: The HTTP requests and responses must be kept as small as possible because all contents are transported using RAM memory, which is very limited.</span>
+
+<span class="s1">## Request body</span>
+
+<span class="s1">`(application/json)`</span>
+
+<span class="s1">```json</span>
+<span class="s1">{</span>
+<span class="s1">  &quot;enable&quot;: true</span>
+<span class="s1">}</span>
+<span class="s1">```</span>
+
+<span class="s1">## Response</span>
+
+<span class="s1">??? success &quot;In case of success&quot;</span>
+<span class="s1">    `200 OK (application/json)`</span>
+
+<span class="s1">    ```json</span>
+<span class="s1">    {</span>
+<span class="s1">      &quot;success&quot;: true</span>
+<span class="s1">    }</span>
+<span class="s1">    ```</span>
+
+<span class="s1">??? failure &quot;In case of error in the payload&quot;</span>
+<span class="s1">    `400 Bad Request (application/json)`</span>
+
+<span class="s1">    ```json</span>
+<span class="s1">    {</span>
+<span class="s1">      &quot;success&quot;: false,</span>
+<span class="s1">      &quot;error&quot;: &quot;Reason why the payload is invalid&quot;</span>
+<span class="s1">    }</span>
+<span class="s1">    ```</span>
+</code></pre></div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://labodj.github.io/homie-esp8266/configurators/v2/" target="_blank" rel="noopener" title="labodj.github.io" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 15.5A3.5 3.5 0 0 1 8.5 12 3.5 3.5 0 0 1 12 8.5a3.5 3.5 0 0 1 3.5 3.5 3.5 3.5 0 0 1-3.5 3.5m7.43-2.53c.04-.32.07-.64.07-.97s-.03-.66-.07-1l2.11-1.63c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.31-.61-.22l-2.49 1c-.52-.39-1.06-.73-1.69-.98l-.37-2.65A.506.506 0 0 0 14 2h-4c-.25 0-.46.18-.5.42l-.37 2.65c-.63.25-1.17.59-1.69.98l-2.49-1c-.22-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64L4.57 11c-.04.34-.07.67-.07 1s.03.65.07.97l-2.11 1.66c-.19.15-.25.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1.01c.52.4 1.06.74 1.69.99l.37 2.65c.04.24.25.42.5.42h4c.25 0 .46-.18.5-.42l.37-2.65c.63-.26 1.17-.59 1.69-.99l2.49 1.01c.22.08.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64z"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": [], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

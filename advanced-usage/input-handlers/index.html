@@ -12,29 +12,31 @@
         <meta name="author" content="Marvin ROGER, Jacopo Labardi">
       
       
-        <link rel="canonical" href="https://labodj.github.io/homie-esp8266/">
+        <link rel="canonical" href="https://labodj.github.io/homie-esp8266/advanced-usage/input-handlers/">
       
       
+        <link rel="prev" href="../streaming-operator/">
       
-        <link rel="next" href="quickstart/what-is-it/">
+      
+        <link rel="next" href="../broadcast/">
       
       
         
       
       
-      <link rel="icon" href="assets/images/favicon.png">
+      <link rel="icon" href="../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
     
     
       
-        <title>Homie for ESP8266</title>
+        <title>Input handlers - Homie for ESP8266</title>
       
     
     
-      <link rel="stylesheet" href="assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
       
         
-        <link rel="stylesheet" href="assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -53,7 +55,7 @@
       
     
     
-    <script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -87,9 +89,9 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="." title="Homie for ESP8266" class="md-header__button md-logo" aria-label="Homie for ESP8266" data-md-component="logo">
+    <a href="../.." title="Homie for ESP8266" class="md-header__button md-logo" aria-label="Homie for ESP8266" data-md-component="logo">
       
-  <img src="assets/logo.png" alt="logo">
+  <img src="../../assets/logo.png" alt="logo">
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
@@ -106,7 +108,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Welcome
+              Input handlers
             
           </span>
         </div>
@@ -196,9 +198,9 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="." title="Homie for ESP8266" class="md-nav__button md-logo" aria-label="Homie for ESP8266" data-md-component="logo">
+    <a href="../.." title="Homie for ESP8266" class="md-nav__button md-logo" aria-label="Homie for ESP8266" data-md-component="logo">
       
-  <img src="assets/logo.png" alt="logo">
+  <img src="../../assets/logo.png" alt="logo">
 
     </a>
     Homie for ESP8266
@@ -222,17 +224,10 @@
       
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-      
-      <a href="." class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
         
   
   
@@ -248,7 +243,6 @@
   
 
       </a>
-      
     </li>
   
 
@@ -307,7 +301,7 @@
   
   
     <li class="md-nav__item">
-      <a href="quickstart/what-is-it/" class="md-nav__link">
+      <a href="../../quickstart/what-is-it/" class="md-nav__link">
         
   
   
@@ -335,7 +329,7 @@
   
   
     <li class="md-nav__item">
-      <a href="quickstart/getting-started/" class="md-nav__link">
+      <a href="../../quickstart/getting-started/" class="md-nav__link">
         
   
   
@@ -367,18 +361,20 @@
       
   
   
+    
   
   
+  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
         
           
           <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
@@ -399,7 +395,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_3">
             <span class="md-nav__icon md-icon"></span>
             
@@ -417,7 +413,7 @@
   
   
     <li class="md-nav__item">
-      <a href="advanced-usage/built-in-led/" class="md-nav__link">
+      <a href="../built-in-led/" class="md-nav__link">
         
   
   
@@ -445,7 +441,7 @@
   
   
     <li class="md-nav__item">
-      <a href="advanced-usage/branding/" class="md-nav__link">
+      <a href="../branding/" class="md-nav__link">
         
   
   
@@ -473,7 +469,7 @@
   
   
     <li class="md-nav__item">
-      <a href="advanced-usage/events/" class="md-nav__link">
+      <a href="../events/" class="md-nav__link">
         
   
   
@@ -501,7 +497,7 @@
   
   
     <li class="md-nav__item">
-      <a href="advanced-usage/logging/" class="md-nav__link">
+      <a href="../logging/" class="md-nav__link">
         
   
   
@@ -529,7 +525,7 @@
   
   
     <li class="md-nav__item">
-      <a href="advanced-usage/streaming-operator/" class="md-nav__link">
+      <a href="../streaming-operator/" class="md-nav__link">
         
   
   
@@ -554,10 +550,17 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="advanced-usage/input-handlers/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -573,6 +576,7 @@
   
 
       </a>
+      
     </li>
   
 
@@ -585,7 +589,7 @@
   
   
     <li class="md-nav__item">
-      <a href="advanced-usage/broadcast/" class="md-nav__link">
+      <a href="../broadcast/" class="md-nav__link">
         
   
   
@@ -613,7 +617,7 @@
   
   
     <li class="md-nav__item">
-      <a href="advanced-usage/custom-settings/" class="md-nav__link">
+      <a href="../custom-settings/" class="md-nav__link">
         
   
   
@@ -641,7 +645,7 @@
   
   
     <li class="md-nav__item">
-      <a href="advanced-usage/resetting/" class="md-nav__link">
+      <a href="../resetting/" class="md-nav__link">
         
   
   
@@ -669,7 +673,7 @@
   
   
     <li class="md-nav__item">
-      <a href="advanced-usage/compiler-flags/" class="md-nav__link">
+      <a href="../compiler-flags/" class="md-nav__link">
         
   
   
@@ -697,7 +701,7 @@
   
   
     <li class="md-nav__item">
-      <a href="advanced-usage/standalone-mode/" class="md-nav__link">
+      <a href="../standalone-mode/" class="md-nav__link">
         
   
   
@@ -725,7 +729,7 @@
   
   
     <li class="md-nav__item">
-      <a href="advanced-usage/magic-bytes/" class="md-nav__link">
+      <a href="../magic-bytes/" class="md-nav__link">
         
   
   
@@ -753,7 +757,7 @@
   
   
     <li class="md-nav__item">
-      <a href="advanced-usage/range-properties/" class="md-nav__link">
+      <a href="../range-properties/" class="md-nav__link">
         
   
   
@@ -781,7 +785,7 @@
   
   
     <li class="md-nav__item">
-      <a href="advanced-usage/deep-sleep/" class="md-nav__link">
+      <a href="../deep-sleep/" class="md-nav__link">
         
   
   
@@ -809,7 +813,7 @@
   
   
     <li class="md-nav__item">
-      <a href="advanced-usage/miscellaneous/" class="md-nav__link">
+      <a href="../miscellaneous/" class="md-nav__link">
         
   
   
@@ -837,7 +841,7 @@
   
   
     <li class="md-nav__item">
-      <a href="advanced-usage/ui-bundle/" class="md-nav__link">
+      <a href="../ui-bundle/" class="md-nav__link">
         
   
   
@@ -919,7 +923,7 @@
   
   
     <li class="md-nav__item">
-      <a href="configuration/json-configuration-file/" class="md-nav__link">
+      <a href="../../configuration/json-configuration-file/" class="md-nav__link">
         
   
   
@@ -947,7 +951,7 @@
   
   
     <li class="md-nav__item">
-      <a href="configuration/http-json-api/" class="md-nav__link">
+      <a href="../../configuration/http-json-api/" class="md-nav__link">
         
   
   
@@ -1029,7 +1033,7 @@
   
   
     <li class="md-nav__item">
-      <a href="others/ota-configuration-updates/" class="md-nav__link">
+      <a href="../../others/ota-configuration-updates/" class="md-nav__link">
         
   
   
@@ -1057,7 +1061,7 @@
   
   
     <li class="md-nav__item">
-      <a href="others/homie-implementation-specifics/" class="md-nav__link">
+      <a href="../../others/homie-implementation-specifics/" class="md-nav__link">
         
   
   
@@ -1085,7 +1089,7 @@
   
   
     <li class="md-nav__item">
-      <a href="others/limitations-and-known-issues/" class="md-nav__link">
+      <a href="../../others/limitations-and-known-issues/" class="md-nav__link">
         
   
   
@@ -1113,7 +1117,7 @@
   
   
     <li class="md-nav__item">
-      <a href="others/troubleshooting/" class="md-nav__link">
+      <a href="../../others/troubleshooting/" class="md-nav__link">
         
   
   
@@ -1141,7 +1145,7 @@
   
   
     <li class="md-nav__item">
-      <a href="others/cpp-api-reference/" class="md-nav__link">
+      <a href="../../others/cpp-api-reference/" class="md-nav__link">
         
   
   
@@ -1169,7 +1173,7 @@
   
   
     <li class="md-nav__item">
-      <a href="others/upgrade-guide-from-v1-to-v2/" class="md-nav__link">
+      <a href="../../others/upgrade-guide-from-v1-to-v2/" class="md-nav__link">
         
   
   
@@ -1197,7 +1201,7 @@
   
   
     <li class="md-nav__item">
-      <a href="others/upgrade-guide-from-v2-to-v3/" class="md-nav__link">
+      <a href="../../others/upgrade-guide-from-v2-to-v3/" class="md-nav__link">
         
   
   
@@ -1225,7 +1229,7 @@
   
   
     <li class="md-nav__item">
-      <a href="others/community-projects/" class="md-nav__link">
+      <a href="../../others/community-projects/" class="md-nav__link">
         
   
   
@@ -1289,9 +1293,64 @@
   
 
 
-  <h1>Welcome</h1>
+  <h1>Input handlers</h1>
 
-<p>Welcome on the Homie for ESP8266 docs.</p>
+<p>There are four types of input handlers:</p>
+<ul>
+<li>Global input handler. This unique handler will handle every changed settable properties for all nodes</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="kt">bool</span><span class="w"> </span><span class="nf">globalInputHandler</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">HomieNode</span><span class="o">&amp;</span><span class="w"> </span><span class="n">node</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">HomieRange</span><span class="o">&amp;</span><span class="w"> </span><span class="n">range</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">String</span><span class="o">&amp;</span><span class="w"> </span><span class="n">property</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">String</span><span class="o">&amp;</span><span class="w"> </span><span class="n">value</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+
+<span class="p">}</span>
+
+<span class="kt">void</span><span class="w"> </span><span class="nf">setup</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="n">Homie</span><span class="p">.</span><span class="n">setGlobalInputHandler</span><span class="p">(</span><span class="n">globalInputHandler</span><span class="p">);</span><span class="w"> </span><span class="c1">// before Homie.setup()</span>
+<span class="w">  </span><span class="c1">// ...</span>
+<span class="p">}</span>
+</code></pre></div>
+<ul>
+<li>Node input handlers. This handler will handle every changed settable properties of a specific node</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="kt">bool</span><span class="w"> </span><span class="nf">nodeInputHandler</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">HomieRange</span><span class="o">&amp;</span><span class="w"> </span><span class="n">range</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">String</span><span class="o">&amp;</span><span class="w"> </span><span class="n">property</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">String</span><span class="o">&amp;</span><span class="w"> </span><span class="n">value</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+
+<span class="p">}</span>
+
+<span class="n">HomieNode</span><span class="w"> </span><span class="n">node</span><span class="p">(</span><span class="s">&quot;id&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;type&quot;</span><span class="p">,</span><span class="w"> </span><span class="nb">false</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="n">nodeInputHandler</span><span class="p">);</span>
+</code></pre></div>
+<ul>
+<li>Virtual callback from node input handler</li>
+</ul>
+<p>You can create your own class derived from HomieNode that implements the virtual method <code>bool HomieNode::handleInput(const HomieRange&amp; range, const String&amp; property, const String&amp; value)</code>. The default node input handler then automatically calls your callback.</p>
+<div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">RelaisNode</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="n">HomieNode</span><span class="w"> </span><span class="p">{</span>
+<span class="w"> </span><span class="k">public</span><span class="o">:</span>
+<span class="w">    </span><span class="n">RelaisNode</span><span class="p">()</span><span class="o">:</span><span class="w"> </span><span class="n">HomieNode</span><span class="p">(</span><span class="s">&quot;Relais&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;switch8&quot;</span><span class="p">);</span>
+
+<span class="w"> </span><span class="k">protected</span><span class="o">:</span>
+<span class="w">  </span><span class="k">virtual</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="n">handleInput</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">HomieRange</span><span class="o">&amp;</span><span class="w"> </span><span class="n">range</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">String</span><span class="o">&amp;</span><span class="w"> </span><span class="n">property</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">String</span><span class="o">&amp;</span><span class="w"> </span><span class="n">value</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">  </span><span class="p">}</span>
+<span class="p">};</span>
+</code></pre></div>
+<ul>
+<li>Property input handlers. This handler will handle changes for a specific settable property of a specific node</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="kt">bool</span><span class="w"> </span><span class="nf">propertyInputHandler</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">HomieRange</span><span class="o">&amp;</span><span class="w"> </span><span class="n">range</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">String</span><span class="o">&amp;</span><span class="w"> </span><span class="n">value</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+
+<span class="p">}</span>
+
+<span class="n">HomieNode</span><span class="w"> </span><span class="n">node</span><span class="p">(</span><span class="s">&quot;id&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;type&quot;</span><span class="p">);</span>
+
+<span class="kt">void</span><span class="w"> </span><span class="nf">setup</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="n">node</span><span class="p">.</span><span class="n">advertise</span><span class="p">(</span><span class="s">&quot;property&quot;</span><span class="p">).</span><span class="n">settable</span><span class="p">(</span><span class="n">propertyInputHandler</span><span class="p">);</span><span class="w"> </span><span class="c1">// before Homie.setup()</span>
+<span class="w">  </span><span class="c1">// ...</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>You can see that input handlers return a boolean. An input handler can decide whether or not it handled the message and want to propagate it down to other input handlers. If an input handler returns <code>true</code>, the propagation is stopped, if it returns <code>false</code>, the propagation continues. The order of propagation is global handler → node handler → property handler.</p>
+<p>For example, imagine you defined three input handlers: the global one, the node one, and the property one. If the global input handler returns <code>false</code>, the node input handler will be called. If the node input handler returns <code>true</code>, the propagation is stopped and the property input handler won't be called. You can think of it as middlewares.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Homie uses <a href="https://github.com/me-no-dev/ESPAsyncTCP">ESPAsyncTCP</a> for network communication that make uses of asynchronous callback from the ESP8266 framework for incoming network packets. Thus the input handler runs in a different task than the <code>loopHandler()</code>. So keep in mind that the network task may interrupt your loop at any time.</p>
+</div>
 
 
 
@@ -1357,10 +1416,10 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": ".", "features": [], "search": "assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": [], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
     
   </body>

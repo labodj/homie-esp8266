@@ -12,29 +12,31 @@
         <meta name="author" content="Marvin ROGER, Jacopo Labardi">
       
       
-        <link rel="canonical" href="https://labodj.github.io/homie-esp8266/">
+        <link rel="canonical" href="https://labodj.github.io/homie-esp8266/others/homie-implementation-specifics/">
       
       
+        <link rel="prev" href="../ota-configuration-updates/">
       
-        <link rel="next" href="quickstart/what-is-it/">
+      
+        <link rel="next" href="../limitations-and-known-issues/">
       
       
         
       
       
-      <link rel="icon" href="assets/images/favicon.png">
+      <link rel="icon" href="../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
     
     
       
-        <title>Homie for ESP8266</title>
+        <title>Homie implementation specifics - Homie for ESP8266</title>
       
     
     
-      <link rel="stylesheet" href="assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
       
         
-        <link rel="stylesheet" href="assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -53,7 +55,7 @@
       
     
     
-    <script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -75,6 +77,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#version" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -87,9 +94,9 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="." title="Homie for ESP8266" class="md-header__button md-logo" aria-label="Homie for ESP8266" data-md-component="logo">
+    <a href="../.." title="Homie for ESP8266" class="md-header__button md-logo" aria-label="Homie for ESP8266" data-md-component="logo">
       
-  <img src="assets/logo.png" alt="logo">
+  <img src="../../assets/logo.png" alt="logo">
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
@@ -106,7 +113,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Welcome
+              Homie implementation specifics
             
           </span>
         </div>
@@ -196,9 +203,9 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="." title="Homie for ESP8266" class="md-nav__button md-logo" aria-label="Homie for ESP8266" data-md-component="logo">
+    <a href="../.." title="Homie for ESP8266" class="md-nav__button md-logo" aria-label="Homie for ESP8266" data-md-component="logo">
       
-  <img src="assets/logo.png" alt="logo">
+  <img src="../../assets/logo.png" alt="logo">
 
     </a>
     Homie for ESP8266
@@ -222,17 +229,10 @@
       
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-      
-      <a href="." class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
         
   
   
@@ -248,7 +248,6 @@
   
 
       </a>
-      
     </li>
   
 
@@ -307,7 +306,7 @@
   
   
     <li class="md-nav__item">
-      <a href="quickstart/what-is-it/" class="md-nav__link">
+      <a href="../../quickstart/what-is-it/" class="md-nav__link">
         
   
   
@@ -335,7 +334,7 @@
   
   
     <li class="md-nav__item">
-      <a href="quickstart/getting-started/" class="md-nav__link">
+      <a href="../../quickstart/getting-started/" class="md-nav__link">
         
   
   
@@ -417,7 +416,7 @@
   
   
     <li class="md-nav__item">
-      <a href="advanced-usage/built-in-led/" class="md-nav__link">
+      <a href="../../advanced-usage/built-in-led/" class="md-nav__link">
         
   
   
@@ -445,7 +444,7 @@
   
   
     <li class="md-nav__item">
-      <a href="advanced-usage/branding/" class="md-nav__link">
+      <a href="../../advanced-usage/branding/" class="md-nav__link">
         
   
   
@@ -473,7 +472,7 @@
   
   
     <li class="md-nav__item">
-      <a href="advanced-usage/events/" class="md-nav__link">
+      <a href="../../advanced-usage/events/" class="md-nav__link">
         
   
   
@@ -501,7 +500,7 @@
   
   
     <li class="md-nav__item">
-      <a href="advanced-usage/logging/" class="md-nav__link">
+      <a href="../../advanced-usage/logging/" class="md-nav__link">
         
   
   
@@ -529,7 +528,7 @@
   
   
     <li class="md-nav__item">
-      <a href="advanced-usage/streaming-operator/" class="md-nav__link">
+      <a href="../../advanced-usage/streaming-operator/" class="md-nav__link">
         
   
   
@@ -557,7 +556,7 @@
   
   
     <li class="md-nav__item">
-      <a href="advanced-usage/input-handlers/" class="md-nav__link">
+      <a href="../../advanced-usage/input-handlers/" class="md-nav__link">
         
   
   
@@ -585,7 +584,7 @@
   
   
     <li class="md-nav__item">
-      <a href="advanced-usage/broadcast/" class="md-nav__link">
+      <a href="../../advanced-usage/broadcast/" class="md-nav__link">
         
   
   
@@ -613,7 +612,7 @@
   
   
     <li class="md-nav__item">
-      <a href="advanced-usage/custom-settings/" class="md-nav__link">
+      <a href="../../advanced-usage/custom-settings/" class="md-nav__link">
         
   
   
@@ -641,7 +640,7 @@
   
   
     <li class="md-nav__item">
-      <a href="advanced-usage/resetting/" class="md-nav__link">
+      <a href="../../advanced-usage/resetting/" class="md-nav__link">
         
   
   
@@ -669,7 +668,7 @@
   
   
     <li class="md-nav__item">
-      <a href="advanced-usage/compiler-flags/" class="md-nav__link">
+      <a href="../../advanced-usage/compiler-flags/" class="md-nav__link">
         
   
   
@@ -697,7 +696,7 @@
   
   
     <li class="md-nav__item">
-      <a href="advanced-usage/standalone-mode/" class="md-nav__link">
+      <a href="../../advanced-usage/standalone-mode/" class="md-nav__link">
         
   
   
@@ -725,7 +724,7 @@
   
   
     <li class="md-nav__item">
-      <a href="advanced-usage/magic-bytes/" class="md-nav__link">
+      <a href="../../advanced-usage/magic-bytes/" class="md-nav__link">
         
   
   
@@ -753,7 +752,7 @@
   
   
     <li class="md-nav__item">
-      <a href="advanced-usage/range-properties/" class="md-nav__link">
+      <a href="../../advanced-usage/range-properties/" class="md-nav__link">
         
   
   
@@ -781,7 +780,7 @@
   
   
     <li class="md-nav__item">
-      <a href="advanced-usage/deep-sleep/" class="md-nav__link">
+      <a href="../../advanced-usage/deep-sleep/" class="md-nav__link">
         
   
   
@@ -809,7 +808,7 @@
   
   
     <li class="md-nav__item">
-      <a href="advanced-usage/miscellaneous/" class="md-nav__link">
+      <a href="../../advanced-usage/miscellaneous/" class="md-nav__link">
         
   
   
@@ -837,7 +836,7 @@
   
   
     <li class="md-nav__item">
-      <a href="advanced-usage/ui-bundle/" class="md-nav__link">
+      <a href="../../advanced-usage/ui-bundle/" class="md-nav__link">
         
   
   
@@ -919,7 +918,7 @@
   
   
     <li class="md-nav__item">
-      <a href="configuration/json-configuration-file/" class="md-nav__link">
+      <a href="../../configuration/json-configuration-file/" class="md-nav__link">
         
   
   
@@ -947,7 +946,7 @@
   
   
     <li class="md-nav__item">
-      <a href="configuration/http-json-api/" class="md-nav__link">
+      <a href="../../configuration/http-json-api/" class="md-nav__link">
         
   
   
@@ -979,18 +978,20 @@
       
   
   
+    
   
   
+  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
         
           
           <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
@@ -1011,7 +1012,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_5">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1029,7 +1030,7 @@
   
   
     <li class="md-nav__item">
-      <a href="others/ota-configuration-updates/" class="md-nav__link">
+      <a href="../ota-configuration-updates/" class="md-nav__link">
         
   
   
@@ -1054,10 +1055,19 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="others/homie-implementation-specifics/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -1073,6 +1083,7 @@
   
 
       </a>
+      
     </li>
   
 
@@ -1085,7 +1096,7 @@
   
   
     <li class="md-nav__item">
-      <a href="others/limitations-and-known-issues/" class="md-nav__link">
+      <a href="../limitations-and-known-issues/" class="md-nav__link">
         
   
   
@@ -1113,7 +1124,7 @@
   
   
     <li class="md-nav__item">
-      <a href="others/troubleshooting/" class="md-nav__link">
+      <a href="../troubleshooting/" class="md-nav__link">
         
   
   
@@ -1141,7 +1152,7 @@
   
   
     <li class="md-nav__item">
-      <a href="others/cpp-api-reference/" class="md-nav__link">
+      <a href="../cpp-api-reference/" class="md-nav__link">
         
   
   
@@ -1169,7 +1180,7 @@
   
   
     <li class="md-nav__item">
-      <a href="others/upgrade-guide-from-v1-to-v2/" class="md-nav__link">
+      <a href="../upgrade-guide-from-v1-to-v2/" class="md-nav__link">
         
   
   
@@ -1197,7 +1208,7 @@
   
   
     <li class="md-nav__item">
-      <a href="others/upgrade-guide-from-v2-to-v3/" class="md-nav__link">
+      <a href="../upgrade-guide-from-v2-to-v3/" class="md-nav__link">
         
   
   
@@ -1225,7 +1236,7 @@
   
   
     <li class="md-nav__item">
-      <a href="others/community-projects/" class="md-nav__link">
+      <a href="../community-projects/" class="md-nav__link">
         
   
   
@@ -1270,6 +1281,8 @@
   
   
   
+    
+  
   
 </nav>
                   </div>
@@ -1289,9 +1302,81 @@
   
 
 
-  <h1>Welcome</h1>
-
-<p>Welcome on the Homie for ESP8266 docs.</p>
+<p>The Homie <code>$implementation</code> identifier is platform-dependent on this fork:</p>
+<ul>
+<li><code>esp32</code> on ESP32 builds</li>
+<li><code>esp8266</code> on ESP8266 builds</li>
+</ul>
+<h1 id="version">Version<a class="headerlink" href="#version" title="Permanent link">&para;</a></h1>
+<ul>
+<li><code>$implementation/version</code>: maintained fork version</li>
+</ul>
+<h1 id="reset">Reset<a class="headerlink" href="#reset" title="Permanent link">&para;</a></h1>
+<ul>
+<li><code>$implementation/reset</code>: You can publish a <code>true</code> to this topic to reset the device</li>
+</ul>
+<h1 id="configuration">Configuration<a class="headerlink" href="#configuration" title="Permanent link">&para;</a></h1>
+<ul>
+<li><code>$implementation/config</code>: The <code>configuration.json</code> is published there, with <code>wifi.password</code>, <code>mqtt.username</code> and <code>mqtt.password</code> fields stripped</li>
+<li><code>$implementation/config/set</code>: You can update the <code>configuration.json</code> by sending incremental JSON on this topic</li>
+</ul>
+<h1 id="ota">OTA<a class="headerlink" href="#ota" title="Permanent link">&para;</a></h1>
+<ul>
+<li><code>$implementation/ota/enabled</code>: <code>true</code> if OTA is enabled, <code>false</code> otherwise</li>
+<li><code>$implementation/ota/firmware/&lt;md5 checksum&gt;</code>: Send the firmware payload to this topic, where the last topic level is the hexadecimal MD5 checksum of the firmware image</li>
+<li><code>$implementation/ota/status</code>: HTTP-like status code indicating the status of the OTA. Might be:</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>200</code></td>
+<td>OTA successfully flashed</td>
+</tr>
+<tr>
+<td><code>202</code></td>
+<td>OTA request / checksum accepted</td>
+</tr>
+<tr>
+<td><code>206 465/349680</code></td>
+<td>OTA in progress. The data after the status code corresponds to <code>&lt;bytes written&gt;/&lt;bytes total&gt;</code></td>
+</tr>
+<tr>
+<td><code>304</code></td>
+<td>The current firmware is already up-to-date</td>
+</tr>
+<tr>
+<td><code>400 BAD_FIRMWARE</code></td>
+<td>OTA error from your side. The identifier might be <code>BAD_FIRMWARE</code>, <code>BAD_CHECKSUM</code>, <code>NOT_ENOUGH_SPACE</code>, <code>NOT_REQUESTED</code></td>
+</tr>
+<tr>
+<td><code>403</code></td>
+<td>OTA not enabled</td>
+</tr>
+<tr>
+<td><code>500 FLASH_ERROR</code></td>
+<td>OTA error in the device flash/update path. The identifier might be <code>FLASH_ERROR</code></td>
+</tr>
+</tbody>
+</table>
+<p>On this fork, the OTA handler is hardened for MQTT QoS 1 delivery:</p>
+<ul>
+<li>duplicate retransmissions of already-flashed payloads are ignored safely</li>
+<li>overlapping retransmitted chunks are trimmed before flashing</li>
+<li>out-of-sequence chunks fail explicitly instead of silently corrupting the update</li>
+<li>if MQTT disconnects during OTA, the update is aborted cleanly and must be retried</li>
+</ul>
+<h1 id="statistics">Statistics<a class="headerlink" href="#statistics" title="Permanent link">&para;</a></h1>
+<p>The fork publishes the standard Homie statistics plus two additional retained topics:</p>
+<ul>
+<li><code>$stats/uptimewifi</code>: seconds since Wi-Fi connectivity was established</li>
+<li><code>$stats/uptimemqtt</code>: seconds since MQTT connectivity was established</li>
+</ul>
 
 
 
@@ -1357,10 +1442,10 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": ".", "features": [], "search": "assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": [], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
     
   </body>

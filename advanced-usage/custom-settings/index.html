@@ -12,29 +12,31 @@
         <meta name="author" content="Marvin ROGER, Jacopo Labardi">
       
       
-        <link rel="canonical" href="https://labodj.github.io/homie-esp8266/">
+        <link rel="canonical" href="https://labodj.github.io/homie-esp8266/advanced-usage/custom-settings/">
       
       
+        <link rel="prev" href="../broadcast/">
       
-        <link rel="next" href="quickstart/what-is-it/">
+      
+        <link rel="next" href="../resetting/">
       
       
         
       
       
-      <link rel="icon" href="assets/images/favicon.png">
+      <link rel="icon" href="../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
     
     
       
-        <title>Homie for ESP8266</title>
+        <title>Custom settings - Homie for ESP8266</title>
       
     
     
-      <link rel="stylesheet" href="assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
       
         
-        <link rel="stylesheet" href="assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -53,7 +55,7 @@
       
     
     
-    <script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -75,6 +77,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#typical-use-case" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -87,9 +94,9 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="." title="Homie for ESP8266" class="md-header__button md-logo" aria-label="Homie for ESP8266" data-md-component="logo">
+    <a href="../.." title="Homie for ESP8266" class="md-header__button md-logo" aria-label="Homie for ESP8266" data-md-component="logo">
       
-  <img src="assets/logo.png" alt="logo">
+  <img src="../../assets/logo.png" alt="logo">
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
@@ -106,7 +113,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Welcome
+              Custom settings
             
           </span>
         </div>
@@ -196,9 +203,9 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="." title="Homie for ESP8266" class="md-nav__button md-logo" aria-label="Homie for ESP8266" data-md-component="logo">
+    <a href="../.." title="Homie for ESP8266" class="md-nav__button md-logo" aria-label="Homie for ESP8266" data-md-component="logo">
       
-  <img src="assets/logo.png" alt="logo">
+  <img src="../../assets/logo.png" alt="logo">
 
     </a>
     Homie for ESP8266
@@ -222,17 +229,10 @@
       
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-      
-      <a href="." class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
         
   
   
@@ -248,7 +248,6 @@
   
 
       </a>
-      
     </li>
   
 
@@ -307,7 +306,7 @@
   
   
     <li class="md-nav__item">
-      <a href="quickstart/what-is-it/" class="md-nav__link">
+      <a href="../../quickstart/what-is-it/" class="md-nav__link">
         
   
   
@@ -335,7 +334,7 @@
   
   
     <li class="md-nav__item">
-      <a href="quickstart/getting-started/" class="md-nav__link">
+      <a href="../../quickstart/getting-started/" class="md-nav__link">
         
   
   
@@ -367,18 +366,20 @@
       
   
   
+    
   
   
+  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
         
           
           <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
@@ -399,7 +400,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_3">
             <span class="md-nav__icon md-icon"></span>
             
@@ -417,7 +418,7 @@
   
   
     <li class="md-nav__item">
-      <a href="advanced-usage/built-in-led/" class="md-nav__link">
+      <a href="../built-in-led/" class="md-nav__link">
         
   
   
@@ -445,7 +446,7 @@
   
   
     <li class="md-nav__item">
-      <a href="advanced-usage/branding/" class="md-nav__link">
+      <a href="../branding/" class="md-nav__link">
         
   
   
@@ -473,7 +474,7 @@
   
   
     <li class="md-nav__item">
-      <a href="advanced-usage/events/" class="md-nav__link">
+      <a href="../events/" class="md-nav__link">
         
   
   
@@ -501,7 +502,7 @@
   
   
     <li class="md-nav__item">
-      <a href="advanced-usage/logging/" class="md-nav__link">
+      <a href="../logging/" class="md-nav__link">
         
   
   
@@ -529,7 +530,7 @@
   
   
     <li class="md-nav__item">
-      <a href="advanced-usage/streaming-operator/" class="md-nav__link">
+      <a href="../streaming-operator/" class="md-nav__link">
         
   
   
@@ -557,7 +558,7 @@
   
   
     <li class="md-nav__item">
-      <a href="advanced-usage/input-handlers/" class="md-nav__link">
+      <a href="../input-handlers/" class="md-nav__link">
         
   
   
@@ -585,7 +586,7 @@
   
   
     <li class="md-nav__item">
-      <a href="advanced-usage/broadcast/" class="md-nav__link">
+      <a href="../broadcast/" class="md-nav__link">
         
   
   
@@ -610,10 +611,19 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="advanced-usage/custom-settings/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -629,6 +639,7 @@
   
 
       </a>
+      
     </li>
   
 
@@ -641,7 +652,7 @@
   
   
     <li class="md-nav__item">
-      <a href="advanced-usage/resetting/" class="md-nav__link">
+      <a href="../resetting/" class="md-nav__link">
         
   
   
@@ -669,7 +680,7 @@
   
   
     <li class="md-nav__item">
-      <a href="advanced-usage/compiler-flags/" class="md-nav__link">
+      <a href="../compiler-flags/" class="md-nav__link">
         
   
   
@@ -697,7 +708,7 @@
   
   
     <li class="md-nav__item">
-      <a href="advanced-usage/standalone-mode/" class="md-nav__link">
+      <a href="../standalone-mode/" class="md-nav__link">
         
   
   
@@ -725,7 +736,7 @@
   
   
     <li class="md-nav__item">
-      <a href="advanced-usage/magic-bytes/" class="md-nav__link">
+      <a href="../magic-bytes/" class="md-nav__link">
         
   
   
@@ -753,7 +764,7 @@
   
   
     <li class="md-nav__item">
-      <a href="advanced-usage/range-properties/" class="md-nav__link">
+      <a href="../range-properties/" class="md-nav__link">
         
   
   
@@ -781,7 +792,7 @@
   
   
     <li class="md-nav__item">
-      <a href="advanced-usage/deep-sleep/" class="md-nav__link">
+      <a href="../deep-sleep/" class="md-nav__link">
         
   
   
@@ -809,7 +820,7 @@
   
   
     <li class="md-nav__item">
-      <a href="advanced-usage/miscellaneous/" class="md-nav__link">
+      <a href="../miscellaneous/" class="md-nav__link">
         
   
   
@@ -837,7 +848,7 @@
   
   
     <li class="md-nav__item">
-      <a href="advanced-usage/ui-bundle/" class="md-nav__link">
+      <a href="../ui-bundle/" class="md-nav__link">
         
   
   
@@ -919,7 +930,7 @@
   
   
     <li class="md-nav__item">
-      <a href="configuration/json-configuration-file/" class="md-nav__link">
+      <a href="../../configuration/json-configuration-file/" class="md-nav__link">
         
   
   
@@ -947,7 +958,7 @@
   
   
     <li class="md-nav__item">
-      <a href="configuration/http-json-api/" class="md-nav__link">
+      <a href="../../configuration/http-json-api/" class="md-nav__link">
         
   
   
@@ -1029,7 +1040,7 @@
   
   
     <li class="md-nav__item">
-      <a href="others/ota-configuration-updates/" class="md-nav__link">
+      <a href="../../others/ota-configuration-updates/" class="md-nav__link">
         
   
   
@@ -1057,7 +1068,7 @@
   
   
     <li class="md-nav__item">
-      <a href="others/homie-implementation-specifics/" class="md-nav__link">
+      <a href="../../others/homie-implementation-specifics/" class="md-nav__link">
         
   
   
@@ -1085,7 +1096,7 @@
   
   
     <li class="md-nav__item">
-      <a href="others/limitations-and-known-issues/" class="md-nav__link">
+      <a href="../../others/limitations-and-known-issues/" class="md-nav__link">
         
   
   
@@ -1113,7 +1124,7 @@
   
   
     <li class="md-nav__item">
-      <a href="others/troubleshooting/" class="md-nav__link">
+      <a href="../../others/troubleshooting/" class="md-nav__link">
         
   
   
@@ -1141,7 +1152,7 @@
   
   
     <li class="md-nav__item">
-      <a href="others/cpp-api-reference/" class="md-nav__link">
+      <a href="../../others/cpp-api-reference/" class="md-nav__link">
         
   
   
@@ -1169,7 +1180,7 @@
   
   
     <li class="md-nav__item">
-      <a href="others/upgrade-guide-from-v1-to-v2/" class="md-nav__link">
+      <a href="../../others/upgrade-guide-from-v1-to-v2/" class="md-nav__link">
         
   
   
@@ -1197,7 +1208,7 @@
   
   
     <li class="md-nav__item">
-      <a href="others/upgrade-guide-from-v2-to-v3/" class="md-nav__link">
+      <a href="../../others/upgrade-guide-from-v2-to-v3/" class="md-nav__link">
         
   
   
@@ -1225,7 +1236,7 @@
   
   
     <li class="md-nav__item">
-      <a href="others/community-projects/" class="md-nav__link">
+      <a href="../../others/community-projects/" class="md-nav__link">
         
   
   
@@ -1270,6 +1281,8 @@
   
   
   
+    
+  
   
 </nav>
                   </div>
@@ -1289,9 +1302,70 @@
   
 
 
-  <h1>Welcome</h1>
+<h1 id="typical-use-case">Typical use case<a class="headerlink" href="#typical-use-case" title="Permanent link">&para;</a></h1>
+<p>Homie for ESP8266 lets you implement custom settings that can be set from the JSON configuration file and the Configuration API. Below is an example of how to use this feature:</p>
+<div class="highlight"><pre><span></span><code><span class="n">HomieSetting</span><span class="o">&lt;</span><span class="kt">long</span><span class="o">&gt;</span><span class="w"> </span><span class="n">percentageSetting</span><span class="p">(</span><span class="s">&quot;percentage&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;A simple percentage&quot;</span><span class="p">);</span><span class="w">  </span><span class="c1">// id, description</span>
 
-<p>Welcome on the Homie for ESP8266 docs.</p>
+<span class="kt">void</span><span class="w"> </span><span class="nf">setup</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="n">percentageSetting</span><span class="p">.</span><span class="n">setDefaultValue</span><span class="p">(</span><span class="mi">50</span><span class="p">).</span><span class="n">setValidator</span><span class="p">([]</span><span class="w"> </span><span class="p">(</span><span class="kt">long</span><span class="w"> </span><span class="n">candidate</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="p">(</span><span class="n">candidate</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="p">(</span><span class="n">candidate</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="mi">100</span><span class="p">);</span>
+<span class="w">  </span><span class="p">});</span>
+
+<span class="w">  </span><span class="n">Homie</span><span class="p">.</span><span class="n">setup</span><span class="p">();</span>
+<span class="p">}</span>
+</code></pre></div>
+<div class="admonition tip">
+<p class="admonition-title">setDefaultValue() before Homie.setup()</p>
+</div>
+<p>As shown in the example above, the <strong>default value</strong> has to be set <strong>before</strong> <code>Homie.setup()</code> is called.
+   Otherwise you get an error on startup if there is also no value configured in JSON configuration file.</p>
+<p>An <code>HomieSetting</code> instance can be of the following types:</p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>bool</code></td>
+<td><code>true</code> or <code>false</code></td>
+</tr>
+<tr>
+<td><code>long</code></td>
+<td>An integer from <code>-2,147,483,648</code> to <code>2,147,483,647</code></td>
+</tr>
+<tr>
+<td><code>double</code></td>
+<td>A floating number that can fit into a <code>real64_t</code></td>
+</tr>
+<tr>
+<td><code>const char*</code></td>
+<td>Any string</td>
+</tr>
+</tbody>
+</table>
+<p>By default, a setting is mandatory (you have to set it in the configuration file). If you give it a default value with <code>setDefaultValue()</code>, the setting becomes optional. You can validate a setting by giving a validator function to <code>setValidator()</code>. To get the setting from your code, use <code>get()</code>. To get whether the value returned is the optional one or the one provided, use <code>wasProvided()</code>.</p>
+<p>For this example, if you want to provide the <code>percentage</code> setting, you will have to put in your configuration file:</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;settings&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;percentage&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">75</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<h1 id="updating-custom-settings">Updating custom settings<a class="headerlink" href="#updating-custom-settings" title="Permanent link">&para;</a></h1>
+<p>In order to change custom settings send via MQTT the JSON Object to: <code>homie/&lt;device&gt;/$implementation/config/set</code>. The JSON object might include all settings you need to update at once. As well, partial/incremental update is supported.
+JSON object should be flat string. From the example above it becomes:
+<code>{"settings":{"percentage":75}}</code></p>
+<p>!!! tip Updated custom settings are saved to SPIFFS automatically.</p>
+<p>Once you updated the custom settings Homie will save it to the Flash and reboot itself.
+   The reboot causes the updated and stored setting be read into RAM and be used in actual code.</p>
+<p>!!! tip If function of your Homie device is sensitive to reboots, then consider other method of custom settings.</p>
+<p>Sometimes, the device is designed for non-interrupted service. So the reset by setting update is not acceptable and can affect the device function/behavior.</p>
+<h1 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h1>
+<p>See the following example for a concrete use case:</p>
+<p><a href="https://github.com/homieiot/homie-esp8266/blob/develop/examples/CustomSettings/CustomSettings.ino"><img alt="GitHub logo" src="../../assets/github.png" /> CustomSettings.ino</a></p>
 
 
 
@@ -1357,10 +1431,10 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": ".", "features": [], "search": "assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": [], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
     
   </body>
