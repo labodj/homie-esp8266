@@ -13,7 +13,7 @@ This branch of Homie for ESP8266 implements [Homie 3.0.1](https://github.com/hom
 ## Download
 
 This repository contains the maintained development branch of the fork.
-Use the git dependency snippets below to consume it from PlatformIO.
+The supported consumption path is a git dependency from PlatformIO.
 
 ## Recovery Policy
 
@@ -49,28 +49,7 @@ lib_deps = https://github.com/labodj/homie-esp8266.git#develop
 
 Add the `PIO_FRAMEWORK_ARDUINO_LWIP2_LOW_MEMORY` build flag to ensure reliable OTA updates.
 
-### Tracking branch
-
-4. Update dev/platform to staging version:
-   - [Instruction for Espressif 8266](http://docs.platformio.org/en/latest/platforms/espressif8266.html#using-arduino-framework-with-staging-version)
-
-5. Before editing platformio.ini as shown below, you must install "git" if you don't already have it. For Windows, just go to http://git-scm.com/download/win and the download will start automatically. Note, this is only a requirement for the development versions.
-
-6. Add development version of "Homie" to project using `platformio.ini` and [lib_deps](http://docs.platformio.org/page/projectconf/section_env_library.html#lib-deps) option:
-```ini
-[env:myboard]
-platform = ...
-board = ...
-framework = arduino
-build_flags = -D PIO_FRAMEWORK_ARDUINO_LWIP2_LOW_MEMORY
-
-; the latest development branch (convention V3.0.x)
-lib_deps = https://github.com/labodj/homie-esp8266.git#develop
-
-```
-
------
-Happy coding with PlatformIO!
+If you need reproducible builds, pin a commit SHA instead of the branch name in `lib_deps`.
 
 ## Features
 
@@ -80,7 +59,6 @@ Happy coding with PlatformIO!
 * [Custom settings](https://homieiot.github.io/homie-esp8266/docs/stable/advanced-usage/custom-settings)
 * [OTA over MQTT](https://homieiot.github.io/homie-esp8266/docs/stable/others/ota-configuration-updates)
 * [Magic bytes](https://homieiot.github.io/homie-esp8266/docs/stable/advanced-usage/magic-bytes)
-* Available in the [PlatformIO registry](http://platformio.org/#!/lib/show/555/Homie)
 * Pretty [straightforward sketches](./examples), a simple light for example: (**TODO**: adapt to V3)
 
 ```c++
@@ -121,7 +99,7 @@ void loop() {
 
 ## Requirements, installation and usage
 
-The project is documented on https://homieiot.github.io/homie-esp8266/ with a *Getting started* guide and every piece of information you will need.
+The project documentation in this repository is still derived from upstream Homie and is being updated incrementally for this fork. For the maintained path today, prefer the PlatformIO git dependency described above.
 
 ## Donate
 

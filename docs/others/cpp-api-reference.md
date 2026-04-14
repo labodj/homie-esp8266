@@ -118,6 +118,9 @@ Set the event handler. Useful if you want to hook to Homie events.
 
 * **`callback`**: Event handler
 
+!!! warning "Callback context"
+    Connectivity, inbound MQTT, publish-acknowledgement and OTA events are dispatched from the main `Homie.loop()` flow on this fork. The reset path is still driven by the reset-handler timer, so keep event handlers short and avoid unsynchronized shared-state mutations if you combine Homie events with other asynchronous code.
+
 ```c++
 Homie& setResetTrigger(uint8_t pin, uint8_t state, uint16_t time);
 ```

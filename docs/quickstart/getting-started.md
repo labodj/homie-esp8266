@@ -2,6 +2,8 @@ This *Getting Started* guide assumes you have an ESP8266 board with an user-conf
 
 This page intentionally stays close to the original upstream guide, so several examples remain ESP8266-centric. This fork is maintained primarily against current ESP32 Arduino cores while keeping the Homie 3.0.1 API and flow as close as possible to the original library.
 
+The maintained installation path for this fork is PlatformIO with a git dependency. The Arduino IDE / ZIP flow below is legacy upstream documentation and is not the recommended path for this fork.
+
 To use Homie for ESP8266, you will need:
 
 * An ESP8266
@@ -13,17 +15,34 @@ To use Homie for ESP8266, you will need:
 
 There are two ways to install Homie for ESP8266.
 
-### 1a. For the Arduino IDE
+### 1a. With [PlatformIO](http://platformio.org)
+
+Add this to your `platformio.ini`:
+
+!!! warning "Maintained path for this fork"
+    This fork is consumed through a git dependency. Add this in your **platformio.ini**:
+
+    ```
+    lib_deps = https://github.com/labodj/homie-esp8266.git#develop
+    ```
+
+If you need reproducible builds, pin a commit SHA instead of the branch name.
+
+Dependencies are installed automatically.
+
+### 1b. For the Arduino IDE
+
+This section is kept only as upstream legacy guidance. It is not the recommended installation path for this fork and its dependency list may not match the maintained PlatformIO path.
 
 There is a YouTube video with instructions:
 
 [![YouTube logo](../assets/youtube.png) How to install Homie libraries on Arduino IDE](https://www.youtube.com/watch?v=bH3KfFfYUvg)
 
-1. Download the [release corresponding to this documentation version](https://github.com/homieiot/homie-esp8266/releases)
+1. Download an upstream release archive compatible with your target environment
 
 2. Load the `.zip` with **Sketch → Include Library → Add .ZIP Library**
 
-Homie for ESP8266 has 5 dependencies:
+Upstream Homie for ESP8266 has 5 dependencies:
 
 * [ArduinoJson](https://github.com/bblanchon/ArduinoJson) >= 5.0.8
 * [Bounce2](https://github.com/thomasfredericks/Bounce2)
@@ -32,19 +51,6 @@ Homie for ESP8266 has 5 dependencies:
 * [ESPAsyncWebServer](https://github.com/me-no-dev/ESPAsyncWebServer)
 
 Some of them are available through the Arduino IDE, with **Sketch → Include Library → Manage Libraries**. For the others, install it by downloading the `.zip` on GitHub.
-
-### 1b. With [PlatformIO](http://platformio.org)
-
-Add this to your `platformio.ini`:
-
-!!! warning "Not yet released as stable"
-    This fork is consumed through a git dependency. Add this in your **platformio.ini**:
-
-    ```
-    lib_deps = https://github.com/labodj/homie-esp8266.git#develop
-    ```
-
-Dependencies are installed automatically.
 
 ## Bare minimum sketch
 
@@ -120,7 +126,7 @@ Although the sketch looks like it does not do anything, it actually does quite a
 
 Now that we understand how Homie for ESP8266 works, let's create an useful sketch. We want to create a smart light.
 
-[![GitHub logo](../assets/github.png) LightOnOff.ino](https://github.com/homieiot/homie-esp8266/blob/develop/examples/LightOnOff/LightOnOff.ino)
+[![GitHub logo](../assets/github.png) LightOnOff.ino](https://github.com/labodj/homie-esp8266/blob/develop/examples/LightOnOff/LightOnOff.ino)
 
 Alright, step by step:
 
@@ -137,7 +143,7 @@ In the previous example sketch, we were reacting to property changes. But what i
 
 Fortunately, Homie for ESP8266 provides an easy way to do that.
 
-[![GitHub logo](../assets/github.png) TemperatureSensor.ino](https://github.com/homieiot/homie-esp8266/blob/develop/examples/TemperatureSensor/TemperatureSensor.ino)
+[![GitHub logo](../assets/github.png) TemperatureSensor.ino](https://github.com/labodj/homie-esp8266/blob/develop/examples/TemperatureSensor/TemperatureSensor.ino)
 
 The only new things here are the `Homie.setSetupFunction(setupHandler);` and `Homie.setLoopFunction(loopHandler);` calls. The setup function will be called once, when the device is in `normal` mode and the network connection is up. The loop function will be called everytime, when the device is in `normal` mode and the network connection is up. This provides a nice level of abstraction.
 
