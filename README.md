@@ -15,6 +15,23 @@ This branch of Homie for ESP8266 implements [Homie 3.0.1](https://github.com/hom
 This repository contains the maintained development branch of the fork.
 The supported consumption path is a git dependency from PlatformIO.
 
+## Documentation
+
+Fork documentation is published at:
+
+* https://labodj.github.io/homie-esp8266/
+
+Key pages:
+
+* Getting started: https://labodj.github.io/homie-esp8266/quickstart/getting-started/
+* JSON configuration file: https://labodj.github.io/homie-esp8266/configuration/json-configuration-file/
+* HTTP JSON API: https://labodj.github.io/homie-esp8266/configuration/http-json-api/
+* OTA over MQTT: https://labodj.github.io/homie-esp8266/others/ota-configuration-updates/
+* Implementation specifics: https://labodj.github.io/homie-esp8266/others/homie-implementation-specifics/
+
+The generated site reflects the maintained fork. When a fork-specific page differs
+from upstream, prefer the fork site and the documents tracked in this repository.
+
 ## Recovery Policy
 
 The normal-mode flow stays close to upstream Homie, but reconnect handling is stricter on this fork:
@@ -55,11 +72,11 @@ If you need reproducible builds, pin a commit SHA instead of the branch name in 
 ## Features
 
 * Automatic connection/reconnection to Wi-Fi/MQTT
-* [JSON configuration file](./docs/configuration/json-configuration-file.md) to configure the device
-* [Cute HTTP API / Web UI / App](./docs/configuration/http-json-api.md) to remotely send the configuration to the device and get information about it
-* [Custom settings](./docs/advanced-usage/custom-settings.md)
-* [OTA over MQTT](./docs/others/ota-configuration-updates.md)
-* [Magic bytes](./docs/advanced-usage/magic-bytes.md)
+* [JSON configuration file](https://labodj.github.io/homie-esp8266/configuration/json-configuration-file/) to configure the device
+* [Cute HTTP API / Web UI / App](https://labodj.github.io/homie-esp8266/configuration/http-json-api/) to remotely send the configuration to the device and get information about it
+* [Custom settings](https://labodj.github.io/homie-esp8266/advanced-usage/custom-settings/)
+* [OTA over MQTT](https://labodj.github.io/homie-esp8266/others/ota-configuration-updates/)
+* [Magic bytes](https://labodj.github.io/homie-esp8266/advanced-usage/magic-bytes/)
 * Pretty [straightforward sketches](./examples), a simple light for example: (**TODO**: adapt to V3)
 
 ```c++
