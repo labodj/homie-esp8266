@@ -69,6 +69,29 @@ reliable OTA behavior. That flag is not part of the maintained ESP32 path.
 
 If you need reproducible builds, pin a commit SHA instead of the branch name in `lib_deps`.
 
+### Compile-time tuning
+
+This fork exposes a small number of internal queue sizes as build-time overrides
+for advanced consumers that need to absorb larger MQTT bursts during startup or
+reconnect.
+
+The currently supported override is:
+
+```ini
+build_flags =
+  -D HOMIE_PENDING_MQTT_ACK_QUEUE_SIZE=64
+```
+
+Default:
+
+```ini
+-D HOMIE_PENDING_MQTT_ACK_QUEUE_SIZE=16
+```
+
+This controls the internal queue that stores MQTT publish acknowledgement events
+before `BootNormal::loop()` dispatches them. Increase it if your device emits a
+large Homie advertisement burst and logs `MQTT ACK queue full`.
+
 ## Features
 
 * Automatic connection/reconnection to Wi-Fi/MQTT
@@ -125,9 +148,3 @@ Fork-specific behavior already documented in this repository includes:
 * ESP32-aware `$implementation` reporting (`esp32` on ESP32 builds, `esp8266` on ESP8266 builds)
 * OTA delivery hardening for QoS 1 retransmits and MQTT disconnects
 * fork-specific statistics such as `$stats/uptimewifi` and `$stats/uptimemqtt`
-
-## Donate
-
-I am a student and maintaining Homie for ESP8266 takes time. **I am not in need and I will continue to maintain this project as much as I can even without donations**. Consider this as a way to tip the project if you like it. :wink:
-
-[![Donate button](https://www.paypal.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=JSGTYJPMNRC74)

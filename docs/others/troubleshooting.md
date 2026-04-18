@@ -35,3 +35,19 @@ The framework needs to work continuously (ie. `Homie.loop()` needs to be called 
 ## 4. My device resets itself without me doing anything?
 
 You have probably connected a sensor to the default reset pin of the framework (D3 on NodeMCU, GPIO0 on other boards). See [Resetting](../advanced-usage/resetting.md).
+
+## 5. I see `MQTT ACK queue full` during startup or reconnect
+
+This means the device is receiving MQTT publish acknowledgements faster than
+Homie can dispatch the related internal events.
+
+On this maintained fork you can increase the internal acknowledgement queue
+size with:
+
+```ini
+build_flags =
+  -D HOMIE_PENDING_MQTT_ACK_QUEUE_SIZE=64
+```
+
+See [Compiler-Flags](../advanced-usage/compiler-flags.md) for details. Only
+increase it if you actually see this warning in practice.

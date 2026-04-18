@@ -36,6 +36,29 @@ build_flags =
 
 The additional flag `PIO_FRAMEWORK_ARDUINO_LWIP2_HIGHER_BANDWIDTH` is necessary for SSL encryption to work properly.
 
+**HOMIE_PENDING_MQTT_ACK_QUEUE_SIZE**
+
+This maintained fork exposes a build-time override for the internal queue that
+stores MQTT publish acknowledgement events before `BootNormal::loop()`
+dispatches them.
+
+Use it when the device emits a large retained advertisement burst and logs
+`MQTT ACK queue full` during startup or reconnect:
+
+```
+build_flags =
+  -D HOMIE_PENDING_MQTT_ACK_QUEUE_SIZE=64
+```
+
+Default:
+
+```
+-D HOMIE_PENDING_MQTT_ACK_QUEUE_SIZE=16
+```
+
+This is an advanced tuning option. Increase it only if the default queue size is
+not sufficient for your device and broker timing.
+
 ## ESP8266-only networking flags
 
 Flags such as `PIO_FRAMEWORK_ARDUINO_LWIP2_LOW_MEMORY` and

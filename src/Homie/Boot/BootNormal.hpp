@@ -12,6 +12,10 @@
 #define HOMIE_MDNS 1
 #endif
 
+#ifndef HOMIE_PENDING_MQTT_ACK_QUEUE_SIZE
+#define HOMIE_PENDING_MQTT_ACK_QUEUE_SIZE 16
+#endif
+
 
 #ifdef ESP32
 #include <WiFi.h>
@@ -51,7 +55,11 @@ class BootNormal : public Boot {
 
  private:
   static constexpr uint8_t PENDING_MQTT_MESSAGE_QUEUE_SIZE = 16;
-  static constexpr uint8_t PENDING_MQTT_ACK_QUEUE_SIZE = 16;
+  static_assert(HOMIE_PENDING_MQTT_ACK_QUEUE_SIZE > 0,
+                "HOMIE_PENDING_MQTT_ACK_QUEUE_SIZE must be greater than zero");
+  static_assert(HOMIE_PENDING_MQTT_ACK_QUEUE_SIZE <= 255,
+                "HOMIE_PENDING_MQTT_ACK_QUEUE_SIZE must fit in uint8_t");
+  static constexpr uint8_t PENDING_MQTT_ACK_QUEUE_SIZE = HOMIE_PENDING_MQTT_ACK_QUEUE_SIZE;
 
   struct AdvertisementProgress {
     bool done = false;
