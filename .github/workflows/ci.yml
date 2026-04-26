@@ -1,0 +1,100 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - develop
+      - master
+  pull_request:
+
+jobs:
+  platformio:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: esp8266-default
+            board: nodemcuv2
+            platform: ""
+            build_flags: -DPIO_FRAMEWORK_ARDUINO_LWIP2_LOW_MEMORY
+          - name: esp8266-no-config
+            board: nodemcuv2
+            platform: ""
+            build_flags: -DPIO_FRAMEWORK_ARDUINO_LWIP2_LOW_MEMORY -DHOMIE_CONFIG=0
+          - name: esp8266-no-mdns
+            board: nodemcuv2
+            platform: ""
+            build_flags: -DPIO_FRAMEWORK_ARDUINO_LWIP2_LOW_MEMORY -DHOMIE_MDNS=0
+          - name: esp8266-queue-min
+            board: nodemcuv2
+            platform: ""
+            build_flags: -DPIO_FRAMEWORK_ARDUINO_LWIP2_LOW_MEMORY -DHOMIE_PENDING_MQTT_ACK_QUEUE_SIZE=1 -DHOMIE_PENDING_MQTT_MESSAGE_QUEUE_SIZE=1
+          - name: esp8266-queue-large
+            board: nodemcuv2
+            platform: ""
+            build_flags: -DPIO_FRAMEWORK_ARDUINO_LWIP2_LOW_MEMORY -DHOMIE_PENDING_MQTT_ACK_QUEUE_SIZE=64 -DHOMIE_PENDING_MQTT_MESSAGE_QUEUE_SIZE=32
+          - name: esp8266-littlefs-only
+            board: nodemcuv2
+            platform: ""
+            build_flags: -DPIO_FRAMEWORK_ARDUINO_LWIP2_LOW_MEMORY -DHOMIE_USE_LITTLEFS=1
+          - name: esp8266-littlefs-migration
+            board: nodemcuv2
+            platform: ""
+            build_flags: -DPIO_FRAMEWORK_ARDUINO_LWIP2_LOW_MEMORY -DHOMIE_USE_LITTLEFS=1 -DHOMIE_MIGRATE_SPIFFS_TO_LITTLEFS=1
+          - name: esp8266-esp01-no-config
+            board: esp01_1m
+            platform: ""
+            build_flags: -DPIO_FRAMEWORK_ARDUINO_LWIP2_LOW_MEMORY -DHOMIE_CONFIG=0 -DHOMIE_MDNS=0
+          - name: esp32-default
+            board: esp32dev
+            platform: ""
+            build_flags: ""
+          - name: esp32-no-config-no-mdns
+            board: esp32dev
+            platform: ""
+            build_flags: -DHOMIE_CONFIG=0 -DHOMIE_MDNS=0
+          - name: esp32-littlefs-only
+            board: esp32dev
+            platform: ""
+            build_flags: -DHOMIE_USE_LITTLEFS=1
+          - name: esp32-littlefs-migration
+            board: esp32dev
+            platform: ""
+            build_flags: -DHOMIE_USE_LITTLEFS=1 -DHOMIE_MIGRATE_SPIFFS_TO_LITTLEFS=1
+          - name: esp32-pioarduino
+            board: esp32dev
+            platform: https://github.com/pioarduino/platform-espressif32/releases/download/stable/platform-espressif32.zip
+            build_flags: ""
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install PlatformIO
+        run: python -m pip install --upgrade platformio
+      - name: Build Ping example
+        env:
+          PLATFORMIO_BUILD_FLAGS: ${{ matrix.build_flags }}
+        run: |
+          args=(--lib=. --board "${{ matrix.board }}" -O "lib_compat_mode=strict")
+          if [ -n "${{ matrix.platform }}" ]; then
+            args+=(-O "platform=${{ matrix.platform }}")
+          fi
+          pio ci "${args[@]}" examples/Ping/src
+
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install PlatformIO
+        run: python -m pip install --upgrade platformio
+      - name: Validate PlatformIO package
+        run: pio pkg pack
+      - name: Validate OTA updater syntax
+        run: python -m py_compile scripts/ota_updater/ota_updater.py
+      - name: Run OTA updater tests
+        run: python scripts/ota_updater/test_ota_updater.py
