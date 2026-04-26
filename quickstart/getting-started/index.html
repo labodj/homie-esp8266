@@ -18,7 +18,7 @@
         <link rel="prev" href="../what-is-it/">
       
       
-        <link rel="next" href="../../advanced-usage/built-in-led/">
+        <link rel="next" href="../platformio-pioarduino/">
       
       
         
@@ -517,6 +517,34 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../platformio-pioarduino/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    PlatformIO / PioArduino
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -1195,6 +1223,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../others/fork-differences/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Maintained fork differences
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../others/ota-configuration-updates/" class="md-nav__link">
         
   
@@ -1587,13 +1643,17 @@
 
   <h1>Getting started</h1>
 
-<p>This <em>Getting Started</em> guide assumes you have an ESP8266 board with an user-configurable LED, and an user programmable button, like a NodeMCU DevKit 1.0, for example. These restrictions can be lifted (see next pages).</p>
+<p>This <em>Getting Started</em> guide assumes you have a board with a user-configurable LED
+and a user-programmable button, like a NodeMCU DevKit 1.0 or a typical ESP32 dev
+board. These restrictions can be lifted (see next pages).</p>
 <p>This page intentionally stays close to the original upstream guide, so several examples remain ESP8266-centric. This fork is maintained primarily against current ESP32 Arduino cores while keeping the Homie 3.0.1 API and flow as close as possible to the original library.</p>
-<p>The maintained installation path for this fork is PlatformIO with a git dependency. The Arduino IDE / ZIP flow below is legacy upstream documentation and is not the recommended path for this fork.</p>
-<p>To use Homie for ESP8266, you will need:</p>
+<p>The maintained installation path for this fork is PlatformIO with a git dependency. The Arduino IDE / ZIP flow below is legacy upstream documentation and is not the recommended path for this fork.
+See <a href="../platformio-pioarduino/">PlatformIO / PioArduino</a> for the maintained ESP32
+and ESP8266 project configuration examples.</p>
+<p>To use this fork, you will typically need:</p>
 <ul>
-<li>An ESP8266</li>
-<li>The Arduino IDE for ESP8266 (version 2.3.0 minimum)</li>
+<li>An ESP32 or ESP8266 board</li>
+<li>PlatformIO for the maintained path, or the Arduino IDE for legacy upstream-style setups</li>
 <li>Basic knowledge of the Arduino environment (upload a sketch, import libraries, ...)</li>
 <li>To understand <a href="https://github.com/homieiot/convention">the Homie convention</a></li>
 </ul>
@@ -1656,7 +1716,7 @@ of this fork. If you use ESP8266, keep the ESP8266 platform and add
 <div class="admonition tip">
 <p class="admonition-title">LED</p>
 <p><img alt="Solid LED" src="../../assets/led_solid.gif" />
-If you upload this sketch, you will notice the LED of the ESP8266 will light on. This is because you are in <code>configuration</code> mode.</p>
+If you upload this sketch, you will notice the LED on the board will light on. This is because you are in <code>configuration</code> mode.</p>
 </div>
 <p>Homie for ESP8266 has 3 modes of operation:</p>
 <ol>
@@ -1664,7 +1724,7 @@ If you upload this sketch, you will notice the LED of the ESP8266 will light on.
 <p>By default, the <code>configuration</code> mode is the initial one. It spawns an AP and an HTTP webserver exposing a JSON API. To interact with it, you have to connect to the AP. Then, an HTTP client can get the list of available Wi-Fi networks and send the configuration (like the Wi-Fi SSID, the Wi-Fi password, some settings...). Once the device receives the credentials, it boots into <code>normal</code> mode.</p>
 </li>
 <li>
-<p>The <code>normal</code> mode is the mode the device will be most of the time. It connects to the Wi-Fi, to the MQTT, it sends initial informations to the Homie server (like the local IP, the version of the firmware currently running...) and it subscribes to the needed MQTT topics. It automatically reconnects to the Wi-Fi and the MQTT when the connection is lost. It also handle the OTA. The device can return to <code>configuration</code> mode in different ways (press of a button or custom function, see <a href="../../advanced-usage/resetting/">Resetting</a>).</p>
+<p>The <code>normal</code> mode is the mode the device will be in most of the time. It connects to Wi-Fi and MQTT, sends initial information to the Homie server (like the local IP and the version of the firmware currently running), and subscribes to the needed MQTT topics. It automatically reconnects to Wi-Fi and MQTT when the connection is lost. It also handles OTA. The device can return to <code>configuration</code> mode in different ways (button press or custom function, see <a href="../../advanced-usage/resetting/">Resetting</a>).</p>
 </li>
 <li>
 <p>The <code>standalone</code> mode. See <a href="../../advanced-usage/standalone-mode/">Standalone mode</a>.</p>
@@ -1701,7 +1761,7 @@ Faster when connecting to the MQTT broker</p>
 <li>It automatically connects to the Wi-Fi and MQTT broker. No more network boilerplate code</li>
 <li>It exposes the Homie device on MQTT (as <code>&lt;base topic&gt;/&lt;device ID&gt;</code>, e.g. <code>homie/c631f278df44</code>)</li>
 <li>It subscribes to the special OTA and configuration topics, automatically flashing a sketch if available or updating the configuration</li>
-<li>It checks for a button press on the ESP8266, to return to <code>configuration</code> mode</li>
+<li>It checks for the configured reset trigger on the board to return to <code>configuration</code> mode</li>
 </ul>
 <h2 id="creating-an-useful-sketch">Creating an useful sketch<a class="headerlink" href="#creating-an-useful-sketch" title="Permanent link">&para;</a></h2>
 <p>Now that we understand how Homie for ESP8266 works, let's create an useful sketch. We want to create a smart light.</p>

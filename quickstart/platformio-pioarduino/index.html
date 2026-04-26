@@ -12,13 +12,13 @@
         <meta name="author" content="Marvin ROGER, Jacopo Labardi">
       
       
-        <link rel="canonical" href="https://labodj.github.io/homie-esp8266/advanced-usage/ui-bundle/">
+        <link rel="canonical" href="https://labodj.github.io/homie-esp8266/quickstart/platformio-pioarduino/">
       
       
-        <link rel="prev" href="../miscellaneous/">
+        <link rel="prev" href="../getting-started/">
       
       
-        <link rel="next" href="../../configuration/json-configuration-file/">
+        <link rel="next" href="../../advanced-usage/built-in-led/">
       
       
         
@@ -29,7 +29,7 @@
     
     
       
-        <title>UI Bundle - Homie for ESP8266</title>
+        <title>PlatformIO / PioArduino - Homie for ESP8266</title>
       
     
     
@@ -77,6 +77,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#platformio-pioarduino" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -108,7 +113,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              UI Bundle
+              PlatformIO / PioArduino
             
           </span>
         </div>
@@ -251,18 +256,20 @@
       
   
   
+    
   
   
+  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
         
           
           <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
@@ -283,7 +290,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_2">
             <span class="md-nav__icon md-icon"></span>
             
@@ -301,7 +308,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../quickstart/what-is-it/" class="md-nav__link">
+      <a href="../what-is-it/" class="md-nav__link">
         
   
   
@@ -329,7 +336,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../quickstart/getting-started/" class="md-nav__link">
+      <a href="../getting-started/" class="md-nav__link">
         
   
   
@@ -354,10 +361,19 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../quickstart/platformio-pioarduino/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -373,6 +389,7 @@
   
 
       </a>
+      
     </li>
   
 
@@ -389,20 +406,18 @@
       
   
   
-    
   
   
-  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
         
           
           <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
@@ -423,7 +438,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_3">
             <span class="md-nav__icon md-icon"></span>
             
@@ -441,7 +456,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../built-in-led/" class="md-nav__link">
+      <a href="../../advanced-usage/built-in-led/" class="md-nav__link">
         
   
   
@@ -469,7 +484,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../branding/" class="md-nav__link">
+      <a href="../../advanced-usage/branding/" class="md-nav__link">
         
   
   
@@ -497,7 +512,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../events/" class="md-nav__link">
+      <a href="../../advanced-usage/events/" class="md-nav__link">
         
   
   
@@ -525,7 +540,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../logging/" class="md-nav__link">
+      <a href="../../advanced-usage/logging/" class="md-nav__link">
         
   
   
@@ -553,7 +568,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../streaming-operator/" class="md-nav__link">
+      <a href="../../advanced-usage/streaming-operator/" class="md-nav__link">
         
   
   
@@ -581,7 +596,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../input-handlers/" class="md-nav__link">
+      <a href="../../advanced-usage/input-handlers/" class="md-nav__link">
         
   
   
@@ -609,7 +624,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../broadcast/" class="md-nav__link">
+      <a href="../../advanced-usage/broadcast/" class="md-nav__link">
         
   
   
@@ -637,7 +652,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../custom-settings/" class="md-nav__link">
+      <a href="../../advanced-usage/custom-settings/" class="md-nav__link">
         
   
   
@@ -665,7 +680,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../resetting/" class="md-nav__link">
+      <a href="../../advanced-usage/resetting/" class="md-nav__link">
         
   
   
@@ -693,7 +708,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../compiler-flags/" class="md-nav__link">
+      <a href="../../advanced-usage/compiler-flags/" class="md-nav__link">
         
   
   
@@ -721,7 +736,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../standalone-mode/" class="md-nav__link">
+      <a href="../../advanced-usage/standalone-mode/" class="md-nav__link">
         
   
   
@@ -749,7 +764,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../magic-bytes/" class="md-nav__link">
+      <a href="../../advanced-usage/magic-bytes/" class="md-nav__link">
         
   
   
@@ -777,7 +792,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../range-properties/" class="md-nav__link">
+      <a href="../../advanced-usage/range-properties/" class="md-nav__link">
         
   
   
@@ -805,7 +820,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../deep-sleep/" class="md-nav__link">
+      <a href="../../advanced-usage/deep-sleep/" class="md-nav__link">
         
   
   
@@ -833,7 +848,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../miscellaneous/" class="md-nav__link">
+      <a href="../../advanced-usage/miscellaneous/" class="md-nav__link">
         
   
   
@@ -858,17 +873,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../advanced-usage/ui-bundle/" class="md-nav__link">
         
   
   
@@ -884,7 +892,6 @@
   
 
       </a>
-      
     </li>
   
 
@@ -1330,6 +1337,8 @@
   
   
   
+    
+  
   
 </nav>
                   </div>
@@ -1349,10 +1358,52 @@
   
 
 
-  <h1>UI Bundle</h1>
-
-<p>The Homie for ESP8266 configuration AP implements a captive portal. When connecting to it, you will be prompted to connect, and your Web browser will open. By default, it will show an empty page with a text saying to install an <code>ui_bundle.gz</code> file.</p>
-<p>Indeed, you can serve the <a href="https://labodj.github.io/homie-esp8266/configurators/v2/">configuration UI</a> directly from your device. See <a href="https://github.com/labodj/homie-esp8266/tree/develop/data/homie">the data/homie folder</a>.</p>
+<h1 id="platformio-pioarduino">PlatformIO / PioArduino<a class="headerlink" href="#platformio-pioarduino" title="Permanent link">&para;</a></h1>
+<p>This fork is maintained primarily through PlatformIO git dependencies. For ESP32
+projects that track current Arduino cores, use the PioArduino platform package:</p>
+<div class="highlight"><pre><span></span><code><span class="k">[env:esp32dev]</span>
+<span class="na">platform</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">https://github.com/pioarduino/platform-espressif32/releases/download/stable/platform-espressif32.zip</span>
+<span class="na">board</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">esp32dev</span>
+<span class="na">framework</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">arduino</span>
+<span class="na">lib_compat_mode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">strict</span>
+<span class="na">lib_deps</span><span class="w"> </span><span class="o">=</span>
+<span class="w">  </span><span class="na">https</span><span class="o">:</span><span class="s">//github.com/labodj/homie-esp8266.git</span><span class="c1">#develop</span>
+</code></pre></div>
+<p>For reproducible firmware builds, pin the Homie dependency to a commit SHA
+instead of <code>develop</code>.</p>
+<p>ESP8266 projects should keep the ESP8266 PlatformIO platform:</p>
+<div class="highlight"><pre><span></span><code><span class="k">[env:nodemcuv2]</span>
+<span class="na">platform</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">espressif8266</span>
+<span class="na">board</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">nodemcuv2</span>
+<span class="na">framework</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">arduino</span>
+<span class="na">lib_compat_mode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">strict</span>
+<span class="na">build_flags</span><span class="w"> </span><span class="o">=</span>
+<span class="w">  </span><span class="na">-D PIO_FRAMEWORK_ARDUINO_LWIP2_LOW_MEMORY</span>
+<span class="na">lib_deps</span><span class="w"> </span><span class="o">=</span>
+<span class="w">  </span><span class="na">https</span><span class="o">:</span><span class="s">//github.com/labodj/homie-esp8266.git</span><span class="c1">#develop</span>
+</code></pre></div>
+<p><code>lib_compat_mode = strict</code> is recommended because the async networking
+dependencies are platform-specific. Without strict compatibility, PlatformIO may
+try to compile ESP32 or RP2040 async TCP dependencies for ESP8266 builds, or the
+other way around.</p>
+<p>The library package pins its internal AsyncMqttClient dependency to a commit hash
+instead of a moving tag so dependency resolution stays repeatable across CI and
+developer machines.</p>
+<p>SPIFFS remains the default storage backend for compatibility with existing
+devices. To build and upload LittleFS images, configure both PlatformIO and
+Homie:</p>
+<div class="highlight"><pre><span></span><code><span class="na">board_build.filesystem</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">littlefs</span>
+<span class="na">build_flags</span><span class="w"> </span><span class="o">=</span>
+<span class="w">  </span><span class="na">-D HOMIE_USE_LITTLEFS</span><span class="o">=</span><span class="s">1</span>
+</code></pre></div>
+<p>For already provisioned SPIFFS devices, first OTA a temporary migration firmware
+that adds <code>-D HOMIE_MIGRATE_SPIFFS_TO_LITTLEFS=1</code>. After one successful boot,
+OTA a normal LittleFS-only firmware without the migration flag. The migration
+only covers the small state needed to keep a provisioned device online; upload
+the UI bundle again with <code>pio run --target uploadfs</code> because it is intentionally
+not copied through RAM during migration.</p>
+<p>See <a href="../../others/fork-differences/">Maintained fork differences</a> for the full
+compatibility policy and the exact fork-only behavior.</p>
 
 
 

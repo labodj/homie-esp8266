@@ -355,6 +355,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../quickstart/platformio-pioarduino/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    PlatformIO / PioArduino
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1030,6 +1058,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../fork-differences/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Maintained fork differences
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../ota-configuration-updates/" class="md-nav__link">
         
   
@@ -1317,8 +1373,8 @@
 </ul>
 <h1 id="configuration">Configuration<a class="headerlink" href="#configuration" title="Permanent link">&para;</a></h1>
 <ul>
-<li><code>$implementation/config</code>: The <code>configuration.json</code> is published there, with <code>wifi.password</code>, <code>mqtt.username</code> and <code>mqtt.password</code> fields stripped</li>
-<li><code>$implementation/config/set</code>: You can update the <code>configuration.json</code> by sending incremental JSON on this topic</li>
+<li><code>$implementation/config</code>: The <code>config.json</code> is published there, with <code>wifi.password</code>, <code>mqtt.username</code> and <code>mqtt.password</code> fields stripped</li>
+<li><code>$implementation/config/set</code>: You can update the <code>config.json</code> by sending incremental JSON on this topic</li>
 </ul>
 <h1 id="ota">OTA<a class="headerlink" href="#ota" title="Permanent link">&para;</a></h1>
 <ul>
@@ -1371,11 +1427,24 @@
 <li>out-of-sequence chunks fail explicitly instead of silently corrupting the update</li>
 <li>if MQTT disconnects during OTA, the update is aborted cleanly and must be retried</li>
 </ul>
+<h1 id="filesystem">Filesystem<a class="headerlink" href="#filesystem" title="Permanent link">&para;</a></h1>
+<p>SPIFFS remains the default storage backend for compatibility with existing
+devices. LittleFS is selected only when <code>HOMIE_USE_LITTLEFS=1</code> is compiled into
+the firmware. A temporary migration build can add
+<code>HOMIE_MIGRATE_SPIFFS_TO_LITTLEFS=1</code> to copy <code>/homie/config.json</code> and
+<code>/homie/NEXTMODE</code> from SPIFFS to LittleFS on first boot.</p>
+<p>The UI bundle is not migrated because SPIFFS and LittleFS share the same flash
+area and the bundle can be too large to hold in RAM while the destination
+filesystem is formatted.</p>
 <h1 id="statistics">Statistics<a class="headerlink" href="#statistics" title="Permanent link">&para;</a></h1>
-<p>The fork publishes the standard Homie statistics plus two additional retained topics:</p>
+<p>The fork publishes the standard Homie statistics plus these additional retained
+topics:</p>
 <ul>
+<li><code>$stats/freeheap</code>: current free heap in bytes</li>
 <li><code>$stats/uptimewifi</code>: seconds since Wi-Fi connectivity was established</li>
 <li><code>$stats/uptimemqtt</code>: seconds since MQTT connectivity was established</li>
+<li><code>$stats/mqttackdropped</code>: cumulative MQTT publish acknowledgement queue drops</li>
+<li><code>$stats/mqttinbounddropped</code>: cumulative deferred inbound MQTT queue drops</li>
 </ul>
 
 

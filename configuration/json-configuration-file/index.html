@@ -350,6 +350,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../quickstart/platformio-pioarduino/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    PlatformIO / PioArduino
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1033,6 +1061,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../others/fork-differences/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Maintained fork differences
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../others/ota-configuration-updates/" class="md-nav__link">
         
   
@@ -1295,7 +1351,7 @@
 
   <h1>JSON configuration file</h1>
 
-<p>To configure your device, you have two choices: manually flashing the configuration file to the SPIFFS at the <code>/homie/config.json</code> (see <a href="http://esp8266.github.io/Arduino/versions/2.3.0/doc/filesystem.html#uploading-files-to-file-system">Uploading files to file system</a>), so you can bypass the <code>configuration</code> mode, or send it through the <a href="../http-json-api/">HTTP JSON API</a>.</p>
+<p>To configure your device, you have two choices: manually flashing the configuration file to the configured filesystem at <code>/homie/config.json</code> (SPIFFS by default, or LittleFS when <code>HOMIE_USE_LITTLEFS=1</code>), so you can bypass the <code>configuration</code> mode, or send it through the <a href="../http-json-api/">HTTP JSON API</a>. When switching an already provisioned device to LittleFS, use a temporary build with <code>HOMIE_MIGRATE_SPIFFS_TO_LITTLEFS=1</code> to migrate this file from SPIFFS on first boot.</p>
 <p>Below is the format of the JSON configuration you will have to provide:</p>
 <div class="highlight"><pre><span></span><code><span class="p">{</span>
 <span class="w">  </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;The kitchen light&quot;</span><span class="p">,</span>

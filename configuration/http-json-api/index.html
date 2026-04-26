@@ -18,7 +18,7 @@
         <link rel="prev" href="../json-configuration-file/">
       
       
-        <link rel="next" href="../../others/ota-configuration-updates/">
+        <link rel="next" href="../../others/fork-differences/">
       
       
         
@@ -342,6 +342,34 @@
     
   
     Getting started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../quickstart/platformio-pioarduino/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    PlatformIO / PioArduino
   
 
     
@@ -1040,6 +1068,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../others/fork-differences/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Maintained fork differences
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../others/ota-configuration-updates/" class="md-nav__link">
         
   
@@ -1305,7 +1361,7 @@
 <p>When in <code>configuration</code> mode, the device exposes a HTTP JSON API to send the configuration to it. When you send a valid configuration to the <code>/config</code> endpoint, the configuration file is stored in the filesystem at <code>/homie/config.json</code>.</p>
 <p>If you don't want to mess with JSON, you have a Web UI / app available:</p>
 <ul>
-<li>At <a href="http://homieiot.github.io/homie-esp8266/configurators/v2/">http://homieiot.github.io/homie-esp8266/configurators/v2/</a></li>
+<li>At <a href="https://labodj.github.io/homie-esp8266/configurators/v2/">https://labodj.github.io/homie-esp8266/configurators/v2/</a></li>
 <li>As an <a href="https://build.phonegap.com/apps/1906578/share">Android app</a></li>
 </ul>
 <p><strong>Quick instructions to use the Web UI / app</strong>:</p>
@@ -1338,37 +1394,38 @@ If anything goes wrong, a return code != 2xx will be returned, with a JSON <code
 <summary>GET <code>/device-info</code></summary>
 </details>
 <p>Get some information on the device.</p>
-<div class="codehilite"><pre><span></span><code><span class="c1">## Response</span>
+<div class="codehilite"><pre><span></span><code><span class="gu">##</span> Response
 
-<span class="n n-Quoted">`200 OK (application/json)`</span>
+<span class="sb">`200 OK (application/json)`</span>
 
-<span class="n n-Quoted">`</span><span class="n n-Quoted n-Quoted-Escape">``</span><span class="n n-Quoted">json</span>
-<span class="n n-Quoted">{</span>
-<span class="n n-Quoted">  &quot;hardware_device_id&quot;: &quot;52a8fa5d&quot;,</span>
-<span class="n n-Quoted">  &quot;homie_esp8266_version&quot;: &quot;2.0.0&quot;,</span>
-<span class="n n-Quoted">  &quot;firmware&quot;: {</span>
-<span class="n n-Quoted">    &quot;name&quot;: &quot;awesome-device&quot;,</span>
-<span class="n n-Quoted">    &quot;version&quot;: &quot;1.0.0&quot;</span>
-<span class="n n-Quoted">  },</span>
-<span class="n n-Quoted">  &quot;nodes&quot;: [</span>
-<span class="n n-Quoted">    {</span>
-<span class="n n-Quoted">      &quot;id&quot;: &quot;light&quot;,</span>
-<span class="n n-Quoted">      &quot;type&quot;: &quot;light&quot;</span>
-<span class="n n-Quoted">    }</span>
-<span class="n n-Quoted">  ],</span>
-<span class="n n-Quoted">  &quot;settings&quot;: [</span>
-<span class="n n-Quoted">    {</span>
-<span class="n n-Quoted">      &quot;name&quot;: &quot;timeout&quot;,</span>
-<span class="n n-Quoted">      &quot;description&quot;: &quot;Timeout in seconds&quot;,</span>
-<span class="n n-Quoted">      &quot;type&quot;: &quot;ulong&quot;,</span>
-<span class="n n-Quoted">      &quot;required&quot;: false,</span>
-<span class="n n-Quoted">      &quot;default&quot;: 10</span>
-<span class="n n-Quoted">    }</span>
-<span class="n n-Quoted">  ]</span>
-<span class="n n-Quoted">}</span>
-<span class="n n-Quoted n-Quoted-Escape">``</span><span class="n n-Quoted">`</span>
+```json
+{
+  &quot;hardware_device_id&quot;: &quot;52a8fa5d&quot;,
+</code></pre></div>
 
-<span class="n n-Quoted">`type`</span><span class="w"> </span><span class="n">can</span><span class="w"> </span><span class="n">be</span><span class="w"> </span><span class="k">one</span><span class="w"> </span><span class="k">of</span><span class="w"> </span><span class="n">the</span><span class="w"> </span><span class="k">following</span><span class="o">:</span>
+<p>"homie_esp8266_version": "3.2.0",
+      "firmware": {
+        "name": "awesome-device",
+        "version": "1.0.0"
+      },
+      "nodes": [
+        {
+          "id": "light",
+          "type": "light"
+        }
+      ],
+      "settings": [
+        {
+          "name": "timeout",
+          "description": "Timeout in seconds",
+          "type": "ulong",
+          "required": false,
+          "default": 10
+        }
+      ]
+    }
+    ```</p>
+<div class="codehilite"><pre><span></span><code><span class="n n-Quoted">`type`</span><span class="w"> </span><span class="n">can</span><span class="w"> </span><span class="n">be</span><span class="w"> </span><span class="k">one</span><span class="w"> </span><span class="k">of</span><span class="w"> </span><span class="n">the</span><span class="w"> </span><span class="k">following</span><span class="o">:</span>
 
 <span class="o">*</span><span class="w"> </span><span class="n n-Quoted">`bool`</span><span class="o">:</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="kt">boolean</span>
 <span class="o">*</span><span class="w"> </span><span class="n n-Quoted">`ulong`</span><span class="o">:</span><span class="w"> </span><span class="n">an</span><span class="w"> </span><span class="k">unsigned</span><span class="w"> </span><span class="kt">long</span>
@@ -1527,7 +1584,7 @@ If anything goes wrong, a return code != 2xx will be returned, with a JSON <code
 <p>Enable/disable the device to act as a transparent proxy between AP and Station networks.</p>
 <div class="codehilite"><pre><span></span><code><span class="k">All</span><span class="w"> </span><span class="n">requests</span><span class="w"> </span><span class="n">that</span><span class="w"> </span><span class="n">don</span><span class="s1">&#39;t collide with existing API paths will be bridged to the destination according to the `Host` HTTP header. The destination host is called using the existing Wi-Fi connection (established after a `PUT /wifi/connect`) and all contents are bridged back to the connection made to the AP side.</span>
 
-<span class="s1">This feature can be used to help captive portals to perform cloud API calls during device enrollment using the ESP8266 Wi-Fi AP connection without having to patch the Homie firmware. By using the transparent proxy, all operations can be performed by the custom JavaScript running on the browser (in SPIFFS location `/data/homie/ui_bundle.gz`).</span>
+<span class="s1">This feature can be used to help captive portals to perform cloud API calls during device enrollment using the ESP8266 Wi-Fi AP connection without having to patch the Homie firmware. By using the transparent proxy, all operations can be performed by the custom JavaScript running on the browser (in the configured filesystem location `/data/homie/ui_bundle.gz`; SPIFFS by default).</span>
 
 <span class="s1">HTTPS is not supported.</span>
 

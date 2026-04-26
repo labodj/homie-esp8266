@@ -355,6 +355,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../quickstart/platformio-pioarduino/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    PlatformIO / PioArduino
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1030,6 +1058,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../fork-differences/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Maintained fork differences
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../ota-configuration-updates/" class="md-nav__link">
         
   
@@ -1571,12 +1627,21 @@ If you want to define the name or version outside the function call, you need to
 <li><strong><code>property</code></strong>: Property to advertise</li>
 </ul>
 <p>This returns a reference to <code>PropertyInterface</code> on which you can call:</p>
-<div class="highlight"><pre><span></span><code><span class="kt">void</span><span class="w"> </span><span class="nf">settable</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">function</span><span class="o">&lt;</span><span class="kt">bool</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">HomieRange</span><span class="o">&amp;</span><span class="w"> </span><span class="n">range</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">String</span><span class="o">&amp;</span><span class="w"> </span><span class="n">value</span><span class="p">)</span><span class="o">&gt;</span><span class="w"> </span><span class="n">handler</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">);</span>
+<div class="highlight"><pre><span></span><code><span class="n">PropertyInterface</span><span class="o">&amp;</span><span class="w"> </span><span class="nf">setName</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="o">*</span><span class="w"> </span><span class="n">name</span><span class="p">);</span>
+<span class="n">PropertyInterface</span><span class="o">&amp;</span><span class="w"> </span><span class="nf">setUnit</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="o">*</span><span class="w"> </span><span class="n">unit</span><span class="p">);</span>
+<span class="n">PropertyInterface</span><span class="o">&amp;</span><span class="w"> </span><span class="nf">setDatatype</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="o">*</span><span class="w"> </span><span class="n">datatype</span><span class="p">);</span>
+<span class="n">PropertyInterface</span><span class="o">&amp;</span><span class="w"> </span><span class="nf">setFormat</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="o">*</span><span class="w"> </span><span class="n">format</span><span class="p">);</span>
+<span class="n">PropertyInterface</span><span class="o">&amp;</span><span class="w"> </span><span class="nf">setRetained</span><span class="p">(</span><span class="kt">bool</span><span class="w"> </span><span class="n">retained</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">true</span><span class="p">);</span>
+<span class="n">PropertyInterface</span><span class="o">&amp;</span><span class="w"> </span><span class="nf">settable</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">function</span><span class="o">&lt;</span><span class="kt">bool</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">HomieRange</span><span class="o">&amp;</span><span class="w"> </span><span class="n">range</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">String</span><span class="o">&amp;</span><span class="w"> </span><span class="n">value</span><span class="p">)</span><span class="o">&gt;</span><span class="w"> </span><span class="n">handler</span><span class="p">);</span>
 </code></pre></div>
-<p>Make the property settable.</p>
+<p>Set the advertised property metadata and optionally make the property settable.</p>
 <ul>
 <li><strong><code>handler</code></strong>: Optional. Input handler of the property</li>
 </ul>
+<p><code>setRetained(false)</code> marks the advertised property as non-retained and makes
+<code>HomieNode::setProperty()</code> start from a non-retained publish default for that
+property. You can still override an individual send with
+<code>SendingPromise::setRetained()</code>.</p>
 <div class="highlight"><pre><span></span><code><span class="n">SendingPromise</span><span class="o">&amp;</span><span class="w"> </span><span class="nf">setProperty</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">String</span><span class="o">&amp;</span><span class="w"> </span><span class="n">property</span><span class="p">);</span>
 </code></pre></div>
 <p>Using this function, you can set the value of a node property, like a temperature for example.</p>
@@ -1585,7 +1650,7 @@ If you want to define the name or version outside the function call, you need to
 </ul>
 <p>This returns a reference to <code>SendingPromise</code>, on which you can call:</p>
 <div class="highlight"><pre><span></span><code><span class="n">SendingPromise</span><span class="o">&amp;</span><span class="w"> </span><span class="nf">setQos</span><span class="p">(</span><span class="kt">uint8_t</span><span class="w"> </span><span class="n">qos</span><span class="p">);</span><span class="w">  </span><span class="c1">// defaults to 1</span>
-<span class="n">SendingPromise</span><span class="o">&amp;</span><span class="w"> </span><span class="nf">setRetained</span><span class="p">(</span><span class="kt">bool</span><span class="w"> </span><span class="n">retained</span><span class="p">);</span><span class="w">  </span><span class="c1">// defaults to true</span>
+<span class="n">SendingPromise</span><span class="o">&amp;</span><span class="w"> </span><span class="nf">setRetained</span><span class="p">(</span><span class="kt">bool</span><span class="w"> </span><span class="n">retained</span><span class="p">);</span><span class="w">  </span><span class="c1">// defaults to the advertised property retention</span>
 <span class="n">SendingPromise</span><span class="o">&amp;</span><span class="w"> </span><span class="nf">setSetRetained</span><span class="p">(</span><span class="kt">bool</span><span class="w"> </span><span class="n">retained</span><span class="p">);</span><span class="w">  </span><span class="c1">// defaults to true, controls only the echoed /set topic when overwriteSetter(true) is used</span>
 <span class="n">SendingPromise</span><span class="o">&amp;</span><span class="w"> </span><span class="nf">overwriteSetter</span><span class="p">(</span><span class="kt">bool</span><span class="w"> </span><span class="n">overwrite</span><span class="p">);</span><span class="w">  </span><span class="c1">// defaults to false</span>
 <span class="n">SendingPromise</span><span class="o">&amp;</span><span class="w"> </span><span class="nf">setRange</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">HomieRange</span><span class="o">&amp;</span><span class="w"> </span><span class="n">range</span><span class="p">);</span><span class="w">  </span><span class="c1">// defaults to not a range</span>

@@ -355,6 +355,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../quickstart/platformio-pioarduino/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    PlatformIO / PioArduino
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1040,6 +1068,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../others/fork-differences/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Maintained fork differences
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../others/ota-configuration-updates/" class="md-nav__link">
         
   
@@ -1358,14 +1414,14 @@
 <p>In order to change custom settings send via MQTT the JSON Object to: <code>homie/&lt;device&gt;/$implementation/config/set</code>. The JSON object might include all settings you need to update at once. As well, partial/incremental update is supported.
 JSON object should be flat string. From the example above it becomes:
 <code>{"settings":{"percentage":75}}</code></p>
-<p>!!! tip Updated custom settings are saved to SPIFFS automatically.</p>
+<p>!!! tip Updated custom settings are saved to the configured filesystem automatically. SPIFFS is used by default; LittleFS is opt-in with <code>HOMIE_USE_LITTLEFS=1</code>.</p>
 <p>Once you updated the custom settings Homie will save it to the Flash and reboot itself.
    The reboot causes the updated and stored setting be read into RAM and be used in actual code.</p>
 <p>!!! tip If function of your Homie device is sensitive to reboots, then consider other method of custom settings.</p>
 <p>Sometimes, the device is designed for non-interrupted service. So the reset by setting update is not acceptable and can affect the device function/behavior.</p>
 <h1 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h1>
 <p>See the following example for a concrete use case:</p>
-<p><a href="https://github.com/homieiot/homie-esp8266/blob/develop/examples/CustomSettings/CustomSettings.ino"><img alt="GitHub logo" src="../../assets/github.png" /> CustomSettings.ino</a></p>
+<p><a href="https://github.com/labodj/homie-esp8266/blob/develop/examples/CustomSettings/CustomSettings.ino"><img alt="GitHub logo" src="../../assets/github.png" /> CustomSettings.ino</a></p>
 
 
 

@@ -350,6 +350,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../quickstart/platformio-pioarduino/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    PlatformIO / PioArduino
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1033,6 +1061,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../others/fork-differences/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Maintained fork differences
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../others/ota-configuration-updates/" class="md-nav__link">
         
   
@@ -1295,7 +1351,7 @@
 
   <h1>Resetting</h1>
 
-<p>Resetting the device means erasing the stored configuration and rebooting from <code>normal</code> mode to <code>configuration</code> mode. By default, you can do it by pressing for 5 seconds the <code>FLASH</code> button of your ESP8266 board.</p>
+<p>Resetting the device means erasing the stored configuration and rebooting from <code>normal</code> mode to <code>configuration</code> mode. By default, you can do it by holding the configured reset trigger for 5 seconds. On many dev boards this is the <code>FLASH</code> or <code>BOOT</code> button.</p>
 <p>This behavior is configurable:</p>
 <div class="highlight"><pre><span></span><code><span class="kt">void</span><span class="w"> </span><span class="nf">setup</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="n">Homie</span><span class="p">.</span><span class="n">setResetTrigger</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="n">LOW</span><span class="p">,</span><span class="w"> </span><span class="mi">2000</span><span class="p">);</span><span class="w"> </span><span class="c1">// before Homie.setup()</span>

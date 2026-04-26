@@ -355,6 +355,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../quickstart/platformio-pioarduino/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    PlatformIO / PioArduino
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1030,6 +1058,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../fork-differences/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Maintained fork differences
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../ota-configuration-updates/" class="md-nav__link">
         
   
@@ -1395,8 +1451,13 @@
 <li>Constructor of <code>HomieNode</code> needs third mandatory param <code>const char* type</code>:
    E.g. <code>HomieNode lightNode("light", "Light");</code> -&gt; <code>HomieNode lightNode("light", "Light", "switch");</code>.</li>
 <li>Signature of handleInput has changed to: <code>handleInput(const HomieRange&amp; range, const String&amp; property, const String&amp; value)</code>
-   TODO: see Ping example.</li>
-<li>TODO</li>
+   See the Ping example for the current callback shape.</li>
+<li>Review every advertised property id against the Homie 3.0.1 id rules. This
+   fork keeps legacy ids for compatibility but logs a warning when an id is not
+   convention-compliant.</li>
+<li>If you rely on <code>overwriteSetter(true)</code>, use <code>setSetRetained()</code> when the
+   mirrored <code>/set</code> topic needs a different retained flag from the main property
+   publish.</li>
 </ol>
 
 

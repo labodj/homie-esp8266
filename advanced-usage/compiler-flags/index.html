@@ -355,6 +355,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../quickstart/platformio-pioarduino/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    PlatformIO / PioArduino
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1084,6 +1112,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../others/fork-differences/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Maintained fork differences
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../others/ota-configuration-updates/" class="md-nav__link">
         
   
@@ -1369,7 +1425,7 @@
 <p>Removing functionality can become useful if your firmware gets too large in size and is not upgradable any more over OTA. On the other hand these compiler flags allow to remove features from homie-esp8266, that you do not require or do not use.</p>
 <p>Adding functionality or features is useful to enable only partly implemented features or unstable or experimental features.</p>
 <p><strong>HOMIE_CONFIG</strong></p>
-<p>This compiler flag allows to disable the configuration mode completely. To configure your homie-esp8266, you need to upload the configuration to the SPIFFS before starting the device. Without a proper configuration the device will just restart after writing the error message about the missing configuration to the logger. Add the following to your platformio.ini file:</p>
+<p>This compiler flag allows to disable the configuration mode completely. To configure your homie-esp8266, you need to upload the configuration to the configured filesystem before starting the device. The default filesystem is SPIFFS, unless <code>HOMIE_USE_LITTLEFS=1</code> is set. Without a proper configuration the device will just restart after writing the error message about the missing configuration to the logger. Add the following to your platformio.ini file:</p>
 <div class="highlight"><pre><span></span><code>build_flags = -D HOMIE_CONFIG=0
 </code></pre></div>
 <p>This reduces the firmware size by about 50000 bytes.</p>
@@ -1384,7 +1440,65 @@
   -D ASYNC_TCP_SSL_ENABLED=1
   -D PIO_FRAMEWORK_ARDUINO_LWIP2_HIGHER_BANDWIDTH
 </code></pre></div>
-<p>The additional flag <code>PIO_FRAMEWORK_ARDUINO_LWIP2_HIGHER_BANDWITH</code> is necessary for SSL encryptions to work properly.</p>
+<p>The additional flag <code>PIO_FRAMEWORK_ARDUINO_LWIP2_HIGHER_BANDWIDTH</code> is necessary for SSL encryption to work properly.</p>
+<p><strong>HOMIE_PENDING_MQTT_ACK_QUEUE_SIZE</strong></p>
+<p>This maintained fork exposes a build-time override for the internal queue that
+stores MQTT publish acknowledgement events before <code>BootNormal::loop()</code>
+dispatches them.</p>
+<p>Use it when the device emits a large retained advertisement burst and logs
+<code>MQTT ACK queue full</code> during startup or reconnect:</p>
+<div class="highlight"><pre><span></span><code>build_flags =
+  -D HOMIE_PENDING_MQTT_ACK_QUEUE_SIZE=64
+</code></pre></div>
+<p>Default:</p>
+<div class="highlight"><pre><span></span><code>-D HOMIE_PENDING_MQTT_ACK_QUEUE_SIZE=16
+</code></pre></div>
+<p>This is an advanced tuning option. Increase it only if the default queue size is
+not sufficient for your device and broker timing.</p>
+<p>Both drop counters are also exposed in Homie statistics as
+<code>$stats/mqttackdropped</code> and <code>$stats/mqttinbounddropped</code>, so production devices
+can be monitored without relying only on serial logs.</p>
+<p><strong>HOMIE_PENDING_MQTT_MESSAGE_QUEUE_SIZE</strong></p>
+<p>This maintained fork also exposes the size of the internal queue used to defer
+non-OTA MQTT input handling from async MQTT callbacks into <code>BootNormal::loop()</code>.</p>
+<p>Use it only when the device logs <code>MQTT inbound queue full</code> under expected broker
+traffic:</p>
+<div class="highlight"><pre><span></span><code>build_flags =
+  -D HOMIE_PENDING_MQTT_MESSAGE_QUEUE_SIZE=32
+</code></pre></div>
+<p>Default:</p>
+<div class="highlight"><pre><span></span><code>-D HOMIE_PENDING_MQTT_MESSAGE_QUEUE_SIZE=16
+</code></pre></div>
+<p><strong>HOMIE_USE_LITTLEFS</strong></p>
+<p>This maintained fork keeps SPIFFS as the default storage backend to preserve
+existing deployments. Set this flag to use LittleFS for configuration files,
+next-boot mode state, and the optional configuration UI bundle:</p>
+<div class="highlight"><pre><span></span><code>board_build.filesystem = littlefs
+build_flags =
+  -D HOMIE_USE_LITTLEFS=1
+</code></pre></div>
+<p><strong>HOMIE_MIGRATE_SPIFFS_TO_LITTLEFS</strong></p>
+<p>Build a temporary OTA migration firmware with this flag when already provisioned
+devices need to move from SPIFFS to LittleFS:</p>
+<div class="highlight"><pre><span></span><code>board_build.filesystem = littlefs
+build_flags =
+  -D HOMIE_USE_LITTLEFS=1
+  -D HOMIE_MIGRATE_SPIFFS_TO_LITTLEFS=1
+</code></pre></div>
+<p>The flag is disabled by default so normal LittleFS builds do not include SPIFFS
+or migration code. A migration build tries to copy data only when LittleFS cannot
+mount and a SPIFFS filesystem with <code>/homie/config.json</code> is still present. The
+migration copies:</p>
+<ul>
+<li><code>/homie/config.json</code></li>
+<li><code>/homie/NEXTMODE</code>, when present</li>
+</ul>
+<p>The UI bundle at <code>/homie/ui_bundle.gz</code> is not migrated because it can be too
+large to hold in RAM while LittleFS formats the shared flash area. Upload the UI
+bundle again with PlatformIO <code>uploadfs</code> after switching to LittleFS.</p>
+<p>After the device has booted once and migrated successfully, replace the migration
+firmware with a normal LittleFS-only OTA build that keeps only
+<code>HOMIE_USE_LITTLEFS=1</code>.</p>
 <h2 id="esp8266-only-networking-flags">ESP8266-only networking flags<a class="headerlink" href="#esp8266-only-networking-flags" title="Permanent link">&para;</a></h2>
 <p>Flags such as <code>PIO_FRAMEWORK_ARDUINO_LWIP2_LOW_MEMORY</code> and
 <code>PIO_FRAMEWORK_ARDUINO_LWIP2_HIGHER_BANDWIDTH</code> are relevant to the ESP8266

@@ -350,6 +350,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../quickstart/platformio-pioarduino/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    PlatformIO / PioArduino
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1033,6 +1061,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../others/fork-differences/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Maintained fork differences
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../others/ota-configuration-updates/" class="md-nav__link">
         
   
@@ -1296,7 +1352,7 @@
   <h1>Magic bytes</h1>
 
 <p>Homie for ESP8266 firmwares contain magic bytes allowing you to check if a firmware is actually an Homie for ESP8266 firmware, and if so, to get the name, the version and the brand of the firmware.</p>
-<p>You might be wondering why <code>Homie_setFirmware()</code> instead of <code>Homie.setFirmware()</code>, this is because we use <a href="https://github.com/homieiot/homie-esp8266/blob/8935639bc649a6c71ce817ea4f732988506d020e/src/Homie.hpp#L23-L24">special macros</a> to embed the magic bytes.</p>
+<p>You might be wondering why <code>Homie_setFirmware()</code> instead of <code>Homie.setFirmware()</code>, this is because we use <a href="https://github.com/labodj/homie-esp8266/blob/develop/src/Homie.hpp#L23-L24">special macros</a> to embed the magic bytes.</p>
 <p>Values are encoded as such within the firmware binary:</p>
 <table>
 <thead>
@@ -1335,7 +1391,7 @@
 </tbody>
 </table>
 <p>See the following script for a concrete use case:</p>
-<p><a href="https://github.com/homieiot/homie-esp8266/blob/develop/scripts/firmware_parser"><img alt="GitHub logo" src="../../assets/github.png" /> firmware_parser.py</a></p>
+<p><a href="https://github.com/labodj/homie-esp8266/blob/develop/scripts/firmware_parser/firmware_parser.py"><img alt="GitHub logo" src="../../assets/github.png" /> firmware_parser.py</a></p>
 
 
 

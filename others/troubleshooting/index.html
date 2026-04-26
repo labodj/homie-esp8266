@@ -355,6 +355,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../quickstart/platformio-pioarduino/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    PlatformIO / PioArduino
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1030,6 +1058,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../fork-differences/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Maintained fork differences
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../ota-configuration-updates/" class="md-nav__link">
         
   
@@ -1207,6 +1263,39 @@
     <span class="md-ellipsis">
       
         4. My device resets itself without me doing anything?
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-i-see-mqtt-ack-queue-full-during-startup-or-reconnect" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. I see MQTT ACK queue full during startup or reconnect
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-platformio-tries-to-build-asynctcp-espasynctcp-or-rpasynctcp-for-the-wrong-board" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. PlatformIO tries to build AsyncTCP, ESPAsyncTCP, or RPAsyncTCP for the wrong board
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-i-see-mqtt-inbound-queue-full" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. I see MQTT inbound queue full
       
     </span>
   </a>
@@ -1409,6 +1498,39 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#5-i-see-mqtt-ack-queue-full-during-startup-or-reconnect" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. I see MQTT ACK queue full during startup or reconnect
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-platformio-tries-to-build-asynctcp-espasynctcp-or-rpasynctcp-for-the-wrong-board" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. PlatformIO tries to build AsyncTCP, ESPAsyncTCP, or RPAsyncTCP for the wrong board
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-i-see-mqtt-inbound-queue-full" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. I see MQTT inbound queue full
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1463,6 +1585,34 @@
 <p>The framework needs to work continuously (ie. <code>Homie.loop()</code> needs to be called very frequently). In other words, don't use <code>delay()</code> (see <a href="http://playground.arduino.cc/Code/AvoidDelay">avoid delay</a>) or anything that might block the code for more than 50ms or so. There is also a known Arduino for ESP8266 issue with <code>analogRead()</code>, see <a href="../limitations-and-known-issues/#adc-readings">Limitations and known issues</a>.</p>
 <h2 id="4-my-device-resets-itself-without-me-doing-anything">4. My device resets itself without me doing anything?<a class="headerlink" href="#4-my-device-resets-itself-without-me-doing-anything" title="Permanent link">&para;</a></h2>
 <p>You have probably connected a sensor to the default reset pin of the framework (D3 on NodeMCU, GPIO0 on other boards). See <a href="../../advanced-usage/resetting/">Resetting</a>.</p>
+<h2 id="5-i-see-mqtt-ack-queue-full-during-startup-or-reconnect">5. I see <code>MQTT ACK queue full</code> during startup or reconnect<a class="headerlink" href="#5-i-see-mqtt-ack-queue-full-during-startup-or-reconnect" title="Permanent link">&para;</a></h2>
+<p>This means the device is receiving MQTT publish acknowledgements faster than
+Homie can dispatch the related internal events.</p>
+<p>On this maintained fork you can increase the internal acknowledgement queue
+size with:</p>
+<div class="highlight"><pre><span></span><code><span class="na">build_flags</span><span class="w"> </span><span class="o">=</span>
+<span class="w">  </span><span class="na">-D HOMIE_PENDING_MQTT_ACK_QUEUE_SIZE</span><span class="o">=</span><span class="s">64</span>
+</code></pre></div>
+<p>See <a href="../../advanced-usage/compiler-flags/">Compiler-Flags</a> for details. Only
+increase it if you actually see this warning in practice.</p>
+<h2 id="6-platformio-tries-to-build-asynctcp-espasynctcp-or-rpasynctcp-for-the-wrong-board">6. PlatformIO tries to build <code>AsyncTCP</code>, <code>ESPAsyncTCP</code>, or <code>RPAsyncTCP</code> for the wrong board<a class="headerlink" href="#6-platformio-tries-to-build-asynctcp-espasynctcp-or-rpasynctcp-for-the-wrong-board" title="Permanent link">&para;</a></h2>
+<p>Use strict library compatibility mode in your <code>platformio.ini</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="na">lib_compat_mode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">strict</span>
+</code></pre></div>
+<p>The async networking dependencies publish platform metadata, but PlatformIO's
+default <code>soft</code> compatibility mode may still compile transitive libraries for
+other targets when using <code>pio ci</code> or unusual dependency layouts.</p>
+<h2 id="7-i-see-mqtt-inbound-queue-full">7. I see <code>MQTT inbound queue full</code><a class="headerlink" href="#7-i-see-mqtt-inbound-queue-full" title="Permanent link">&para;</a></h2>
+<p>Homie defers non-OTA MQTT input handling from async MQTT callbacks into
+<code>Homie.loop()</code>. If expected broker traffic fills that queue, increase it with:</p>
+<div class="highlight"><pre><span></span><code><span class="na">build_flags</span><span class="w"> </span><span class="o">=</span>
+<span class="w">  </span><span class="na">-D HOMIE_PENDING_MQTT_MESSAGE_QUEUE_SIZE</span><span class="o">=</span><span class="s">32</span>
+</code></pre></div>
+<p>Keep <code>Homie.loop()</code> frequent; increasing the queue only absorbs bursts.</p>
+<p>Both queue drop counters are published in the regular Homie statistics as
+<code>$stats/mqttackdropped</code> and <code>$stats/mqttinbounddropped</code>. If either value grows
+after boot under normal traffic, tune the related queue or reduce retained MQTT
+traffic delivered to the device.</p>
 
 
 

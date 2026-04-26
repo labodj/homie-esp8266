@@ -355,6 +355,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../quickstart/platformio-pioarduino/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    PlatformIO / PioArduino
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1040,6 +1068,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../others/fork-differences/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Maintained fork differences
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../others/ota-configuration-updates/" class="md-nav__link">
         
   
@@ -1355,7 +1411,7 @@
 <li>Once your code in <code>setupHandler()</code> and <code>loopHandler()</code> engaged, you can be pretty sure the <code>Homie.isConnected()</code> is true without checking it. Unless, you intend your device is mobile and might reach out of WiFi coverage in the middle of the run.</li>
 <li>The <code>loop()</code> often starts before Wifi is connected. "Wifi connected" event causes significant load on the MCU with Wifi related tasks, also with sending initial MQTT reports. Therefore, running complex commands around the moment of "Wifi connected" might cause malfunction/crash.</li>
 </ol>
-<p>As solution, heavy commands (massive initializations, long calculations, SPIFFS reading/writing, etc.) should be initiated in one of 2 cases:
+<p>As solution, heavy commands (massive initializations, long calculations, filesystem reading/writing, etc.) should be initiated in one of 2 cases:
  - very early in setup() before "Wifi connected".
  - way after "Wifi connected" (non-blocking wait 3-5 seconds and then do the heavy commands).</p>
 <h1 id="get-access-to-the-configuration">Get access to the configuration<a class="headerlink" href="#get-access-to-the-configuration" title="Permanent link">&para;</a></h1>

@@ -355,6 +355,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../quickstart/platformio-pioarduino/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    PlatformIO / PioArduino
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1030,6 +1058,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../fork-differences/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Maintained fork differences
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../ota-configuration-updates/" class="md-nav__link">
         
   
@@ -1398,7 +1454,9 @@
 <li>If you've enabled Serial logging, <code>Serial.begin()</code> must be called explicitely in your sketch</li>
 <li>Remove the <code>HOMIE_OTA_MODE</code> in your event handler, if you have one</li>
 <li>The <code>Homie.setNodeProperty()</code> signature changed completely. If you had <code>Homie.setNodeProperty(node, "property", "value", true)</code>, the new equivalent syntax is <code>Homie.setNodeProperty(node, "property").setRetained(true).send("value")</code>. Note the <code>setRetained()</code> is not even required as messages are retained by default.</li>
-<li>TODO</li>
+<li>Recheck custom event handlers and direct MQTT topic assumptions against the
+   v2 convention before deploying; the public MQTT layout changed between Homie
+   convention v1 and v2.</li>
 </ol>
 
 
