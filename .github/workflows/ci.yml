@@ -90,8 +90,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Install PlatformIO
-        run: python -m pip install --upgrade platformio
+      - name: Install Python tools
+        run: python -m pip install --upgrade platformio -r scripts/ota_updater/requirements.txt
       - name: Validate PlatformIO package
         run: pio pkg pack
       - name: Validate OTA updater syntax
