@@ -7,6 +7,12 @@ on:
       - master
   pull_request:
 
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
 jobs:
   platformio:
     runs-on: ubuntu-latest
@@ -67,8 +73,8 @@ jobs:
             platform: https://github.com/pioarduino/platform-espressif32/releases/download/stable/platform-espressif32.zip
             build_flags: ""
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
       - name: Install PlatformIO
@@ -86,8 +92,8 @@ jobs:
   package:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
       - name: Install Python tools
@@ -98,3 +104,41 @@ jobs:
         run: python -m py_compile scripts/ota_updater/ota_updater.py
       - name: Run OTA updater tests
         run: python scripts/ota_updater/test_ota_updater.py
+
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: docs/requirements.txt
+      - name: Install documentation tools
+        run: python -m pip install --upgrade pip -r docs/requirements.txt
+      - name: Build documentation
+        run: mkdocs build --strict
+      - name: Upload Pages artifact
+        if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: site
+
+  deploy-pages:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+    needs: docs
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    concurrency:
+      group: github-pages
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5
