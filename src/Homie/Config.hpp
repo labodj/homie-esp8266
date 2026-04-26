@@ -3,13 +3,10 @@
 #include "Arduino.h"
 
 #include <ArduinoJson.h>
-#ifdef ESP32
-#include <SPIFFS.h>
-#endif // ESP32
-#include "FS.h"
 #include "Datatypes/Interface.hpp"
 #include "Datatypes/ConfigStruct.hpp"
 #include "Utils/DeviceId.hpp"
+#include "Utils/Filesystem.hpp"
 #include "Utils/Validation.hpp"
 #include "Constants.hpp"
 #include "Limits.hpp"
@@ -34,10 +31,13 @@ class Config {
 
  private:
   ConfigStruct _configStruct;
-  bool _spiffsBegan;
+  bool _filesystemBegan;
   bool _valid;
 
-  bool _spiffsBegin();
+  bool _filesystemBegin();
+  bool _mountSelectedFilesystem(bool formatOnFail);
+  bool _ensureFilesystemDirectories();
+  bool _migrateSpiffsToLittleFs();
   void _patchJsonObject(JsonObject object, JsonObject patch);
 };
 

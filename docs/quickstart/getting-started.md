@@ -5,6 +5,8 @@ board. These restrictions can be lifted (see next pages).
 This page intentionally stays close to the original upstream guide, so several examples remain ESP8266-centric. This fork is maintained primarily against current ESP32 Arduino cores while keeping the Homie 3.0.1 API and flow as close as possible to the original library.
 
 The maintained installation path for this fork is PlatformIO with a git dependency. The Arduino IDE / ZIP flow below is legacy upstream documentation and is not the recommended path for this fork.
+See [PlatformIO / PioArduino](platformio-pioarduino.md) for the maintained ESP32
+and ESP8266 project configuration examples.
 
 To use this fork, you will typically need:
 

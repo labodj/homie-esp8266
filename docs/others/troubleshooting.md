@@ -51,3 +51,32 @@ build_flags =
 
 See [Compiler-Flags](../advanced-usage/compiler-flags.md) for details. Only
 increase it if you actually see this warning in practice.
+
+## 6. PlatformIO tries to build `AsyncTCP`, `ESPAsyncTCP`, or `RPAsyncTCP` for the wrong board
+
+Use strict library compatibility mode in your `platformio.ini`:
+
+```ini
+lib_compat_mode = strict
+```
+
+The async networking dependencies publish platform metadata, but PlatformIO's
+default `soft` compatibility mode may still compile transitive libraries for
+other targets when using `pio ci` or unusual dependency layouts.
+
+## 7. I see `MQTT inbound queue full`
+
+Homie defers non-OTA MQTT input handling from async MQTT callbacks into
+`Homie.loop()`. If expected broker traffic fills that queue, increase it with:
+
+```ini
+build_flags =
+  -D HOMIE_PENDING_MQTT_MESSAGE_QUEUE_SIZE=32
+```
+
+Keep `Homie.loop()` frequent; increasing the queue only absorbs bursts.
+
+Both queue drop counters are published in the regular Homie statistics as
+`$stats/mqttackdropped` and `$stats/mqttinbounddropped`. If either value grows
+after boot under normal traffic, tune the related queue or reduce retained MQTT
+traffic delivered to the device.

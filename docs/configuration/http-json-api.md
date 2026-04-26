@@ -49,7 +49,7 @@ Get some information on the device.
     ```json
     {
       "hardware_device_id": "52a8fa5d",
-      "homie_esp8266_version": "3.1.0",
+  "homie_esp8266_version": "3.2.0",
       "firmware": {
         "name": "awesome-device",
         "version": "1.0.0"
@@ -226,7 +226,7 @@ Enable/disable the device to act as a transparent proxy between AP and Station n
 
     All requests that don't collide with existing API paths will be bridged to the destination according to the `Host` HTTP header. The destination host is called using the existing Wi-Fi connection (established after a `PUT /wifi/connect`) and all contents are bridged back to the connection made to the AP side.
 
-    This feature can be used to help captive portals to perform cloud API calls during device enrollment using the ESP8266 Wi-Fi AP connection without having to patch the Homie firmware. By using the transparent proxy, all operations can be performed by the custom JavaScript running on the browser (in SPIFFS location `/data/homie/ui_bundle.gz`).
+    This feature can be used to help captive portals to perform cloud API calls during device enrollment using the ESP8266 Wi-Fi AP connection without having to patch the Homie firmware. By using the transparent proxy, all operations can be performed by the custom JavaScript running on the browser (in the configured filesystem location `/data/homie/ui_bundle.gz`; SPIFFS by default).
 
     HTTPS is not supported.
 

@@ -11,8 +11,8 @@
 #endif
 
 namespace HomieInternals {
-  const char HOMIE_VERSION[] = "3.0.1";
-  const char HOMIE_ESP8266_VERSION[] = "3.1.0";
+const char HOMIE_VERSION[] = "3.0.1";
+const char HOMIE_ESP8266_VERSION[] = "3.2.0";
 
   const IPAddress ACCESS_POINT_IP(192, 168, 123, 1);
 
@@ -39,6 +39,7 @@ namespace HomieInternals {
   const float LED_WIFI_DELAY = 1;
   const float LED_MQTT_DELAY = 0.2;
 
+  const char CONFIG_DIRECTORY_PATH[] = "/homie";
   const char CONFIG_UI_BUNDLE_PATH[] = "/homie/ui_bundle.gz";
   const char CONFIG_NEXT_BOOT_MODE_FILE_PATH[] = "/homie/NEXTMODE";
   const char CONFIG_FILE_PATH[] = "/homie/config.json";

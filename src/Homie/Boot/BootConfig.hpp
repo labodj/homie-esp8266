@@ -10,7 +10,6 @@
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <AsyncTCP.h>
-#include <SPIFFS.h>
 #elif defined(ESP8266)
 #include <ESP8266WiFi.h>
 #include <ESP8266HTTPClient.h>
@@ -24,6 +23,7 @@
 #include "../Datatypes/Interface.hpp"
 #include "../Timer.hpp"
 #include "../Utils/DeviceId.hpp"
+#include "../Utils/Filesystem.hpp"
 #include "../Utils/Validation.hpp"
 #include "../Utils/Helpers.hpp"
 #include "../Logger.hpp"

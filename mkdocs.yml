@@ -14,6 +14,7 @@ nav:
   - Quickstart:
       - What is it?: quickstart/what-is-it.md
       - Getting started: quickstart/getting-started.md
+      - PlatformIO / PioArduino: quickstart/platformio-pioarduino.md
   - Advanced usage:
       - Built-in LED: advanced-usage/built-in-led.md
       - Branding: advanced-usage/branding.md
@@ -35,6 +36,7 @@ nav:
       - JSON configuration file: configuration/json-configuration-file.md
       - HTTP JSON API: configuration/http-json-api.md
   - Others:
+      - Maintained fork differences: others/fork-differences.md
       - OTA/configuration updates: others/ota-configuration-updates.md
       - Homie implementation specifics: others/homie-implementation-specifics.md
       - Limitations and known issues: others/limitations-and-known-issues.md

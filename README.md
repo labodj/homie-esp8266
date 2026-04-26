@@ -24,9 +24,11 @@ Fork documentation is published at:
 Key pages:
 
 * Getting started: https://labodj.github.io/homie-esp8266/quickstart/getting-started/
+* PlatformIO / PioArduino setup: https://labodj.github.io/homie-esp8266/quickstart/platformio-pioarduino/
 * JSON configuration file: https://labodj.github.io/homie-esp8266/configuration/json-configuration-file/
 * HTTP JSON API: https://labodj.github.io/homie-esp8266/configuration/http-json-api/
 * OTA over MQTT: https://labodj.github.io/homie-esp8266/others/ota-configuration-updates/
+* Maintained fork differences: https://labodj.github.io/homie-esp8266/others/fork-differences/
 * Implementation specifics: https://labodj.github.io/homie-esp8266/others/homie-implementation-specifics/
 
 The generated site reflects the maintained fork. When a fork-specific page differs
@@ -75,22 +77,50 @@ This fork exposes a small number of internal queue sizes as build-time overrides
 for advanced consumers that need to absorb larger MQTT bursts during startup or
 reconnect.
 
-The currently supported override is:
+The queue overrides are:
 
 ```ini
 build_flags =
   -D HOMIE_PENDING_MQTT_ACK_QUEUE_SIZE=64
+  -D HOMIE_PENDING_MQTT_MESSAGE_QUEUE_SIZE=32
 ```
 
-Default:
+Defaults:
 
 ```ini
 -D HOMIE_PENDING_MQTT_ACK_QUEUE_SIZE=16
+-D HOMIE_PENDING_MQTT_MESSAGE_QUEUE_SIZE=16
 ```
 
-This controls the internal queue that stores MQTT publish acknowledgement events
-before `BootNormal::loop()` dispatches them. Increase it if your device emits a
-large Homie advertisement burst and logs `MQTT ACK queue full`.
+The ACK queue stores MQTT publish acknowledgement events before
+`BootNormal::loop()` dispatches them. The message queue defers non-OTA MQTT input
+from async callbacks into the main loop. Increase them only when the device logs
+the related queue warning under expected traffic.
+
+Storage defaults to SPIFFS for backward compatibility. LittleFS can be enabled
+explicitly:
+
+```ini
+board_build.filesystem = littlefs
+build_flags =
+  -D HOMIE_USE_LITTLEFS=1
+```
+
+For already provisioned devices, build one temporary OTA migration firmware with:
+
+```ini
+board_build.filesystem = littlefs
+build_flags =
+  -D HOMIE_USE_LITTLEFS=1
+  -D HOMIE_MIGRATE_SPIFFS_TO_LITTLEFS=1
+```
+
+That firmware reads SPIFFS `/homie/config.json` and `/homie/NEXTMODE` into RAM,
+formats and mounts LittleFS, then writes the migrated files back. The UI bundle
+is not migrated because it can be too large to copy safely in RAM; upload it
+again with `pio run --target uploadfs`. After the device has booted once with
+the migration firmware, OTA a normal LittleFS-only firmware without
+`HOMIE_MIGRATE_SPIFFS_TO_LITTLEFS`.
 
 ## Features
 
@@ -100,7 +130,7 @@ large Homie advertisement burst and logs `MQTT ACK queue full`.
 * [Custom settings](https://labodj.github.io/homie-esp8266/advanced-usage/custom-settings/)
 * [OTA over MQTT](https://labodj.github.io/homie-esp8266/others/ota-configuration-updates/)
 * [Magic bytes](https://labodj.github.io/homie-esp8266/advanced-usage/magic-bytes/)
-* Pretty [straightforward sketches](./examples), a simple light for example: (**TODO**: adapt to V3)
+* Pretty [straightforward sketches](./examples), a simple light for example:
 
 ```c++
 #include <Homie.h>
@@ -144,7 +174,11 @@ The project documentation in this repository is still derived from upstream Homi
 
 Fork-specific behavior already documented in this repository includes:
 
+* a maintained fork differences page with the upstream baseline and compatibility policy
 * stricter Wi-Fi / MQTT recovery on ESP32 and ESP8266
+* LittleFS opt-in builds and SPIFFS-to-LittleFS OTA migration
+* deferred async MQTT/event dispatch and queue tuning flags
 * ESP32-aware `$implementation` reporting (`esp32` on ESP32 builds, `esp8266` on ESP8266 builds)
 * OTA delivery hardening for QoS 1 retransmits and MQTT disconnects
-* fork-specific statistics such as `$stats/uptimewifi` and `$stats/uptimemqtt`
+* fork-specific statistics such as `$stats/uptimewifi`, `$stats/uptimemqtt`,
+  `$stats/mqttackdropped` and `$stats/mqttinbounddropped`

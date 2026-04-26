@@ -1,6 +1,6 @@
 {
   "name": "Homie",
-  "version": "3.1.2",
+  "version": "3.2.0",
   "keywords": "iot, home, automation, mqtt, esp8266, async, sensor",
   "description": "Maintained Homie fork for ESP8266 / ESP32 with targeted fixes for newer Arduino cores",
   "homepage": "https://github.com/labodj/homie-esp8266",
@@ -27,21 +27,28 @@
     {
       "owner": "bblanchon",
       "name": "ArduinoJson",
-      "version": "^6.21.6"
+      "version": "^6.21.6",
+      "platforms": ["espressif8266", "espressif32"]
     },
     {
       "name": "AsyncMqttClient",
-      "version": "https://github.com/labodj/async-mqtt-client.git#v2.1.1"
+      "version": "https://github.com/labodj/async-mqtt-client.git#7d61a5ddcdf69379193f972836dc2e89d5e8b93f",
+      "platforms": ["espressif8266", "espressif32"]
     },
     {
       "owner": "esp32async",
-      "name": "ESPAsyncWebServer"
+      "name": "ESPAsyncWebServer",
+      "platforms": ["espressif8266", "espressif32"]
     },
     {
       "owner": "thomasfredericks",
-      "name": "Bounce2"
+      "name": "Bounce2",
+      "platforms": ["espressif8266", "espressif32"]
     }
   ],
+  "build": {
+    "libCompatMode": "strict"
+  },
   "export": {
     "include": ["LICENSE", "keywords.txt", "src", "examples"]
   }

@@ -257,12 +257,22 @@ Advertise a property / range property on the node.
 This returns a reference to `PropertyInterface` on which you can call:
 
 ```c++
-void settable(std::function<bool(const HomieRange& range, const String& value)> handler) = );
+PropertyInterface& setName(const char* name);
+PropertyInterface& setUnit(const char* unit);
+PropertyInterface& setDatatype(const char* datatype);
+PropertyInterface& setFormat(const char* format);
+PropertyInterface& setRetained(bool retained = true);
+PropertyInterface& settable(std::function<bool(const HomieRange& range, const String& value)> handler);
 ```
 
-Make the property settable.
+Set the advertised property metadata and optionally make the property settable.
 
 * **`handler`**: Optional. Input handler of the property
+
+`setRetained(false)` marks the advertised property as non-retained and makes
+`HomieNode::setProperty()` start from a non-retained publish default for that
+property. You can still override an individual send with
+`SendingPromise::setRetained()`.
 
 ```c++
 SendingPromise& setProperty(const String& property);
@@ -276,7 +286,7 @@ This returns a reference to `SendingPromise`, on which you can call:
 
 ```c++
 SendingPromise& setQos(uint8_t qos);  // defaults to 1
-SendingPromise& setRetained(bool retained);  // defaults to true
+SendingPromise& setRetained(bool retained);  // defaults to the advertised property retention
 SendingPromise& setSetRetained(bool retained);  // defaults to true, controls only the echoed /set topic when overwriteSetter(true) is used
 SendingPromise& overwriteSetter(bool overwrite);  // defaults to false
 SendingPromise& setRange(const HomieRange& range);  // defaults to not a range

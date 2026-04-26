@@ -39,9 +39,25 @@ On this fork, the OTA handler is hardened for MQTT QoS 1 delivery:
 * out-of-sequence chunks fail explicitly instead of silently corrupting the update
 * if MQTT disconnects during OTA, the update is aborted cleanly and must be retried
 
+# Filesystem
+
+SPIFFS remains the default storage backend for compatibility with existing
+devices. LittleFS is selected only when `HOMIE_USE_LITTLEFS=1` is compiled into
+the firmware. A temporary migration build can add
+`HOMIE_MIGRATE_SPIFFS_TO_LITTLEFS=1` to copy `/homie/config.json` and
+`/homie/NEXTMODE` from SPIFFS to LittleFS on first boot.
+
+The UI bundle is not migrated because SPIFFS and LittleFS share the same flash
+area and the bundle can be too large to hold in RAM while the destination
+filesystem is formatted.
+
 # Statistics
 
-The fork publishes the standard Homie statistics plus two additional retained topics:
+The fork publishes the standard Homie statistics plus these additional retained
+topics:
 
+* `$stats/freeheap`: current free heap in bytes
 * `$stats/uptimewifi`: seconds since Wi-Fi connectivity was established
 * `$stats/uptimemqtt`: seconds since MQTT connectivity was established
+* `$stats/mqttackdropped`: cumulative MQTT publish acknowledgement queue drops
+* `$stats/mqttinbounddropped`: cumulative deferred inbound MQTT queue drops

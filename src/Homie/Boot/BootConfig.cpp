@@ -1,5 +1,7 @@
 #include "BootConfig.hpp"
 
+#include <new>
+
 #if HOMIE_CONFIG
 using namespace HomieInternals;
 
@@ -121,6 +123,11 @@ void BootConfig::loop() {
 
 void BootConfig::_onWifiConnectRequest(AsyncWebServerRequest *request) {
   Interface::get().getLogger() << F("Received Wi-Fi connect request") << endl;
+  if (request->_tempObject == nullptr) {
+    __SendJSONError(request, F("✖ Empty or too large JSON"));
+    return;
+  }
+
   StaticJsonDocument<JSON_OBJECT_SIZE(2)> parseJsonDoc;
   char* body = reinterpret_cast<char*>(request->_tempObject);
   if (deserializeJson(parseJsonDoc, body) != DeserializationError::Ok || !parseJsonDoc.is<JsonObject>()) {
@@ -189,6 +196,11 @@ void BootConfig::_onWifiStatusRequest(AsyncWebServerRequest *request) {
 
 void BootConfig::_onProxyControlRequest(AsyncWebServerRequest *request) {
   Interface::get().getLogger() << F("Received proxy control request") << endl;
+  if (request->_tempObject == nullptr) {
+    __SendJSONError(request, F("✖ Empty or too large JSON"));
+    return;
+  }
+
   StaticJsonDocument<JSON_OBJECT_SIZE(1)> parseJsonDoc;
   char* body = reinterpret_cast<char*>(request->_tempObject);
   if (deserializeJson(parseJsonDoc, body) != DeserializationError::Ok || !parseJsonDoc.is<JsonObject>()) {
@@ -285,15 +297,15 @@ void BootConfig::_onCaptivePortal(AsyncWebServerRequest *request) {
       Interface::get().getLogger() << F("Proxy") << endl;
       _proxyHttpRequest(request);
     }
-  } else if (request->url() == "/" && !SPIFFS.exists(CONFIG_UI_BUNDLE_PATH)) {
+  } else if (request->url() == "/" && !HOMIE_FS.exists(CONFIG_UI_BUNDLE_PATH)) {
     // UI File not found
     String msg = String(F("UI bundle not loaded. See Configuration API usage: https://labodj.github.io/homie-esp8266/configuration/http-json-api/"));
     Interface::get().getLogger() << msg << endl;
     request->send(404, F("text/plain"), msg);
-  } else if (request->url() == "/" && SPIFFS.exists(CONFIG_UI_BUNDLE_PATH)) {
+  } else if (request->url() == "/" && HOMIE_FS.exists(CONFIG_UI_BUNDLE_PATH)) {
     // Respond with UI
     Interface::get().getLogger() << F("UI bundle found") << endl;
-    AsyncWebServerResponse *response = request->beginResponse(SPIFFS.open(CONFIG_UI_BUNDLE_PATH, "r"), F("index.html"), F("text/html"));
+    AsyncWebServerResponse *response = request->beginResponse(HOMIE_FS.open(CONFIG_UI_BUNDLE_PATH, "r"), F("index.html"), F("text/html"));
     request->send(response);
   } else {
     // Faild to find request
@@ -329,7 +341,7 @@ void BootConfig::_proxyHttpRequest(AsyncWebServerRequest *request) {
   }
 
   Interface::get().getLogger() << F("Proxy sent request to destination") << endl;
-  const char* body = reinterpret_cast<const char*>(request->_tempObject);
+  const char* body = request->_tempObject == nullptr ? "" : reinterpret_cast<const char*>(request->_tempObject);
   int _httpCode = _httpClient.sendRequest(method.c_str(), body);
   Interface::get().getLogger() << F("Destination response code = ") << _httpCode << endl;
 
@@ -418,6 +430,10 @@ void BootConfig::_onConfigRequest(AsyncWebServerRequest *request) {
     __SendJSONError(request, F("✖ Device already configured"), 403);
     return;
   }
+  if (request->_tempObject == nullptr) {
+    __SendJSONError(request, F("✖ Empty or too large JSON"));
+    return;
+  }
 
   DynamicJsonDocument parseJsonDoc(MAX_JSON_CONFIG_ARDUINOJSON_BUFFER_SIZE);
   char* body = reinterpret_cast<char*>(request->_tempObject);
@@ -456,7 +472,14 @@ void BootConfig::__parsePost(AsyncWebServerRequest *request, uint8_t *data, size
     Interface::get().getLogger() << F("Request is to large to be processed.") << endl;
   } else {
     if (index == 0) {
-      request->_tempObject = new char[total + 1];
+      request->_tempObject = new (std::nothrow) char[total + 1];
+      if (request->_tempObject == nullptr) {
+        Interface::get().getLogger() << F("Cannot allocate request body buffer.") << endl;
+        return;
+      }
+    } else if (request->_tempObject == nullptr) {
+      Interface::get().getLogger() << F("Missing request body buffer.") << endl;
+      return;
     }
     char* buff = reinterpret_cast<char*>(request->_tempObject) + index;
     memcpy(buff, data, len);

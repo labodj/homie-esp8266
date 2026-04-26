@@ -5,3 +5,4 @@
 *.vcxitems
 .vscode
 .pio
+__pycache__/

@@ -4,7 +4,6 @@
 #include "Arduino.h"
 
 #include <array>
-#include <atomic>
 #include <functional>
 #include <libb64/cdecode.h>
 
@@ -14,6 +13,10 @@
 
 #ifndef HOMIE_PENDING_MQTT_ACK_QUEUE_SIZE
 #define HOMIE_PENDING_MQTT_ACK_QUEUE_SIZE 16
+#endif
+
+#ifndef HOMIE_PENDING_MQTT_MESSAGE_QUEUE_SIZE
+#define HOMIE_PENDING_MQTT_MESSAGE_QUEUE_SIZE 16
 #endif
 
 
@@ -54,7 +57,14 @@ class BootNormal : public Boot {
   void loop();
 
  private:
-  static constexpr uint8_t PENDING_MQTT_MESSAGE_QUEUE_SIZE = 16;
+  // These queues bridge AsyncMqttClient callbacks and Homie.loop(). The defaults
+  // match the historical footprint; advanced consumers can raise them with
+  // HOMIE_PENDING_MQTT_*_QUEUE_SIZE when retained MQTT bursts are expected.
+  static_assert(HOMIE_PENDING_MQTT_MESSAGE_QUEUE_SIZE > 0,
+                "HOMIE_PENDING_MQTT_MESSAGE_QUEUE_SIZE must be greater than zero");
+  static_assert(HOMIE_PENDING_MQTT_MESSAGE_QUEUE_SIZE <= 255,
+                "HOMIE_PENDING_MQTT_MESSAGE_QUEUE_SIZE must fit in uint8_t");
+  static constexpr uint8_t PENDING_MQTT_MESSAGE_QUEUE_SIZE = HOMIE_PENDING_MQTT_MESSAGE_QUEUE_SIZE;
   static_assert(HOMIE_PENDING_MQTT_ACK_QUEUE_SIZE > 0,
                 "HOMIE_PENDING_MQTT_ACK_QUEUE_SIZE must be greater than zero");
   static_assert(HOMIE_PENDING_MQTT_ACK_QUEUE_SIZE <= 255,
@@ -111,6 +121,8 @@ class BootNormal : public Boot {
     size_t currentPropertyIndex;
   } _advertisementProgress;
   struct PendingMqttMessage {
+    // Owning copies are required because AsyncMqttClient callback buffers are
+    // no longer valid once the callback returns.
     std::unique_ptr<char[]> topic;
     std::unique_ptr<char[]> payload;
     AsyncMqttClientMessageProperties properties{};
@@ -131,25 +143,30 @@ class BootNormal : public Boot {
   uint32_t _wifiConnectAttemptAt;
   uint32_t _mqttConnectAttemptAt;
   uint32_t _recoveryStartedAt;
-  std::atomic<bool> _wifiEventPending;
-  std::atomic<int32_t> _wifiDisconnectReasonPending;
-  std::atomic<bool> _mqttEventPending;
-  std::atomic<int32_t> _mqttDisconnectReasonPending;
-  std::atomic<uint8_t> _pendingMqttMessageReadIndex;
-  std::atomic<uint8_t> _pendingMqttMessageWriteIndex;
-  std::atomic<uint8_t> _pendingMqttMessageCount;
-  std::atomic<uint16_t> _pendingMqttMessagesDropped;
-  std::atomic<bool> _pendingMqttMessageQueueLocked;
-  std::atomic<uint8_t> _pendingMqttAckReadIndex;
-  std::atomic<uint8_t> _pendingMqttAckWriteIndex;
-  std::atomic<uint8_t> _pendingMqttAckCount;
-  std::atomic<uint16_t> _pendingMqttAcksDropped;
-  std::atomic<bool> _otaStartedPending;
-  std::atomic<bool> _otaProgressPending;
-  std::atomic<size_t> _otaProgressSizeDone;
-  std::atomic<size_t> _otaProgressSizeTotal;
-  std::atomic<bool> _otaSuccessfulPending;
-  std::atomic<bool> _otaFailedPending;
+  // Volatile fields below are written from async Wi-Fi/MQTT callbacks and
+  // consumed from Homie.loop() under AsyncStateCriticalGuard in BootNormal.cpp.
+  volatile bool _wifiEventPending;
+  volatile int32_t _wifiDisconnectReasonPending;
+  volatile bool _mqttEventPending;
+  volatile int32_t _mqttDisconnectReasonPending;
+  volatile uint8_t _pendingMqttMessageReadIndex;
+  volatile uint8_t _pendingMqttMessageWriteIndex;
+  volatile uint8_t _pendingMqttMessageCount;
+  volatile uint16_t _pendingMqttMessagesDropped;
+  volatile uint32_t _pendingMqttMessagesDroppedTotal;
+  volatile bool _pendingMqttMessageQueueLocked;
+  volatile uint8_t _pendingMqttAckReadIndex;
+  volatile uint8_t _pendingMqttAckWriteIndex;
+  volatile uint8_t _pendingMqttAckCount;
+  volatile uint16_t _pendingMqttAcksDropped;
+  volatile uint32_t _pendingMqttAcksDroppedTotal;
+  volatile bool _pendingMqttAckQueueLocked;
+  volatile bool _otaStartedPending;
+  volatile bool _otaProgressPending;
+  volatile size_t _otaProgressSizeDone;
+  volatile size_t _otaProgressSizeTotal;
+  volatile bool _otaSuccessfulPending;
+  volatile bool _otaFailedPending;
   #ifdef ESP32
   WiFiEventId_t _wifiGotIpHandler;
   WiFiEventId_t _wifiDisconnectedHandler;
@@ -167,6 +184,8 @@ class BootNormal : public Boot {
   bool _otaIsBase64;
   base64_decodestate _otaBase64State;
   size_t _otaBase64Pads;
+  // OTA byte counters track both decoded firmware bytes and raw MQTT payload
+  // bytes so retransmitted QoS 1 chunks can be identified and trimmed safely.
   size_t _otaSizeTotal;
   size_t _otaSizeDone;
   size_t _otaPayloadTotal;
@@ -193,6 +212,8 @@ class BootNormal : public Boot {
   void _processPendingEventNotifications();
   void _lockPendingMqttMessageQueue();
   void _unlockPendingMqttMessageQueue();
+  void _lockPendingMqttAckQueue();
+  void _unlockPendingMqttAckQueue();
   void _processPendingMqttMessages();
   void _flushPendingMqttMessages();
   bool _enqueuePendingMqttAck(uint16_t id);
@@ -227,7 +248,7 @@ class BootNormal : public Boot {
   void _endOtaUpdate(bool success, uint8_t update_error = UPDATE_ERROR_OK);
 
   // _onMqttMessage Helpers
-  void __splitTopic(char* topic, std::unique_ptr<char*[]>& topicLevels, uint8_t& topicLevelsCount);
+  bool __splitTopic(char* topic, std::unique_ptr<char*[]>& topicLevels, uint8_t& topicLevelsCount);
   bool __fillPayloadBuffer(std::unique_ptr<char[]>& payloadBuffer, char* payload, size_t len, size_t index, size_t total);
   bool __handleOTAUpdates(char* topic, char* payload, const AsyncMqttClientMessageProperties& properties, size_t len, size_t index, size_t total, char* const* topicLevels, uint8_t topicLevelsCount);
   bool __handleBroadcasts(char* topic, char* payload, const AsyncMqttClientMessageProperties& properties, size_t len, size_t index, size_t total, char* const* topicLevels, uint8_t topicLevelsCount);

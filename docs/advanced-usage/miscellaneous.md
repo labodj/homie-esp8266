@@ -60,7 +60,7 @@ This way you can be sure the run is safe enough (unless you use blocking delay, 
 1. Once your code in `setupHandler()` and `loopHandler()` engaged, you can be pretty sure the `Homie.isConnected()` is true without checking it. Unless, you intend your device is mobile and might reach out of WiFi coverage in the middle of the run.
 1. The `loop()` often starts before Wifi is connected. "Wifi connected" event causes significant load on the MCU with Wifi related tasks, also with sending initial MQTT reports. Therefore, running complex commands around the moment of "Wifi connected" might cause malfunction/crash.
 
-As solution, heavy commands (massive initializations, long calculations, SPIFFS reading/writing, etc.) should be initiated in one of 2 cases:
+As solution, heavy commands (massive initializations, long calculations, filesystem reading/writing, etc.) should be initiated in one of 2 cases:
  - very early in setup() before "Wifi connected".
  - way after "Wifi connected" (non-blocking wait 3-5 seconds and then do the heavy commands).
 

@@ -4,34 +4,185 @@ using namespace HomieInternals;
 
 Config::Config()
   : _configStruct()
-  , _spiffsBegan(false)
+  , _filesystemBegan(false)
   , _valid(false) {
 }
 
-bool Config::_spiffsBegin() {
-  if (!_spiffsBegan) {
+bool Config::_filesystemBegin() {
+  if (!_filesystemBegan) {
+    // Always try a non-formatting mount first. In a LittleFS migration build a
+    // mount failure is the signal that a provisioned SPIFFS image may still
+    // exist on the same flash area and must be read before anything is erased.
+    if (!_mountSelectedFilesystem(false)) {
+      if (_migrateSpiffsToLittleFs()) {
+        return true;
+      }
+
+      const bool formatOnFail =
 #ifdef ESP32
-    _spiffsBegan = SPIFFS.begin(true);
+        true;
 #elif defined(ESP8266)
-    _spiffsBegan = SPIFFS.begin();
+        HOMIE_USE_LITTLEFS;
+#else
+        false;
 #endif
-    if (!_spiffsBegan) Interface::get().getLogger() << F("✖ Cannot mount filesystem") << endl;
+      if (formatOnFail) {
+        Interface::get().getLogger() << F("! Formatting ") << HOMIE_FS_NAME << F(" after mount failure") << endl;
+        _mountSelectedFilesystem(true);
+      }
+    }
+
+    if (!_filesystemBegan) Interface::get().getLogger() << F("✖ Cannot mount ") << HOMIE_FS_NAME << endl;
   }
 
-  return _spiffsBegan;
+  return _filesystemBegan;
 }
 
-bool Config::load() {
-  if (!_spiffsBegin()) { return false; }
+bool Config::_mountSelectedFilesystem(bool formatOnFail) {
+#ifdef ESP32
+  _filesystemBegan = HOMIE_FS.begin(formatOnFail);
+#elif defined(ESP8266)
+  _filesystemBegan = HOMIE_FS.begin();
+  if (!_filesystemBegan && formatOnFail) {
+    if (HOMIE_FS.format()) {
+      _filesystemBegan = HOMIE_FS.begin();
+    }
+  }
+#endif
 
-  _valid = false;
+  return _filesystemBegan;
+}
+
+bool Config::_ensureFilesystemDirectories() {
+#if HOMIE_USE_LITTLEFS
+  // LittleFS has real directories. SPIFFS accepted nested-looking paths without
+  // creating parent directories, so create /homie explicitly when LittleFS is used.
+  if (HOMIE_FS.exists(CONFIG_DIRECTORY_PATH)) return true;
+  if (HOMIE_FS.mkdir(CONFIG_DIRECTORY_PATH)) return true;
+
+  Interface::get().getLogger() << F("✖ Cannot create filesystem directory ") << CONFIG_DIRECTORY_PATH << endl;
+  return false;
+#else
+  return true;
+#endif
+}
+
+bool Config::_migrateSpiffsToLittleFs() {
+#if HOMIE_USE_LITTLEFS && HOMIE_MIGRATE_SPIFFS_TO_LITTLEFS
+  Interface::get().getLogger() << F("! ") << HOMIE_FS_NAME
+                               << F(" mount failed; checking for a SPIFFS configuration to migrate") << endl;
+
+  // The migration path is deliberately gated by config.json. Without it there is
+  // no provisioned Homie state to preserve, so the normal mount/format fallback
+  // should handle the selected filesystem instead.
+  if (!SPIFFS.begin()) {
+    Interface::get().getLogger() << F("! No mountable SPIFFS filesystem found for migration") << endl;
+    return false;
+  }
 
   if (!SPIFFS.exists(CONFIG_FILE_PATH)) {
-    Interface::get().getLogger() << F("✖ ") << CONFIG_FILE_PATH << F(" doesn't exist") << endl;
+    SPIFFS.end();
+    Interface::get().getLogger() << F("! SPIFFS migration skipped: ") << CONFIG_FILE_PATH << F(" not found") << endl;
     return false;
   }
 
   File configFile = SPIFFS.open(CONFIG_FILE_PATH, "r");
+  if (!configFile) {
+    SPIFFS.end();
+    Interface::get().getLogger() << F("✖ SPIFFS migration failed: cannot open config file") << endl;
+    return false;
+  }
+
+  const size_t configSize = configFile.size();
+  if (configSize == 0 || configSize >= MAX_JSON_CONFIG_FILE_SIZE) {
+    configFile.close();
+    SPIFFS.end();
+    Interface::get().getLogger() << F("✖ SPIFFS migration failed: config file size is not supported") << endl;
+    return false;
+  }
+
+  char configBuffer[MAX_JSON_CONFIG_FILE_SIZE];
+  configFile.readBytes(configBuffer, configSize);
+  configFile.close();
+
+  // NEXTMODE is optional operational state. Copy it only when it fits in this
+  // bounded buffer; a malformed oversized file must not block config migration.
+  bool nextModePresent = false;
+  char nextModeBuffer[8];
+  size_t nextModeSize = 0;
+  File nextModeFile = SPIFFS.open(CONFIG_NEXT_BOOT_MODE_FILE_PATH, "r");
+  if (nextModeFile) {
+    nextModeSize = nextModeFile.size();
+    if (nextModeSize > 0 && nextModeSize < sizeof(nextModeBuffer)) {
+      nextModeFile.readBytes(nextModeBuffer, nextModeSize);
+      nextModePresent = true;
+    }
+    nextModeFile.close();
+  }
+
+  const bool uiBundlePresent = SPIFFS.exists(CONFIG_UI_BUNDLE_PATH);
+  SPIFFS.end();
+
+  // SPIFFS and LittleFS use the same flash partition in the migration image.
+  // Once LittleFS is formatted the old SPIFFS contents are gone, so only small,
+  // bounded files are copied through RAM.
+  if (!HOMIE_FS.format() || !_mountSelectedFilesystem(false)) {
+    Interface::get().getLogger() << F("✖ SPIFFS migration failed: cannot format or mount ") << HOMIE_FS_NAME << endl;
+    return false;
+  }
+  if (!_ensureFilesystemDirectories()) {
+    Interface::get().getLogger() << F("✖ SPIFFS migration failed: cannot prepare ") << HOMIE_FS_NAME << endl;
+    return false;
+  }
+
+  File migratedConfig = HOMIE_FS.open(CONFIG_FILE_PATH, "w");
+  if (!migratedConfig) {
+    Interface::get().getLogger() << F("✖ SPIFFS migration failed: cannot write config file") << endl;
+    return false;
+  }
+  const size_t configWritten = migratedConfig.write(reinterpret_cast<const uint8_t*>(configBuffer), configSize);
+  migratedConfig.close();
+  if (configWritten != configSize) {
+    Interface::get().getLogger() << F("✖ SPIFFS migration failed: config file was not fully written") << endl;
+    return false;
+  }
+
+  if (nextModePresent) {
+    File migratedNextMode = HOMIE_FS.open(CONFIG_NEXT_BOOT_MODE_FILE_PATH, "w");
+    if (migratedNextMode) {
+      const size_t nextModeWritten = migratedNextMode.write(reinterpret_cast<const uint8_t*>(nextModeBuffer), nextModeSize);
+      migratedNextMode.close();
+      if (nextModeWritten != nextModeSize) {
+        Interface::get().getLogger() << F("! SPIFFS migration skipped NEXTMODE: file was not fully written") << endl;
+      }
+    } else {
+      Interface::get().getLogger() << F("! SPIFFS migration skipped NEXTMODE: cannot write file") << endl;
+    }
+  }
+
+  Interface::get().getLogger() << F("✔ Migrated Homie configuration from SPIFFS to ") << HOMIE_FS_NAME << endl;
+  if (uiBundlePresent) {
+    // This warning is informational. The UI bundle is intentionally excluded
+    // from migration because it can be much larger than the bounded config copy.
+    Interface::get().getLogger() << F("! UI bundle was not migrated; upload it again to ") << HOMIE_FS_NAME << endl;
+  }
+  return true;
+#else
+  return false;
+#endif
+}
+
+bool Config::load() {
+  if (!_filesystemBegin()) { return false; }
+
+  _valid = false;
+
+  if (!HOMIE_FS.exists(CONFIG_FILE_PATH)) {
+    Interface::get().getLogger() << F("✖ ") << CONFIG_FILE_PATH << F(" doesn't exist") << endl;
+    return false;
+  }
+
+  File configFile = HOMIE_FS.open(CONFIG_FILE_PATH, "r");
   if (!configFile) {
     Interface::get().getLogger() << F("✖ Cannot open config file") << endl;
     return false;
@@ -148,7 +299,7 @@ bool Config::load() {
 }
 
 char* Config::getSafeConfigFile() const {
-  File configFile = SPIFFS.open(CONFIG_FILE_PATH, "r");
+  File configFile = HOMIE_FS.open(CONFIG_FILE_PATH, "r");
   size_t configSize = configFile.size();
 
   char buf[MAX_JSON_CONFIG_FILE_SIZE];
@@ -170,19 +321,20 @@ char* Config::getSafeConfigFile() const {
 }
 
 void Config::erase() {
-  if (!_spiffsBegin()) { return; }
+  if (!_filesystemBegin()) { return; }
 
-  SPIFFS.remove(CONFIG_FILE_PATH);
-  SPIFFS.remove(CONFIG_NEXT_BOOT_MODE_FILE_PATH);
+  HOMIE_FS.remove(CONFIG_FILE_PATH);
+  HOMIE_FS.remove(CONFIG_NEXT_BOOT_MODE_FILE_PATH);
 }
 
 void Config::setHomieBootModeOnNextBoot(HomieBootMode bootMode) {
-  if (!_spiffsBegin()) { return; }
+  if (!_filesystemBegin()) { return; }
+  if (!_ensureFilesystemDirectories()) { return; }
 
   if (bootMode == HomieBootMode::UNDEFINED) {
-    SPIFFS.remove(CONFIG_NEXT_BOOT_MODE_FILE_PATH);
+    HOMIE_FS.remove(CONFIG_NEXT_BOOT_MODE_FILE_PATH);
   } else {
-    File bootModeFile = SPIFFS.open(CONFIG_NEXT_BOOT_MODE_FILE_PATH, "w");
+    File bootModeFile = HOMIE_FS.open(CONFIG_NEXT_BOOT_MODE_FILE_PATH, "w");
     if (!bootModeFile) {
       Interface::get().getLogger() << F("✖ Cannot open NEXTMODE file") << endl;
       return;
@@ -195,9 +347,9 @@ void Config::setHomieBootModeOnNextBoot(HomieBootMode bootMode) {
 }
 
 HomieBootMode Config::getHomieBootModeOnNextBoot() {
-  if (!_spiffsBegin()) { return HomieBootMode::UNDEFINED; }
+  if (!_filesystemBegin()) { return HomieBootMode::UNDEFINED; }
 
-  File bootModeFile = SPIFFS.open(CONFIG_NEXT_BOOT_MODE_FILE_PATH, "r");
+  File bootModeFile = HOMIE_FS.open(CONFIG_NEXT_BOOT_MODE_FILE_PATH, "r");
   if (bootModeFile) {
     int v = bootModeFile.parseInt();
     bootModeFile.close();
@@ -208,11 +360,12 @@ HomieBootMode Config::getHomieBootModeOnNextBoot() {
 }
 
 void Config::write(const JsonObject config) {
-  if (!_spiffsBegin()) { return; }
+  if (!_filesystemBegin()) { return; }
+  if (!_ensureFilesystemDirectories()) { return; }
 
-  SPIFFS.remove(CONFIG_FILE_PATH);
+  HOMIE_FS.remove(CONFIG_FILE_PATH);
 
-  File configFile = SPIFFS.open(CONFIG_FILE_PATH, "w");
+  File configFile = HOMIE_FS.open(CONFIG_FILE_PATH, "w");
   if (!configFile) {
     Interface::get().getLogger() << F("✖ Cannot open config file") << endl;
     return;
@@ -222,7 +375,7 @@ void Config::write(const JsonObject config) {
 }
 
 bool Config::patch(const char* patch) {
-  if (!_spiffsBegin()) { return false; }
+  if (!_filesystemBegin()) { return false; }
 
   StaticJsonDocument<MAX_JSON_CONFIG_ARDUINOJSON_BUFFER_SIZE> patchJsonDoc;
 
@@ -232,7 +385,7 @@ bool Config::patch(const char* patch) {
   }
 
   JsonObject patchObject = patchJsonDoc.as<JsonObject>();
-  File configFile = SPIFFS.open(CONFIG_FILE_PATH, "r");
+  File configFile = HOMIE_FS.open(CONFIG_FILE_PATH, "r");
   if (!configFile) {
     Interface::get().getLogger() << F("✖ Cannot open config file") << endl;
     return false;
