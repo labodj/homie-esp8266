@@ -1,4 +1,4 @@
-This *Getting Started* guide assumes you have a board with a user-configurable LED
+This _Getting Started_ guide assumes you have a board with a user-configurable LED
 and a user-programmable button, like a NodeMCU DevKit 1.0 or a typical ESP32 dev
 board. These restrictions can be lifted (see next pages).
 
@@ -10,10 +10,10 @@ and ESP8266 project configuration examples.
 
 To use this fork, you will typically need:
 
-* An ESP32 or ESP8266 board
-* PlatformIO for the maintained path, or the Arduino IDE for legacy upstream-style setups
-* Basic knowledge of the Arduino environment (upload a sketch, import libraries, ...)
-* To understand [the Homie convention](https://github.com/homieiot/convention)
+- An ESP32 or ESP8266 board
+- PlatformIO for the maintained path, or the Arduino IDE for legacy upstream-style setups
+- Basic knowledge of the Arduino environment (upload a sketch, import libraries, ...)
+- To understand [the Homie convention](https://github.com/homieiot/convention)
 
 ## Installing Homie for ESP8266
 
@@ -24,8 +24,8 @@ There are two ways to install Homie for ESP8266.
 Add this to your `platformio.ini`:
 
 !!! warning "Maintained path for this fork"
-    This fork is consumed through a git dependency. The primary maintained target
-    today is ESP32 on `pioarduino/platform-espressif32`:
+This fork is consumed through a git dependency. The primary maintained target
+today is ESP32 on `pioarduino/platform-espressif32`:
 
     ```
     platform = https://github.com/pioarduino/platform-espressif32/releases/download/stable/platform-espressif32.zip
@@ -56,11 +56,11 @@ There is a YouTube video with instructions:
 
 Upstream Homie for ESP8266 has 5 dependencies:
 
-* [ArduinoJson](https://github.com/bblanchon/ArduinoJson) >= 5.0.8
-* [Bounce2](https://github.com/thomasfredericks/Bounce2)
-* [ESPAsyncTCP](https://github.com/me-no-dev/ESPAsyncTCP) >= [c8ed544](https://github.com/me-no-dev/ESPAsyncTCP)
-* [AsyncMqttClient](https://github.com/marvinroger/async-mqtt-client)
-* [ESPAsyncWebServer](https://github.com/me-no-dev/ESPAsyncWebServer)
+- [ArduinoJson](https://github.com/bblanchon/ArduinoJson) >= 5.0.8
+- [Bounce2](https://github.com/thomasfredericks/Bounce2)
+- [ESPAsyncTCP](https://github.com/me-no-dev/ESPAsyncTCP) >= [c8ed544](https://github.com/me-no-dev/ESPAsyncTCP)
+- [AsyncMqttClient](https://github.com/marvinroger/async-mqtt-client)
+- [ESPAsyncWebServer](https://github.com/me-no-dev/ESPAsyncWebServer)
 
 Some of them are available through the Arduino IDE, with **Sketch → Include Library → Manage Libraries**. For the others, install it by downloading the `.zip` on GitHub.
 
@@ -82,12 +82,11 @@ void loop() {
 }
 ```
 
-
 This is the bare minimum needed for Homie for ESP8266 to work correctly.
 
 !!! tip "LED"
-    ![Solid LED](../assets/led_solid.gif)
-    If you upload this sketch, you will notice the LED on the board will light on. This is because you are in `configuration` mode.
+![Solid LED](../assets/led_solid.gif)
+If you upload this sketch, you will notice the LED on the board will light on. This is because you are in `configuration` mode.
 
 Homie for ESP8266 has 3 modes of operation:
 
@@ -98,14 +97,14 @@ Homie for ESP8266 has 3 modes of operation:
 3. The `standalone` mode. See [Standalone mode](../advanced-usage/standalone-mode.md).
 
 !!! warning
-    **As a rule of thumb, never block the device with blocking code for more than 50ms or so.** Otherwise, you may very probably experience unexpected behaviors.
+**As a rule of thumb, never block the device with blocking code for more than 50ms or so.** Otherwise, you may very probably experience unexpected behaviors.
 
 ## Connecting to the AP and configuring the device
 
 Homie for ESP8266 has spawned a secure AP named `Homie-xxxxxxxxxxxx`, like `Homie-c631f278df44`. Connect to it.
 
 !!! tip "Hardware device ID"
-    This `c631f278df44` ID is unique to each device, and you cannot change it (this is actually the MAC address of the station mode). If you flash a new sketch, this ID won't change.
+This `c631f278df44` ID is unique to each device, and you cannot change it (this is actually the MAC address of the station mode). If you flash a new sketch, this ID won't change.
 
 Once connected, the webserver is available at `http://192.168.123.1`. Every domain name is resolved by the built-in DNS server to this address. You can then configure the device using the [HTTP JSON API](../configuration/http-json-api.md). When the device receives its configuration, it will reboot into `normal` mode.
 
@@ -116,12 +115,12 @@ Once connected, the webserver is available at `http://192.168.123.1`. Every doma
 When the device boots in `normal` mode, it will start blinking:
 
 !!! tip "LED"
-    ![Slowly blinking LED](../assets/led_wifi.gif)
-    Slowly when connecting to the Wi-Fi
+![Slowly blinking LED](../assets/led_wifi.gif)
+Slowly when connecting to the Wi-Fi
 
 !!! tip "LED"
-    ![Fast blinking LED](../assets/led_mqtt.gif)
-    Faster when connecting to the MQTT broker
+![Fast blinking LED](../assets/led_mqtt.gif)
+Faster when connecting to the MQTT broker
 
 This way, you can have a quick feedback on what's going on. If both connections are established, the LED will stay off. Note the device will also blink during the automatic reconnection, if the connection to the Wi-Fi or the MQTT broker is lost.
 
@@ -129,10 +128,10 @@ This way, you can have a quick feedback on what's going on. If both connections 
 
 Although the sketch looks like it does not do anything, it actually does quite a lot:
 
-* It automatically connects to the Wi-Fi and MQTT broker. No more network boilerplate code
-* It exposes the Homie device on MQTT (as `<base topic>/<device ID>`, e.g. `homie/c631f278df44`)
-* It subscribes to the special OTA and configuration topics, automatically flashing a sketch if available or updating the configuration
-* It checks for the configured reset trigger on the board to return to `configuration` mode
+- It automatically connects to the Wi-Fi and MQTT broker. No more network boilerplate code
+- It exposes the Homie device on MQTT (as `<base topic>/<device ID>`, e.g. `homie/c631f278df44`)
+- It subscribes to the special OTA and configuration topics, automatically flashing a sketch if available or updating the configuration
+- It checks for the configured reset trigger on the board to return to `configuration` mode
 
 ## Creating an useful sketch
 

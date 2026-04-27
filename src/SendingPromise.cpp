@@ -1,4 +1,5 @@
 #include "SendingPromise.hpp"
+#include "Homie/Utils/Helpers.hpp"
 
 using namespace HomieInternals;
 
@@ -62,15 +63,18 @@ uint16_t SendingPromise::send(const String& value) {
     return 0;
   }
 
-  char* topic = new char[strlen(Interface::get().getConfig().get().mqtt.baseTopic) + strlen(Interface::get().getConfig().get().deviceId) + 1 + strlen(_node->getId()) + 1 + strlen(_property->c_str()) + 6 + 4 + 1];  // last + 6 for range _65536, last + 4 for /set
-  strcpy(topic, Interface::get().getConfig().get().mqtt.baseTopic);
-  strcat(topic, Interface::get().getConfig().get().deviceId);
+  char* topic = new char[Helpers::mqttDeviceBaseTopicLength(Interface::get().getConfig().get().mqtt.baseTopic, Interface::get().getConfig().get().deviceId) + 1 + strlen(_node->getId()) + 1 + strlen(_property->c_str()) + 6 + 4 + 1];  // last + 6 for range -65535/_65535, last + 4 for /set
+  Helpers::buildMqttDeviceBaseTopic(topic, Interface::get().getConfig().get().mqtt.baseTopic, Interface::get().getConfig().get().deviceId);
   strcat_P(topic, PSTR("/"));
   strcat(topic, _node->getId());
   if (_range.isRange) {
     char rangeStr[5 + 1];  // max 65536
     itoa(_range.index, rangeStr, 10);
+#if HOMIE_CONVENTION_V5
+    strcat_P(topic, PSTR("-"));
+#else
     strcat_P(topic, PSTR("_"));
+#endif
     strcat(topic, rangeStr);
     _range.isRange = false;                  //FIXME: This is a workaround. Problem is that Range is loaded from the property into SendingPromise, but the SendingPromise is global. (one SendingPromise for the HomieClass instance
     _range.index = 0;
@@ -79,12 +83,30 @@ uint16_t SendingPromise::send(const String& value) {
   strcat_P(topic, PSTR("/"));
   strcat(topic, _property->c_str());
 
-  uint16_t packetId = Interface::get().getMqttClient().publish(topic, _qos, _retained, value.c_str());
+  uint16_t packetId;
+#if HOMIE_CONVENTION_V5
+  if (value.length() == 0) {
+    // Homie v5 represents an actual empty string value with one NUL byte,
+    // because an MQTT zero-length retained payload deletes the retained topic.
+    const char emptyStringPayload = '\0';
+    packetId = Interface::get().getMqttClient().publish(topic, _qos, _retained, &emptyStringPayload, 1);
+  } else {
+    packetId = Interface::get().getMqttClient().publish(topic, _qos, _retained, value.c_str());
+  }
+#else
+  packetId = Interface::get().getMqttClient().publish(topic, _qos, _retained, value.c_str());
+#endif
 
+#if HOMIE_CONVENTION_V5
+  if (_overwriteSetter) {
+    Interface::get().getLogger() << F("! overwriteSetter(true) is ignored in Homie v5 mode; devices must not publish command topics") << endl;
+  }
+#else
   if (_overwriteSetter) {
     strcat_P(topic, PSTR("/set"));
     Interface::get().getMqttClient().publish(topic, 2, _setRetained, value.c_str());
   }
+#endif
 
   delete[] topic;
 

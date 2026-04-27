@@ -14,7 +14,7 @@ python3 -m pip install -r requirements.txt
 ```text
 usage: ota_updater.py [-h] [-l BROKER_HOST] [-p BROKER_PORT]
                       [-u BROKER_USERNAME] [-d BROKER_PASSWORD]
-                      [-t BASE_TOPIC] -i DEVICE_ID
+                      [-t BASE_TOPIC] [--homie-version {3,4,5}] -i DEVICE_ID
                       [--broker-tls-cacert BROKER_TLS_CACERT]
                       [--broker-tls-certfile BROKER_TLS_CERTFILE]
                       [--broker-tls-keyfile BROKER_TLS_KEYFILE]
@@ -40,7 +40,13 @@ arguments:
   -d BROKER_PASSWORD, --broker-password BROKER_PASSWORD
                         password used to authenticate with the mqtt broker
   -t BASE_TOPIC, --base-topic BASE_TOPIC
-                        base topic of the homie devices on the broker
+                        base topic/domain of the Homie devices on the broker.
+                        With --homie-version 5, the updater appends the
+                        required /5/ segment unless it is already present.
+  --homie-version {3,4,5}, --convention-version {3,4,5}
+                        Homie convention generation used by the target
+                        firmware. Use 5 for devices built with
+                        HOMIE_CONVENTION_VERSION=5.
   -i DEVICE_ID, --device-id DEVICE_ID
                         homie device id
   --broker-tls-cacert BROKER_TLS_CACERT
@@ -67,7 +73,8 @@ arguments:
 
 * `BROKER_HOST` and `BROKER_PORT` defaults to 127.0.0.1 and 1883 respectively if not set.
 * `BROKER_USERNAME` and `BROKER_PASSWORD` are optional.
-* `BASE_TOPIC` has to end with a slash, defaults to `homie/` if not set.
+* `BASE_TOPIC` is normalized with a trailing slash, defaults to `homie/` if not set.
+* `--homie-version 5` publishes to the required v5 root such as `homie/5/<device-id>/...`.
 * TLS is enabled automatically when any `--broker-tls-*` option is set.
 * `--timeout` defaults to `300` seconds.
 * `--expected-md5` is optional, but useful in scripted deployments where the firmware checksum is produced by a build step.
@@ -78,4 +85,10 @@ arguments:
 
 ```bash
 python3 ota_updater.py -l localhost -u admin -d secure -t "homie/" -i "device-id" /path/to/firmware.bin
+```
+
+For Homie v5 firmware:
+
+```bash
+python3 ota_updater.py --homie-version 5 -l localhost -i "device-id" /path/to/firmware.bin
 ```

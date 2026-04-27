@@ -17,6 +17,7 @@ void setup() {
 ```
 
 On the mqtt broker you will see the following message show up:
+
 ```
 topic                               message
 --------------------------------------------------------

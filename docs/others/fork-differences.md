@@ -14,13 +14,17 @@ intentional maintenance work from upstream Homie behavior.
 The fork keeps the Homie 3.0.1 MQTT contract and the public sketch API intact.
 Changes are additive where possible:
 
-* SPIFFS remains the default filesystem.
-* LittleFS is opt-in with `HOMIE_USE_LITTLEFS=1`.
-* SPIFFS-to-LittleFS migration is a temporary OTA build option and is disabled by
+- SPIFFS remains the default filesystem.
+- LittleFS is opt-in with `HOMIE_USE_LITTLEFS=1`.
+- SPIFFS-to-LittleFS migration is a temporary OTA build option and is disabled by
   default.
-* queue-size overrides keep the upstream-sized default queues.
-* ID validation warnings do not reject legacy node, property, or device IDs.
-* `setSetRetained()` only extends `overwriteSetter(true)` behavior.
+- Homie `4.0.0` MQTT discovery is opt-in with `HOMIE_CONVENTION_VERSION=4`;
+  Homie `3.0.1` remains the default advertised convention.
+- Homie `5.0` MQTT discovery is opt-in with `HOMIE_CONVENTION_VERSION=5` and
+  uses the v5 `$description` model instead of changing the default runtime.
+- queue-size overrides keep the upstream-sized default queues.
+- ID validation warnings do not reject legacy node, property, or device IDs.
+- `setSetRetained()` only extends `overwriteSetter(true)` behavior.
 
 ## Platform And Dependency Maintenance
 
@@ -45,11 +49,11 @@ silently move to a different MQTT client implementation.
 The normal-mode boot flow still follows upstream Homie, but connection recovery
 is more defensive:
 
-* Wi-Fi and MQTT reconnection use explicit backoff timers.
-* missed Wi-Fi and MQTT callbacks are reconciled against the current client
+- Wi-Fi and MQTT reconnection use explicit backoff timers.
+- missed Wi-Fi and MQTT callbacks are reconciled against the current client
   state from `Homie.loop()`.
-* stalled Wi-Fi and MQTT connection attempts are forced into a clean retry.
-* if the device cannot return to full `MQTT_READY` state within the recovery
+- stalled Wi-Fi and MQTT connection attempts are forced into a clean retry.
+- if the device cannot return to full `MQTT_READY` state within the recovery
   window, it schedules a reboot to recover the networking stack.
 
 This avoids relying exclusively on asynchronous network callbacks, which can be
@@ -60,11 +64,11 @@ missed or delayed on newer ESP32/ESP8266 Arduino core combinations.
 Several events that upstream handled directly from asynchronous callbacks are
 now queued and dispatched from the main `Homie.loop()` flow:
 
-* Wi-Fi connected/disconnected
-* MQTT connected/disconnected
-* MQTT publish acknowledgements
-* non-OTA inbound MQTT messages
-* OTA started/progress/success/failure notifications
+- Wi-Fi connected/disconnected
+- MQTT connected/disconnected
+- MQTT publish acknowledgements
+- non-OTA inbound MQTT messages
+- OTA started/progress/success/failure notifications
 
 The purpose is to keep user callbacks, Homie event handlers, and most MQTT input
 processing on one predictable execution path. This reduces races between async
@@ -90,8 +94,8 @@ Defaults:
 Use larger queues only when production devices log queue-full warnings under
 expected traffic. Queue drops are also published as retained Homie statistics:
 
-* `$stats/mqttackdropped`
-* `$stats/mqttinbounddropped`
+- `$stats/mqttackdropped`
+- `$stats/mqttinbounddropped`
 
 Those counters are cumulative for the current boot and are intended for fleet
 monitoring.
@@ -100,10 +104,10 @@ monitoring.
 
 MQTT OTA handling is more robust for QoS 1 delivery and disconnect scenarios:
 
-* duplicate retransmissions of an already flashed payload are ignored safely.
-* overlapping retransmitted chunks are trimmed before writing to flash.
-* out-of-sequence chunks fail explicitly.
-* MQTT disconnect during OTA aborts the update and requires a retry.
+- duplicate retransmissions of an already flashed payload are ignored safely.
+- overlapping retransmitted chunks are trimmed before writing to flash.
+- out-of-sequence chunks fail explicitly.
+- MQTT disconnect during OTA aborts the update and requires a retry.
 
 The OTA helper script was also modernized, but the MQTT OTA topic contract is
 kept compatible with Homie 3.0.1.
@@ -132,8 +136,8 @@ The migration build first tries to mount LittleFS. If LittleFS cannot mount and
 SPIFFS still contains `/homie/config.json`, the firmware copies the small Homie
 state into RAM, formats/mounts LittleFS, and writes it back. Migrated files:
 
-* `/homie/config.json`
-* `/homie/NEXTMODE`, when present and small enough for the bounded buffer
+- `/homie/config.json`
+- `/homie/NEXTMODE`, when present and small enough for the bounded buffer
 
 The UI bundle at `/homie/ui_bundle.gz` is intentionally not migrated because it
 can be too large to copy through RAM while both filesystems share the same flash
@@ -153,15 +157,64 @@ non-retained publish default for that property.
 mirrored `/set` publish performed by `overwriteSetter(true)`. The main property
 publish remains controlled by `SendingPromise::setRetained()`.
 
+## Homie v4 Compatibility
+
+The fork can advertise Homie `4.0.0` metadata when built with:
+
+```ini
+build_flags =
+  -D HOMIE_CONVENTION_VERSION=4
+```
+
+This is intentionally compile-time only, so deployed Homie `3.0.1` devices and
+their consumers do not change behavior accidentally. In v4 mode the device:
+
+- publishes `$homie` as `4.0.0`
+- publishes the mandatory `$extensions` attribute
+- declares `org.homie.legacy-firmware:0.1.1:[4.x]`
+- declares `org.homie.legacy-stats:0.1.1:[4.x]`
+- keeps the existing legacy firmware, local IP, MAC and stats topics
+
+Homie v4 requires property `$name` and `$datatype`. Older sketches did not
+always set those fields, so v4 mode publishes safe fallbacks during discovery:
+the property id as `$name`, and `string` as `$datatype`. Explicit metadata in the
+sketch always wins and is still recommended for production firmware.
+
+## Homie v5 Compatibility
+
+The fork can publish Homie `5.0` discovery metadata when built with:
+
+```ini
+build_flags =
+  -D HOMIE_CONVENTION_VERSION=5
+```
+
+In v5 mode the device:
+
+- publishes under `<domain>/5/<device-id>`
+- publishes retained `$state` and `$description` topics
+- places device, node and property metadata in `$description`
+- requires strict v5 topic IDs for device, node and property identifiers
+- uses `node-<index>` for range nodes instead of the legacy `node_<index>`
+- ignores retained `/set` commands because Homie v5 command messages must be
+  non-retained
+- adds `mqtt.effective_base_topic` to the advertised safe config so diagnostics
+  show the real v5 runtime root while the saved `mqtt.base_topic` remains stable
+
+The historical OTA, configuration, firmware and stats topics remain available as
+the declared extension `io.github.labodj.esp-runtime`. This keeps
+existing operational tooling usable while keeping Homie v5 core discovery
+strictly separated from fork-specific runtime topics.
+
 ## Statistics
 
 The fork publishes the standard Homie statistics plus these retained topics:
 
-* `$stats/freeheap`: current free heap in bytes
-* `$stats/uptimewifi`: seconds since Wi-Fi connectivity was established
-* `$stats/uptimemqtt`: seconds since MQTT connectivity was established
-* `$stats/mqttackdropped`: cumulative MQTT publish acknowledgement queue drops
-* `$stats/mqttinbounddropped`: cumulative deferred inbound MQTT queue drops
+- `$stats/freeheap`: current free heap in bytes
+- `$stats/uptimewifi`: seconds since Wi-Fi connectivity was established
+- `$stats/uptimemqtt`: seconds since MQTT connectivity was established
+- `$stats/mqttackdropped`: cumulative MQTT publish acknowledgement queue drops
+- `$stats/mqttinbounddropped`: cumulative deferred inbound MQTT queue drops
 
 ## Documentation Status
 

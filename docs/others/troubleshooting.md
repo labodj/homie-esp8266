@@ -2,7 +2,7 @@
 
 You are probably using a generic ESP8266. The problem with these modules is the built-in LED is tied to the serial line. You can do two things:
 
-* Disable the serial logging, to have the LED working:
+- Disable the serial logging, to have the LED working:
 
 ```c++
 void setup() {
@@ -11,7 +11,7 @@ void setup() {
 }
 ```
 
-* Disable the LED blinking, to have the serial line working:
+- Disable the LED blinking, to have the serial line working:
 
 ```c++
 void setup() {
@@ -24,9 +24,9 @@ void setup() {
 
 `abort()` is called by Homie for ESP8266 when the framework is used in a bad way. The possible causes are:
 
-* You are calling a function that is meant to be called before `Homie.setup()`, after `Homie.setup()`
+- You are calling a function that is meant to be called before `Homie.setup()`, after `Homie.setup()`
 
-* One of the string you've used (in `setFirmware()`, `subscribe()`, etc.) is too long. Check the `Limits.hpp` file to see the max length possible for each string.
+- One of the string you've used (in `setFirmware()`, `subscribe()`, etc.) is too long. Check the `Limits.hpp` file to see the max length possible for each string.
 
 ## 3. The network is completely unstable... What's going on?
 

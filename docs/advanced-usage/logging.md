@@ -8,7 +8,7 @@ void setup() {
 ```
 
 !!! warning
-    It's up to you to call `Serial.begin();`, whether logging is enabled or not.
+It's up to you to call `Serial.begin();`, whether logging is enabled or not.
 
 You can also change the `Print` instance to log to:
 

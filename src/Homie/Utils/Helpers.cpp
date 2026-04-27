@@ -1,6 +1,27 @@
 #include "Helpers.hpp"
+#include "../Constants.hpp"
 
 using namespace HomieInternals;
+
+namespace {
+bool needsTrailingSlash(const char* value) {
+  const size_t length = strlen(value);
+  return length == 0 || value[length - 1] != '/';
+}
+
+#if HOMIE_CONVENTION_V5
+bool baseTopicEndsWithSegment(const char* baseTopic, char segment) {
+  size_t end = strlen(baseTopic);
+  if (end == 0) return false;
+  if (baseTopic[end - 1] == '/') {
+    if (end == 1) return false;
+    end--;
+  }
+
+  return end > 2 && baseTopic[end - 1] == segment && baseTopic[end - 2] == '/';
+}
+#endif
+}  // namespace
 
 void Helpers::abort(const String& message) {
   Serial.begin(115200);
@@ -96,4 +117,30 @@ void Helpers::byteArrayToHexString(const uint8_t * hexArray, char* hexStr, uint8
   for (uint8_t i = 0; i < size; i++) {
     snprintf((hexStr + (i * 2)), 3, "%02x", hexArray[i]);
   }
+}
+
+size_t Helpers::mqttRootTopicLength(const char* baseTopic) {
+  size_t length = strlen(baseTopic);
+  if (needsTrailingSlash(baseTopic)) length++;
+#if HOMIE_CONVENTION_V5
+  if (!baseTopicEndsWithSegment(baseTopic, '5')) length += 2;  // "5/"
+#endif
+  return length;
+}
+
+void Helpers::buildMqttRootTopic(char* target, const char* baseTopic) {
+  strcpy(target, baseTopic);
+  if (needsTrailingSlash(baseTopic)) strcat_P(target, PSTR("/"));
+#if HOMIE_CONVENTION_V5
+  if (!baseTopicEndsWithSegment(baseTopic, '5')) strcat_P(target, PSTR("5/"));
+#endif
+}
+
+size_t Helpers::mqttDeviceBaseTopicLength(const char* baseTopic, const char* deviceId) {
+  return mqttRootTopicLength(baseTopic) + strlen(deviceId);
+}
+
+void Helpers::buildMqttDeviceBaseTopic(char* target, const char* baseTopic, const char* deviceId) {
+  buildMqttRootTopic(target, baseTopic);
+  strcat(target, deviceId);
 }

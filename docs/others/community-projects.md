@@ -12,10 +12,10 @@ homie-control provides a web UI to manage Homie devices as well as a series of v
 
 Its lets you do useful things like:
 
-* Historically log device properties
-* Schedule changes in event properties (i.e. water your garden once a day)
-* Execute profiles of property values (i.e. turn a series of lights on and off simultaneously)
-* Trigger property changes based on:
-   * When a network device is dis/connected (i.e. your phone joins your wifi, turn the lights on)
-   * Sunset / rise
-   * When another property changes
+- Historically log device properties
+- Schedule changes in event properties (i.e. water your garden once a day)
+- Execute profiles of property values (i.e. turn a series of lights on and off simultaneously)
+- Trigger property changes based on:
+  - When a network device is dis/connected (i.e. your phone joins your wifi, turn the lights on)
+  - Sunset / rise
+  - When another property changes

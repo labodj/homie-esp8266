@@ -1,5 +1,5 @@
 site_name: Homie for ESP8266
-site_description: Documentation for the maintained Homie 3.0.1 fork used by the LSH ecosystem.
+site_description: Documentation for the maintained Homie fork used by the LSH ecosystem.
 site_author: Marvin ROGER, Jacopo Labardi
 site_url: https://labodj.github.io/homie-esp8266/
 
@@ -37,7 +37,8 @@ nav:
       - HTTP JSON API: configuration/http-json-api.md
   - Others:
       - Maintained fork differences: others/fork-differences.md
-      - Homie v4/v5 compatibility outlook: others/homie-v4-v5-compatibility.md
+      - Homie v4/v5 compatibility: others/homie-v4-v5-compatibility.md
+      - Homie v5 fork runtime extension: others/homie-v5-runtime-extension.md
       - OTA/configuration updates: others/ota-configuration-updates.md
       - Homie implementation specifics: others/homie-implementation-specifics.md
       - Limitations and known issues: others/limitations-and-known-issues.md

@@ -19,5 +19,11 @@ class Helpers {
   static void ipToString(const IPAddress& ip, char* str);
   static void hexStringToByteArray(const char* hexStr, uint8_t* hexArray, uint8_t size);
   static void byteArrayToHexString(const uint8_t* hexArray, char* hexStr, uint8_t size);
+  // Convention-aware MQTT roots. Homie 3/4 keep the configured base topic;
+  // Homie 5 inserts the mandatory major-version segment, e.g. homie/5/.
+  static size_t mqttRootTopicLength(const char* baseTopic);
+  static void buildMqttRootTopic(char* target, const char* baseTopic);
+  static size_t mqttDeviceBaseTopicLength(const char* baseTopic, const char* deviceId);
+  static void buildMqttDeviceBaseTopic(char* target, const char* baseTopic, const char* deviceId);
 };
 }  // namespace HomieInternals

@@ -1,62 +1,106 @@
-# Homie v4/v5 compatibility outlook
+# Homie v4/v5 compatibility
 
-This maintained fork currently implements the Homie `3.0.1` convention. The
-fork version in `library.json`, `library.properties` and
-`HOMIE_ESP8266_VERSION` is the package version of this maintained codebase; it
-does not change the advertised Homie convention version.
+This maintained fork advertises the Homie `3.0.1` convention by default and can
+advertise Homie `4.0.0` or Homie `5.0` when explicitly built for it. The fork version in
+`library.json`, `library.properties` and `HOMIE_ESP8266_VERSION` is the package
+version of this maintained codebase; it does not change the advertised Homie
+convention version.
 
 ## Homie v4
 
-Homie `4.0.0` is a realistic compatibility target, but it should be implemented
-as an explicit compatibility mode rather than by changing the existing default
-advertisement behavior.
+Homie `4.0.0` compatibility is available as an explicit build-time mode. It is
+not the default because changing the advertised convention version changes the
+MQTT discovery contract seen by controllers.
+
+Enable it with:
+
+```ini
+build_flags =
+  -D HOMIE_CONVENTION_VERSION=4
+```
 
 The current code already publishes most of the same structural information that
 Homie v4 expects:
 
-* device attributes such as `$homie`, `$name`, `$state`, `$nodes` and
+- device attributes such as `$homie`, `$name`, `$state`, `$nodes` and
   `$implementation`
-* node attributes such as `$name`, `$type` and `$properties`
-* property attributes such as `$name`, `$datatype`, `$format`, `$settable`,
+- node attributes such as `$name`, `$type` and `$properties`
+- property attributes such as `$name`, `$datatype`, `$format`, `$settable`,
   `$retained` and `$unit`
-* `/set` command topics for settable properties
+- `/set` command topics for settable properties
 
-The main work for v4 would be:
+When v4 mode is enabled the library:
 
-* advertising `$homie` as `4.0.0` only when the device is intentionally running
-  in v4 mode
-* publishing a correct `$extensions` attribute
-* mapping or advertising the legacy firmware and stats attributes through the
-  official legacy extensions
-* auditing topic ID validation and lifecycle semantics against the v4 wording
-* testing controllers that consume Homie v4 discovery data
+- advertises `$homie` as `4.0.0`
+- publishes the mandatory `$extensions` attribute
+- declares the official legacy firmware extension:
+  `org.homie.legacy-firmware:0.1.1:[4.x]`
+- declares the official legacy stats extension:
+  `org.homie.legacy-stats:0.1.1:[4.x]`
+- keeps the existing `$fw`, `$mac`, `$localip` and `$stats` topics so existing
+  Homie 3.0.1 consumers and OTA tooling remain usable
+- publishes required property `$name` and `$datatype` metadata even for older
+  sketches that omitted them
+
+The property metadata compatibility fallback is deliberately conservative:
+
+- missing property `$name` uses the property id
+- missing property `$datatype` uses `string`
+
+Production v4 sketches should still set explicit names and datatypes. The
+fallback exists only so enabling v4 mode does not make older sketches disappear
+from strict v4 discovery consumers.
 
 Because Homie v4 still uses retained MQTT attributes and per-topic discovery,
-this can likely be added without rewriting the library architecture.
+the implementation does not rewrite the library architecture.
 
 ## Homie v5
 
-Homie `5.0.0` is a larger architectural change. The v5 convention introduces a
-versioned base topic shape such as `homie/5/<device-id>` and consolidates device
-metadata into a retained `$description` JSON document.
+Homie `5.0` compatibility is also available as an explicit build-time mode:
 
-That means v5 support would need more than a version string change:
+```ini
+build_flags =
+  -D HOMIE_CONVENTION_VERSION=5
+```
 
-* a new topic-prefix strategy for `homie/5/<device-id>`
-* a JSON description generator for device, node and property metadata
-* careful RAM sizing on ESP8266 when building the `$description` document
-* updated subscription paths for settable property commands
-* compatibility decisions for the existing Homie 3.x OTA/configuration
-  implementation topics
-* controller interoperability testing
+The default remains Homie `3.0.1` because v5 changes the discovery contract and
+the root topic shape. In v5 mode this fork follows the Homie v5 core model:
 
-The safest implementation path is to keep Homie `3.0.1` as the default and add a
-separate opt-in convention mode. Homie v4 can probably be delivered as a
-moderate compatibility layer. Homie v5 should be treated as a larger feature or
-major-version branch because the discovery model and base topic shape differ
-substantially from the current runtime.
+- the root topic is `<domain>/5/`, so the default device base becomes
+  `homie/5/<device-id>`
+- the device publishes retained `$state` values under the v5 base topic
+- the device publishes a retained `$description` JSON document with `homie:
+"5.0"`, a numeric description `version`, `nodes`, node metadata and property
+  metadata
+- property commands use `homie/5/<device-id>/<node-id>/<property-id>/set`
+- retained `/set` commands are ignored in v5 mode because controllers must send
+  command messages as non-retained publishes
+- string property publishes with an empty value use the Homie v5 one-byte NUL
+  representation instead of an MQTT zero-length retained payload
+- broadcast subscriptions move to the v5 root and accept nested broadcast levels
+
+Homie v5 topic IDs allow lowercase letters, digits and hyphens. The v5 mode
+therefore treats invalid device, node and property IDs as boot errors. Range
+nodes also change their concrete MQTT topic IDs from the legacy
+`node_<index>` shape to `node-<index>`.
+
+The existing OTA, configuration, firmware and runtime statistics topics are not
+part of Homie v5 core. This fork keeps them as an explicitly declared extension:
+
+```text
+io.github.labodj.esp-runtime
+```
+
+See [Homie v5 fork runtime extension](homie-v5-runtime-extension.md) for the
+extension topic contract.
+
+Production v5 sketches should set explicit property datatypes. If an older
+sketch omits a datatype, uses a datatype that is not valid in Homie v5, or uses
+`enum`/`color` without the format required by v5, the `$description` generator
+advertises that property as `string` so the published description remains
+spec-valid.
 
 References:
 
-* [Homie convention v4.0.0](https://github.com/homieiot/convention/blob/v4.0.0/convention.md)
-* [Homie convention v5.0.0](https://github.com/homieiot/convention/blob/v5.0.0/convention.md)
+- [Homie convention v4.0.0](https://github.com/homieiot/convention/blob/v4.0.0/convention.md)
+- [Homie convention v5.0.0](https://github.com/homieiot/convention/blob/v5.0.0/convention.md)

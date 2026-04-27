@@ -40,6 +40,14 @@ jobs:
             board: nodemcuv2
             platform: ""
             build_flags: -DPIO_FRAMEWORK_ARDUINO_LWIP2_LOW_MEMORY -DHOMIE_PENDING_MQTT_ACK_QUEUE_SIZE=64 -DHOMIE_PENDING_MQTT_MESSAGE_QUEUE_SIZE=32
+          - name: esp8266-homie-v4
+            board: nodemcuv2
+            platform: ""
+            build_flags: -DPIO_FRAMEWORK_ARDUINO_LWIP2_LOW_MEMORY -DHOMIE_CONVENTION_VERSION=4
+          - name: esp8266-homie-v5
+            board: nodemcuv2
+            platform: ""
+            build_flags: -DPIO_FRAMEWORK_ARDUINO_LWIP2_LOW_MEMORY -DHOMIE_CONVENTION_VERSION=5
           - name: esp8266-littlefs-only
             board: nodemcuv2
             platform: ""
@@ -60,6 +68,14 @@ jobs:
             board: esp32dev
             platform: ""
             build_flags: -DHOMIE_CONFIG=0 -DHOMIE_MDNS=0
+          - name: esp32-homie-v4
+            board: esp32dev
+            platform: ""
+            build_flags: -DHOMIE_CONVENTION_VERSION=4
+          - name: esp32-homie-v5
+            board: esp32dev
+            platform: ""
+            build_flags: -DHOMIE_CONVENTION_VERSION=5
           - name: esp32-littlefs-only
             board: esp32dev
             platform: ""

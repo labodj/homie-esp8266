@@ -311,8 +311,13 @@ char* Config::getSafeConfigFile() const {
   deserializeJson(jsonDoc, buf);
   JsonObject parsedJson = jsonDoc.as<JsonObject>();
   parsedJson["wifi"].as<JsonObject>().remove("password");
-  parsedJson["mqtt"].as<JsonObject>().remove("username");
-  parsedJson["mqtt"].as<JsonObject>().remove("password");
+  JsonObject mqtt = parsedJson["mqtt"].as<JsonObject>();
+  mqtt.remove("username");
+  mqtt.remove("password");
+  // Runtime-only diagnostics are injected when advertising over MQTT. Do not
+  // leak a stale value if a previous tool copied the advertised payload back
+  // into config.json.
+  mqtt.remove("effective_base_topic");
 
   size_t jsonBufferLength = measureJson(jsonDoc) + 1;
   char* jsonString = new char[jsonBufferLength];
@@ -403,6 +408,10 @@ bool Config::patch(const char* patch) {
   JsonObject configObject = configJsonDoc.as<JsonObject>();
 
   _patchJsonObject(configObject, patchObject);
+  // mqtt.effective_base_topic is published for diagnostics only. If a consumer
+  // echoes $implementation/config into /config/set, keep the persisted config
+  // clean and let the advertiser regenerate the value from mqtt.base_topic.
+  configObject["mqtt"].as<JsonObject>().remove("effective_base_topic");
 
   ConfigValidationResult configValidationResult = Validation::validateConfig(configObject);
   if (!configValidationResult.valid) {

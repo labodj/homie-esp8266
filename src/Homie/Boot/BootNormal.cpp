@@ -112,19 +112,230 @@ bool isValidHomieId(const char* value) {
 void warnIfInvalidHomieId(const __FlashStringHelper* scope, const char* value) {
   if (isValidHomieId(value)) return;
 
-  Interface::get().getLogger() << F("! ") << scope << F(" \"") << value
-                               << F("\" is not Homie 3.0.1 ID-compliant; keeping it for backward compatibility")
+#if HOMIE_CONVENTION_V5
+  Interface::get().getLogger() << F("✖ ") << scope << F(" \"") << value
+                               << F("\" is not Homie v5 ID-compliant")
                                << endl;
+  Helpers::abort(F("✖ Homie v5 requires lowercase topic IDs with digits and hyphens only"));
+#else
+  Interface::get().getLogger() << F("! ") << scope << F(" \"") << value
+                               << F("\" is not Homie ID-compliant; keeping it for backward compatibility")
+                               << endl;
+#endif
 }
 
 void warnIfInvalidPropertyId(const char* nodeId, const char* propertyId) {
   if (isValidHomieId(propertyId)) return;
 
+#if HOMIE_CONVENTION_V5
+  Interface::get().getLogger() << F("✖ Property ID \"") << propertyId
+                               << F("\" on node \"") << nodeId
+                               << F("\" is not Homie v5 ID-compliant")
+                               << endl;
+  Helpers::abort(F("✖ Homie v5 requires lowercase property IDs with digits and hyphens only"));
+#else
   Interface::get().getLogger() << F("! Property ID \"") << propertyId
                                << F("\" on node \"") << nodeId
-                               << F("\" is not Homie 3.0.1 ID-compliant; keeping it for backward compatibility")
+                               << F("\" is not Homie ID-compliant; keeping it for backward compatibility")
                                << endl;
+#endif
 }
+
+#if HOMIE_CONVENTION_V5
+bool isValidHomieV5BaseTopic(const char* baseTopic) {
+  size_t end = strlen(baseTopic);
+  if (end == 0) return false;
+  if (baseTopic[end - 1] == '/') end--;
+  if (end == 0) return false;
+
+  if (end >= 2 && baseTopic[end - 1] == '5' && baseTopic[end - 2] == '/') {
+    end -= 2;
+  }
+  if (end == 0) return false;
+
+  for (size_t i = 0; i < end; i++) {
+    if (baseTopic[i] == '/') return false;
+  }
+
+  char domain[MAX_MQTT_BASE_TOPIC_LENGTH];
+  if (end >= sizeof(domain)) return false;
+  memcpy(domain, baseTopic, end);
+  domain[end] = '\0';
+  return isValidHomieId(domain);
+}
+
+bool isValidHomieV5Datatype(const char* datatype) {
+  if (!datatype || datatype[0] == '\0') return false;
+
+  return strcmp_P(datatype, PSTR("integer")) == 0
+      || strcmp_P(datatype, PSTR("float")) == 0
+      || strcmp_P(datatype, PSTR("boolean")) == 0
+      || strcmp_P(datatype, PSTR("string")) == 0
+      || strcmp_P(datatype, PSTR("enum")) == 0
+      || strcmp_P(datatype, PSTR("color")) == 0
+      || strcmp_P(datatype, PSTR("datetime")) == 0
+      || strcmp_P(datatype, PSTR("duration")) == 0
+      || strcmp_P(datatype, PSTR("json")) == 0;
+}
+
+bool homieV5DatatypeRequiresFormat(const char* datatype) {
+  return strcmp_P(datatype, PSTR("enum")) == 0
+      || strcmp_P(datatype, PSTR("color")) == 0;
+}
+
+bool homieV5DatatypeSupportsFormat(const char* datatype) {
+  return strcmp_P(datatype, PSTR("integer")) == 0
+      || strcmp_P(datatype, PSTR("float")) == 0
+      || strcmp_P(datatype, PSTR("boolean")) == 0
+      || strcmp_P(datatype, PSTR("enum")) == 0
+      || strcmp_P(datatype, PSTR("color")) == 0
+      || strcmp_P(datatype, PSTR("json")) == 0;
+}
+
+const char* resolveHomieV5Datatype(const char* datatype, const char* format) {
+  if (!isValidHomieV5Datatype(datatype)) return HOMIE_DEFAULT_PROPERTY_DATATYPE;
+
+  if (homieV5DatatypeRequiresFormat(datatype) && (!format || format[0] == '\0')) {
+    // enum and color descriptions are invalid without a format. Advertising
+    // them as string keeps the $description valid while preserving payloads.
+    return HOMIE_DEFAULT_PROPERTY_DATATYPE;
+  }
+
+  return datatype;
+}
+
+bool shouldAdvertiseHomieV5Format(const char* datatype, const char* format) {
+  return format && format[0] != '\0' && homieV5DatatypeSupportsFormat(datatype);
+}
+
+uint8_t decimalDigits(uint16_t value) {
+  uint8_t digits = 1;
+  while (value >= 10) {
+    value /= 10;
+    digits++;
+  }
+  return digits;
+}
+
+char jsonHexDigit(uint8_t value) {
+  return value < 10 ? static_cast<char>('0' + value) : static_cast<char>('a' + value - 10);
+}
+
+void appendJsonString(String& output, const char* value) {
+  output += '"';
+  if (value) {
+    for (const uint8_t* cursor = reinterpret_cast<const uint8_t*>(value); *cursor; cursor++) {
+      const uint8_t c = *cursor;
+      switch (c) {
+        case '"':
+          output.concat(F("\\\""));
+          break;
+        case '\\':
+          output.concat(F("\\\\"));
+          break;
+        case '\b':
+          output.concat(F("\\b"));
+          break;
+        case '\f':
+          output.concat(F("\\f"));
+          break;
+        case '\n':
+          output.concat(F("\\n"));
+          break;
+        case '\r':
+          output.concat(F("\\r"));
+          break;
+        case '\t':
+          output.concat(F("\\t"));
+          break;
+        default:
+          if (c < 0x20) {
+            output.concat(F("\\u00"));
+            output += jsonHexDigit(c >> 4);
+            output += jsonHexDigit(c & 0x0f);
+          } else {
+            output += static_cast<char>(c);
+          }
+          break;
+      }
+    }
+  }
+  output += '"';
+}
+
+void fnv1aUpdateByte(uint32_t& hash, uint8_t value) {
+  hash ^= value;
+  hash *= 16777619UL;
+}
+
+void fnv1aUpdateString(uint32_t& hash, const char* value) {
+  if (value) {
+    while (*value) {
+      fnv1aUpdateByte(hash, static_cast<uint8_t>(*value++));
+    }
+  }
+  fnv1aUpdateByte(hash, 0);
+}
+
+void fnv1aUpdateBool(uint32_t& hash, bool value) {
+  fnv1aUpdateByte(hash, value ? 1 : 0);
+}
+
+void appendV5NodeId(String& output, const HomieNode* node, uint16_t rangeIndex, bool rangeNode) {
+  output.concat(node->getId());
+  if (rangeNode) {
+    // Homie v5 topic IDs may contain hyphens but not underscores. Range nodes
+    // therefore use "node-<index>" in v5 while v3/v4 keep the legacy "_<index>".
+    output += '-';
+    output.concat(rangeIndex);
+  }
+}
+
+void appendV5NodeName(String& output, const HomieNode* node, uint16_t rangeIndex, bool rangeNode) {
+  const char* name = node->getName();
+  output.concat(name && name[0] != '\0' ? name : node->getId());
+  if (rangeNode) {
+    output += ' ';
+    output.concat(rangeIndex);
+  }
+}
+
+std::unique_ptr<char[]> buildV5AdvertisedSafeConfigFile(const char* safeConfigFile) {
+  if (!safeConfigFile) return nullptr;
+
+  const char* configuredBaseTopic = Interface::get().getConfig().get().mqtt.baseTopic;
+  const size_t effectiveBaseTopicLength = Helpers::mqttRootTopicLength(configuredBaseTopic);
+  std::unique_ptr<char[]> effectiveBaseTopic(new (std::nothrow) char[effectiveBaseTopicLength + 1]);
+  if (!effectiveBaseTopic) return nullptr;
+  Helpers::buildMqttRootTopic(effectiveBaseTopic.get(), configuredBaseTopic);
+
+  // $implementation/config mirrors the saved config, but this diagnostic field
+  // must describe the runtime MQTT root after the Homie v5 "/5/" segment has
+  // been applied. Build a temporary JSON payload so config.json stays unchanged.
+  const size_t capacity = MAX_JSON_CONFIG_ARDUINOJSON_BUFFER_SIZE
+                        + JSON_OBJECT_SIZE(1)
+                        + strlen(safeConfigFile)
+                        + effectiveBaseTopicLength
+                        + 32;
+  DynamicJsonDocument advertisedConfig(capacity);
+  DeserializationError error = deserializeJson(advertisedConfig, safeConfigFile);
+  if (error != DeserializationError::Ok || !advertisedConfig.is<JsonObject>()) {
+    return nullptr;
+  }
+
+  JsonObject root = advertisedConfig.as<JsonObject>();
+  JsonObject mqtt = root["mqtt"].as<JsonObject>();
+  if (mqtt.isNull()) mqtt = root.createNestedObject("mqtt");
+  mqtt["effective_base_topic"] = effectiveBaseTopic.get();
+  if (advertisedConfig.overflowed()) return nullptr;
+
+  const size_t advertisedConfigLength = measureJson(advertisedConfig) + 1;
+  std::unique_ptr<char[]> advertisedConfigString(new (std::nothrow) char[advertisedConfigLength]);
+  if (!advertisedConfigString) return nullptr;
+  serializeJson(advertisedConfig, advertisedConfigString.get(), advertisedConfigLength);
+  return advertisedConfigString;
+}
+#endif
 }  // namespace
 
 BootNormal::BootNormal()
@@ -204,8 +415,17 @@ void BootNormal::setup() {
 
   if (Interface::get().led.enabled) Interface::get().getBlinker().start(LED_WIFI_DELAY);
 
+#if HOMIE_CONVENTION_V5
+  if (!isValidHomieV5BaseTopic(Interface::get().getConfig().get().mqtt.baseTopic)) {
+    Interface::get().getLogger() << F("✖ mqtt.base_topic \"")
+                                 << Interface::get().getConfig().get().mqtt.baseTopic
+                                 << F("\" is not a valid Homie v5 root domain") << endl;
+    Helpers::abort(F("✖ Homie v5 requires mqtt.base_topic '<domain>/' or '<domain>/5/'"));
+  }
+#endif
+
   // Generate topic buffer
-  size_t baseTopicLength = strlen(Interface::get().getConfig().get().mqtt.baseTopic) + strlen(Interface::get().getConfig().get().deviceId);
+  size_t baseTopicLength = Helpers::mqttDeviceBaseTopicLength(Interface::get().getConfig().get().mqtt.baseTopic, Interface::get().getConfig().get().deviceId);
   size_t longestSubtopicLength = 31 + 1;  // /$implementation/ota/firmware/+
   for (HomieNode* iNode : HomieNode::nodes) {
     size_t nodeMaxTopicLength = 1 + strlen(iNode->getId()) + 12 + 1;  // /id/$properties
@@ -271,10 +491,26 @@ void BootNormal::setup() {
 
   for (HomieNode* iNode : HomieNode::nodes) {
     warnIfInvalidHomieId(F("Node ID"), iNode->getId());
+    iNode->setup();
     for (Property* iProperty : iNode->getProperties()) {
       warnIfInvalidPropertyId(iNode->getId(), iProperty->getId());
+#if HOMIE_CONVENTION_V5
+      const char* datatype = iProperty->getDatatype();
+      if (!isValidHomieV5Datatype(datatype)) {
+        Interface::get().getLogger() << F("! Property \"") << iProperty->getId()
+                                     << F("\" on node \"") << iNode->getId()
+                                     << F("\" has no valid Homie v5 datatype; $description will use string")
+                                     << endl;
+      } else if (homieV5DatatypeRequiresFormat(datatype)
+                 && (!iProperty->getFormat() || iProperty->getFormat()[0] == '\0')) {
+        Interface::get().getLogger() << F("! Property \"") << iProperty->getId()
+                                     << F("\" on node \"") << iNode->getId()
+                                     << F("\" uses Homie v5 datatype ") << datatype
+                                     << F(" without the required format; $description will use string")
+                                     << endl;
+      }
+#endif
     }
-    iNode->setup();
   }
 
   _resetAdvertisementProgress();
@@ -436,8 +672,11 @@ void BootNormal::loop() {
 }
 
 void BootNormal::_prefixMqttTopic() {
-  strcpy(_mqttTopic.get(), Interface::get().getConfig().get().mqtt.baseTopic);
-  strcat(_mqttTopic.get(), Interface::get().getConfig().get().deviceId);
+  Helpers::buildMqttDeviceBaseTopic(
+    _mqttTopic.get(),
+    Interface::get().getConfig().get().mqtt.baseTopic,
+    Interface::get().getConfig().get().deviceId
+  );
 }
 
 char* BootNormal::_prefixMqttTopic(PGM_P topic) {
@@ -454,13 +693,18 @@ bool BootNormal::_publishOtaStatus(int status, const char* info) {
     payload.concat(info);
   }
 
-  const size_t topicLength = strlen(Interface::get().getConfig().get().mqtt.baseTopic)
-                           + strlen(Interface::get().getConfig().get().deviceId)
+  const size_t topicLength = Helpers::mqttDeviceBaseTopicLength(
+                               Interface::get().getConfig().get().mqtt.baseTopic,
+                               Interface::get().getConfig().get().deviceId
+                             )
                            + strlen_P(PSTR("/$implementation/ota/status"));
   std::unique_ptr<char[]> topic(new (std::nothrow) char[topicLength + 1]);
   if (!topic) return false;
-  strcpy(topic.get(), Interface::get().getConfig().get().mqtt.baseTopic);
-  strcat(topic.get(), Interface::get().getConfig().get().deviceId);
+  Helpers::buildMqttDeviceBaseTopic(
+    topic.get(),
+    Interface::get().getConfig().get().mqtt.baseTopic,
+    Interface::get().getConfig().get().deviceId
+  );
   strcat_P(topic.get(), PSTR("/$implementation/ota/status"));
 
   return Interface::get().getMqttClient().publish(
@@ -1088,6 +1332,184 @@ void BootNormal::_resetAdvertisementProgress() {
   _advertisementProgress.currentPropertyIndex = 0;
 }
 
+size_t BootNormal::_estimateV5DescriptionLength() const {
+#if HOMIE_CONVENTION_V5
+  const auto& config = Interface::get().getConfig().get();
+  const char* deviceName = config.name[0] != '\0' ? config.name : config.deviceId;
+  size_t length = 160 + strlen(HOMIE_VERSION) + strlen(deviceName) + strlen(HOMIE_V5_RUNTIME_EXTENSION);
+
+  for (HomieNode* node : HomieNode::nodes) {
+    const uint16_t firstIndex = node->isRange() ? node->getLower() : 0;
+    const uint16_t lastIndex = node->isRange() ? node->getUpper() : 0;
+    for (uint16_t rangeIndex = firstIndex; rangeIndex <= lastIndex; rangeIndex++) {
+      const bool rangeNode = node->isRange();
+      const char* nodeName = node->getName() ? node->getName() : "";
+      const char* nodeType = node->getType() ? node->getType() : "";
+      length += 96 + strlen(node->getId()) + strlen(nodeName) + strlen(nodeType);
+      if (rangeNode) length += 2 + decimalDigits(rangeIndex);  // "-<index>" and friendly-name suffix.
+
+      for (Property* property : node->getProperties()) {
+        const char* propertyName = property->getName();
+        const char* unit = property->getUnit() ? property->getUnit() : "";
+        const char* propertyFormat = property->getFormat();
+        const char* datatype = resolveHomieV5Datatype(property->getDatatype(), propertyFormat);
+        const char* format = shouldAdvertiseHomieV5Format(datatype, propertyFormat)
+                           ? propertyFormat
+                           : "";
+        length += 112 + strlen(property->getId())
+                    + strlen(propertyName && propertyName[0] != '\0' ? propertyName : property->getId())
+                    + strlen(datatype)
+                    + strlen(unit)
+                    + strlen(format);
+      }
+
+      if (!rangeNode || rangeIndex == lastIndex) break;
+    }
+  }
+
+  return length;
+#else
+  return 0;
+#endif
+}
+
+uint32_t BootNormal::_computeV5DescriptionVersion() const {
+#if HOMIE_CONVENTION_V5
+  const auto& config = Interface::get().getConfig().get();
+  const char* deviceName = config.name[0] != '\0' ? config.name : config.deviceId;
+  uint32_t hash = 2166136261UL;
+
+  fnv1aUpdateString(hash, HOMIE_VERSION);
+  fnv1aUpdateString(hash, deviceName);
+  fnv1aUpdateString(hash, HOMIE_V5_RUNTIME_EXTENSION);
+
+  for (HomieNode* node : HomieNode::nodes) {
+    const uint16_t firstIndex = node->isRange() ? node->getLower() : 0;
+    const uint16_t lastIndex = node->isRange() ? node->getUpper() : 0;
+    for (uint16_t rangeIndex = firstIndex; rangeIndex <= lastIndex; rangeIndex++) {
+      const bool rangeNode = node->isRange();
+      String nodeId;
+      String nodeName;
+      appendV5NodeId(nodeId, node, rangeIndex, rangeNode);
+      appendV5NodeName(nodeName, node, rangeIndex, rangeNode);
+
+      fnv1aUpdateString(hash, nodeId.c_str());
+      fnv1aUpdateString(hash, nodeName.c_str());
+      fnv1aUpdateString(hash, node->getType() ? node->getType() : "");
+
+      for (Property* property : node->getProperties()) {
+        const char* propertyName = property->getName();
+        const char* unit = property->getUnit() ? property->getUnit() : "";
+        const char* propertyFormat = property->getFormat();
+        const char* datatype = resolveHomieV5Datatype(property->getDatatype(), propertyFormat);
+        const char* format = shouldAdvertiseHomieV5Format(datatype, propertyFormat)
+                           ? propertyFormat
+                           : "";
+        fnv1aUpdateString(hash, property->getId());
+        fnv1aUpdateString(hash, propertyName && propertyName[0] != '\0' ? propertyName : property->getId());
+        fnv1aUpdateString(hash, datatype);
+        fnv1aUpdateBool(hash, property->isSettable());
+        fnv1aUpdateBool(hash, property->isRetained());
+        fnv1aUpdateString(hash, unit);
+        fnv1aUpdateString(hash, format);
+      }
+
+      if (!rangeNode || rangeIndex == lastIndex) break;
+    }
+  }
+
+  return hash == 0 ? 1 : hash;
+#else
+  return 0;
+#endif
+}
+
+uint16_t BootNormal::_publishV5Description() {
+#if HOMIE_CONVENTION_V5
+  const auto& config = Interface::get().getConfig().get();
+  const char* deviceName = config.name[0] != '\0' ? config.name : config.deviceId;
+
+  String description;
+  if (!description.reserve(_estimateV5DescriptionLength())) {
+    Interface::get().getLogger() << F("✖ Cannot allocate Homie v5 $description buffer") << endl;
+    return 0;
+  }
+
+  description.concat(F("{\"homie\":"));
+  appendJsonString(description, HOMIE_VERSION);
+  description.concat(F(",\"name\":"));
+  appendJsonString(description, deviceName);
+  description.concat(F(",\"version\":"));
+  description.concat(static_cast<unsigned long>(_computeV5DescriptionVersion()));
+  description.concat(F(",\"extensions\":["));
+  appendJsonString(description, HOMIE_V5_RUNTIME_EXTENSION);
+  description.concat(F("],\"nodes\":{"));
+
+  bool firstNode = true;
+  for (HomieNode* node : HomieNode::nodes) {
+    const uint16_t firstIndex = node->isRange() ? node->getLower() : 0;
+    const uint16_t lastIndex = node->isRange() ? node->getUpper() : 0;
+    for (uint16_t rangeIndex = firstIndex; rangeIndex <= lastIndex; rangeIndex++) {
+      const bool rangeNode = node->isRange();
+      String nodeId;
+      String nodeName;
+      appendV5NodeId(nodeId, node, rangeIndex, rangeNode);
+      appendV5NodeName(nodeName, node, rangeIndex, rangeNode);
+
+      if (!firstNode) description += ',';
+      firstNode = false;
+      appendJsonString(description, nodeId.c_str());
+      description.concat(F(":{\"name\":"));
+      appendJsonString(description, nodeName.c_str());
+      if (node->getType() && node->getType()[0] != '\0') {
+        description.concat(F(",\"type\":"));
+        appendJsonString(description, node->getType());
+      }
+      description.concat(F(",\"properties\":{"));
+
+      bool firstProperty = true;
+      for (Property* property : node->getProperties()) {
+        const char* propertyName = property->getName();
+        const char* propertyFormat = property->getFormat();
+        const char* datatype = resolveHomieV5Datatype(property->getDatatype(), propertyFormat);
+        const char* format = shouldAdvertiseHomieV5Format(datatype, propertyFormat)
+                           ? propertyFormat
+                           : nullptr;
+
+        if (!firstProperty) description += ',';
+        firstProperty = false;
+        appendJsonString(description, property->getId());
+        description.concat(F(":{\"name\":"));
+        appendJsonString(description, propertyName && propertyName[0] != '\0' ? propertyName : property->getId());
+        description.concat(F(",\"datatype\":"));
+        appendJsonString(description, datatype);
+        description.concat(F(",\"settable\":"));
+        description.concat(property->isSettable() ? F("true") : F("false"));
+        description.concat(F(",\"retained\":"));
+        description.concat(property->isRetained() ? F("true") : F("false"));
+        if (property->getUnit() && property->getUnit()[0] != '\0') {
+          description.concat(F(",\"unit\":"));
+          appendJsonString(description, property->getUnit());
+        }
+        if (format) {
+          description.concat(F(",\"format\":"));
+          appendJsonString(description, format);
+        }
+        description += '}';
+      }
+
+      description.concat(F("}}"));
+      if (!rangeNode || rangeIndex == lastIndex) break;
+    }
+  }
+
+  description.concat(F("}}"));
+  return Interface::get().getMqttClient().publish(_prefixMqttTopic(PSTR("/$description")), 1, true, description.c_str());
+#else
+  return 0;
+#endif
+}
+
 void BootNormal::_handleMqttConnected() {
   if (!_mqttDisconnectNotified && !_mqttConnectInProgress) return;
 
@@ -1145,7 +1567,21 @@ void BootNormal::_advertise() {
   switch (_advertisementProgress.globalStep) {
     case AdvertisementProgress::GlobalStep::PUB_INIT:
       packetId = Interface::get().getMqttClient().publish(_prefixMqttTopic(PSTR("/$state")), 1, true, "init");
-      if (packetId != 0) _advertisementProgress.globalStep = AdvertisementProgress::GlobalStep::PUB_HOMIE;
+      if (packetId != 0) {
+#if HOMIE_CONVENTION_V5
+        _advertisementProgress.globalStep = AdvertisementProgress::GlobalStep::PUB_DESCRIPTION;
+#else
+        _advertisementProgress.globalStep = AdvertisementProgress::GlobalStep::PUB_HOMIE;
+#endif
+      }
+      break;
+    case AdvertisementProgress::GlobalStep::PUB_DESCRIPTION:
+#if HOMIE_CONVENTION_V5
+      packetId = _publishV5Description();
+      if (packetId != 0) _advertisementProgress.globalStep = AdvertisementProgress::GlobalStep::PUB_MAC;
+#else
+      _advertisementProgress.globalStep = AdvertisementProgress::GlobalStep::PUB_HOMIE;
+#endif
       break;
     case AdvertisementProgress::GlobalStep::PUB_HOMIE:
       packetId = Interface::get().getMqttClient().publish(_prefixMqttTopic(PSTR("/$homie")), 1, true, HOMIE_VERSION);
@@ -1165,7 +1601,13 @@ void BootNormal::_advertise() {
       char localIpStr[MAX_IP_STRING_LENGTH];
       Helpers::ipToString(localIp, localIpStr);
       packetId = Interface::get().getMqttClient().publish(_prefixMqttTopic(PSTR("/$localip")), 1, true, localIpStr);
-      if (packetId != 0) _advertisementProgress.globalStep = AdvertisementProgress::GlobalStep::PUB_NODES_ATTR;
+      if (packetId != 0) {
+#if HOMIE_CONVENTION_V5
+        _advertisementProgress.globalStep = AdvertisementProgress::GlobalStep::PUB_STATS;
+#else
+        _advertisementProgress.globalStep = AdvertisementProgress::GlobalStep::PUB_NODES_ATTR;
+#endif
+      }
       break;
     }
     case AdvertisementProgress::GlobalStep::PUB_NODES_ATTR:
@@ -1179,9 +1621,24 @@ void BootNormal::_advertise() {
       }
       if (HomieNode::nodes.size() >= 1) nodes.remove(nodes.length() - 1);
       packetId = Interface::get().getMqttClient().publish(_prefixMqttTopic(PSTR("/$nodes")), 1, true, nodes.c_str());
+#if HOMIE_CONVENTION_V4
+      if (packetId != 0) _advertisementProgress.globalStep = AdvertisementProgress::GlobalStep::PUB_EXTENSIONS;
+#else
       if (packetId != 0) _advertisementProgress.globalStep = AdvertisementProgress::GlobalStep::PUB_STATS;
+#endif
       break;
     }
+    case AdvertisementProgress::GlobalStep::PUB_EXTENSIONS:
+#if HOMIE_CONVENTION_V4
+      // Homie 4.0.0 makes $extensions mandatory. The official legacy
+      // extensions document the firmware and stats attributes that this library
+      // keeps for backward compatibility with Homie 3.0.1 consumers.
+      packetId = Interface::get().getMqttClient().publish(_prefixMqttTopic(PSTR("/$extensions")), 1, true, HOMIE_EXTENSIONS);
+      if (packetId != 0) _advertisementProgress.globalStep = AdvertisementProgress::GlobalStep::PUB_STATS;
+#else
+      _advertisementProgress.globalStep = AdvertisementProgress::GlobalStep::PUB_STATS;
+#endif
+      break;
     case AdvertisementProgress::GlobalStep::PUB_STATS:
       packetId = Interface::get().getMqttClient().publish(_prefixMqttTopic(PSTR("/$stats")), 1, true, "signal,uptime,uptimewifi,uptimemqtt,freeheap,mqttinbounddropped,mqttackdropped");
       if (packetId != 0) _advertisementProgress.globalStep = AdvertisementProgress::GlobalStep::PUB_STATS_INTERVAL;
@@ -1215,8 +1672,14 @@ void BootNormal::_advertise() {
     case AdvertisementProgress::GlobalStep::PUB_IMPLEMENTATION_CONFIG:
     {
       char* safeConfigFile = Interface::get().getConfig().getSafeConfigFile();
-      packetId = Interface::get().getMqttClient().publish(_prefixMqttTopic(PSTR("/$implementation/config")), 1, true, safeConfigFile);
-      delete safeConfigFile;
+#if HOMIE_CONVENTION_V5
+      std::unique_ptr<char[]> advertisedSafeConfigFile = buildV5AdvertisedSafeConfigFile(safeConfigFile);
+      const char* safeConfigPayload = advertisedSafeConfigFile ? advertisedSafeConfigFile.get() : safeConfigFile;
+#else
+      const char* safeConfigPayload = safeConfigFile;
+#endif
+      packetId = Interface::get().getMqttClient().publish(_prefixMqttTopic(PSTR("/$implementation/config")), 1, true, safeConfigPayload);
+      delete[] safeConfigFile;
       if (packetId != 0) _advertisementProgress.globalStep = AdvertisementProgress::GlobalStep::PUB_IMPLEMENTATION_VERSION;
       break;
     }
@@ -1227,6 +1690,9 @@ void BootNormal::_advertise() {
     case AdvertisementProgress::GlobalStep::PUB_IMPLEMENTATION_OTA_ENABLED:
       packetId = Interface::get().getMqttClient().publish(_prefixMqttTopic(PSTR("/$implementation/ota/enabled")), 1, true, Interface::get().getConfig().get().ota.enabled ? "true" : "false");
       if (packetId != 0) {
+#if HOMIE_CONVENTION_V5
+        _advertisementProgress.globalStep = AdvertisementProgress::GlobalStep::SUB_IMPLEMENTATION_OTA;
+#else
         if (HomieNode::nodes.size()) {  // skip if no nodes to publish
           _advertisementProgress.globalStep = AdvertisementProgress::GlobalStep::PUB_NODES;
           _advertisementProgress.nodeStep = AdvertisementProgress::NodeStep::PUB_NAME;
@@ -1234,6 +1700,7 @@ void BootNormal::_advertise() {
         } else {
           _advertisementProgress.globalStep = AdvertisementProgress::GlobalStep::SUB_IMPLEMENTATION_OTA;
         }
+#endif
       }
       break;
     case AdvertisementProgress::GlobalStep::PUB_NODES:
@@ -1339,18 +1806,27 @@ void BootNormal::_advertise() {
           if (!subtopic) return;
           switch (_advertisementProgress.propertyStep) {
             case AdvertisementProgress::PropertyStep::PUB_NAME:
-              if (iProperty->getName() && (iProperty->getName()[0] != '\0')) {
+            {
+              const char* propertyName = iProperty->getName();
+#if HOMIE_CONVENTION_V4
+              // Homie 4.0.0 requires every property to advertise $name. Older
+              // sketches did not have to call setName(), so v4 mode falls back
+              // to the property id instead of making the sketch fail at boot.
+              if (!propertyName || propertyName[0] == '\0') propertyName = iProperty->getId();
+#endif
+              if (propertyName && (propertyName[0] != '\0')) {
                 strcpy_P(subtopic.get(), PSTR("/"));
                 strcat(subtopic.get(), node->getId());
                 strcat_P(subtopic.get(), PSTR("/"));
                 strcat(subtopic.get(), iProperty->getId());
                 strcat_P(subtopic.get(), PSTR("/$name"));
-                packetId = Interface::get().getMqttClient().publish(_prefixMqttTopic(subtopic.get()), 1, true, iProperty->getName());
+                packetId = Interface::get().getMqttClient().publish(_prefixMqttTopic(subtopic.get()), 1, true, propertyName);
                 if (packetId != 0) _advertisementProgress.propertyStep = AdvertisementProgress::PropertyStep::PUB_SETTABLE;
               } else {
                 _advertisementProgress.propertyStep = AdvertisementProgress::PropertyStep::PUB_SETTABLE;
               }
               break;
+            }
             case AdvertisementProgress::PropertyStep::PUB_SETTABLE:
               if (iProperty->isSettable()) {
                 strcpy_P(subtopic.get(), PSTR("/"));
@@ -1378,18 +1854,26 @@ void BootNormal::_advertise() {
               }
               break;
             case AdvertisementProgress::PropertyStep::PUB_DATATYPE:
-              if (iProperty->getDatatype() && (iProperty->getDatatype()[0] != '\0')) {
+            {
+              const char* datatype = iProperty->getDatatype();
+#if HOMIE_CONVENTION_V4
+              // Homie 4.0.0 requires $datatype. The conservative fallback is
+              // string because it is the least restrictive Homie payload type.
+              if (!datatype || datatype[0] == '\0') datatype = HOMIE_DEFAULT_PROPERTY_DATATYPE;
+#endif
+              if (datatype && (datatype[0] != '\0')) {
                 strcpy_P(subtopic.get(), PSTR("/"));
                 strcat(subtopic.get(), node->getId());
                 strcat_P(subtopic.get(), PSTR("/"));
                 strcat(subtopic.get(), iProperty->getId());
                 strcat_P(subtopic.get(), PSTR("/$datatype"));
-                packetId = Interface::get().getMqttClient().publish(_prefixMqttTopic(subtopic.get()), 1, true, iProperty->getDatatype());
+                packetId = Interface::get().getMqttClient().publish(_prefixMqttTopic(subtopic.get()), 1, true, datatype);
                 if (packetId != 0) _advertisementProgress.propertyStep = AdvertisementProgress::PropertyStep::PUB_UNIT;
               } else {
                 _advertisementProgress.propertyStep = AdvertisementProgress::PropertyStep::PUB_UNIT;
               }
               break;
+            }
             case AdvertisementProgress::PropertyStep::PUB_UNIT:
               if (iProperty->getUnit() && (iProperty->getUnit()[0] != '\0')) {
                 strcpy_P(subtopic.get(), PSTR("/"));
@@ -1466,9 +1950,16 @@ void BootNormal::_advertise() {
       break;
     case AdvertisementProgress::GlobalStep::SUB_BROADCAST:
     {
-      String broadcast_topic(Interface::get().getConfig().get().mqtt.baseTopic);
-      broadcast_topic.concat("$broadcast/+");
-      packetId = Interface::get().getMqttClient().subscribe(broadcast_topic.c_str(), 2);
+      const size_t rootTopicLength = Helpers::mqttRootTopicLength(Interface::get().getConfig().get().mqtt.baseTopic);
+      std::unique_ptr<char[]> broadcastTopic(new (std::nothrow) char[rootTopicLength + strlen_P(PSTR("$broadcast/#")) + 1]);
+      if (!broadcastTopic) return;
+      Helpers::buildMqttRootTopic(broadcastTopic.get(), Interface::get().getConfig().get().mqtt.baseTopic);
+#if HOMIE_CONVENTION_V5
+      strcat_P(broadcastTopic.get(), PSTR("$broadcast/#"));
+#else
+      strcat_P(broadcastTopic.get(), PSTR("$broadcast/+"));
+#endif
+      packetId = Interface::get().getMqttClient().subscribe(broadcastTopic.get(), 2);
       if (packetId != 0) _advertisementProgress.globalStep = AdvertisementProgress::GlobalStep::PUB_READY;
       break;
     }
@@ -1542,7 +2033,12 @@ void BootNormal::_onMqttPublish(uint16_t id) {
 
 bool BootNormal::__splitTopic(char* topic, std::unique_ptr<char*[]>& topicLevels, uint8_t& topicLevelsCount) {
   // split topic on each "/"
-  char* afterBaseTopic = topic + strlen(Interface::get().getConfig().get().mqtt.baseTopic);
+  const size_t rootTopicLength = Helpers::mqttRootTopicLength(Interface::get().getConfig().get().mqtt.baseTopic);
+  if (strlen(topic) < rootTopicLength) {
+    topicLevelsCount = 0;
+    return false;
+  }
+  char* afterBaseTopic = topic + rootTopicLength;
 
   uint8_t levelsCount = 1;
   for (uint8_t i = 0; i < strlen(afterBaseTopic); i++) {
@@ -1827,10 +2323,14 @@ bool HomieInternals::BootNormal::__handleOTAUpdates(char* topic, char* payload, 
 
 bool HomieInternals::BootNormal::__handleBroadcasts(char * topic, char * payload, const AsyncMqttClientMessageProperties & properties, size_t len, size_t index, size_t total, char* const* topicLevels, uint8_t topicLevelsCount) {
   if (
-    topicLevelsCount == 2
+    topicLevelsCount >= 2
     && strcmp_P(topicLevels[0], PSTR("$broadcast")) == 0
     ) {
     String broadcastLevel(topicLevels[1]);
+    for (uint8_t levelIndex = 2; levelIndex < topicLevelsCount; levelIndex++) {
+      broadcastLevel += '/';
+      broadcastLevel.concat(topicLevels[levelIndex]);
+    }
     Interface::get().getLogger() << F("📢 Calling broadcast handler...") << endl;
     bool handled = Interface::get().broadcastHandler(broadcastLevel, payload);
     if (!handled) {
@@ -1880,6 +2380,17 @@ bool HomieInternals::BootNormal::__handleConfig(char * topic, char * payload, co
 }
 
 bool HomieInternals::BootNormal::__handleNodeProperty(char * topic, char * payload, const AsyncMqttClientMessageProperties& properties, size_t len, size_t index, size_t total, char* const* topicLevels, uint8_t topicLevelsCount) {
+  if (topicLevelsCount != 4 || strcmp_P(topicLevels[3], PSTR("set")) != 0) {
+    return false;
+  }
+#if HOMIE_CONVENTION_V5
+  if (properties.retain) {
+    Interface::get().getLogger() << F("! Ignoring retained Homie v5 set command for ")
+                                 << topicLevels[1] << F("/") << topicLevels[2] << endl;
+    return true;
+  }
+#endif
+
   // initialize HomieRange
   HomieRange range;
   range.isRange = false;
@@ -1887,7 +2398,37 @@ bool HomieInternals::BootNormal::__handleNodeProperty(char * topic, char * paylo
 
   char* node = topicLevels[1];
   char* property = topicLevels[2];
+  HomieNode* homieNode = nullptr;
 
+#if HOMIE_CONVENTION_V5
+  for (HomieNode* iNode : HomieNode::nodes) {
+    if (strcmp(node, iNode->getId()) == 0) {
+      homieNode = iNode;
+      break;
+    }
+
+    const size_t nodeIdLength = strlen(iNode->getId());
+    if (!iNode->isRange()
+        || strncmp(node, iNode->getId(), nodeIdLength) != 0
+        || node[nodeIdLength] != '-'
+        || node[nodeIdLength + 1] == '\0') {
+      continue;
+    }
+
+    char* rangeIndexStr = node + nodeIdLength + 1;
+    String rangeIndexTest = String(rangeIndexStr);
+    for (uint8_t i = 0; i < rangeIndexTest.length(); i++) {
+      if (!isDigit(rangeIndexTest.charAt(i))) {
+        Interface::get().getLogger() << F("Range index ") << rangeIndexStr << F(" is not valid") << endl;
+        return true;
+      }
+    }
+    range.isRange = true;
+    range.index = rangeIndexTest.toInt();
+    homieNode = iNode;
+    break;
+  }
+#else
   int16_t rangeSeparator = -1;
   for (uint16_t i = 0; i < strlen(node); i++) {
     if (node[i] == '_') {
@@ -1908,18 +2449,17 @@ bool HomieInternals::BootNormal::__handleNodeProperty(char * topic, char * paylo
     }
     range.index = rangeIndexTest.toInt();
   }
-
-  HomieNode* homieNode = nullptr;
   homieNode = HomieNode::find(node);
-
-  #ifdef DEBUG
-    Interface::get().getLogger() << F("Recived network message for ") << homieNode->getId() << endl;
-  #endif // DEBUG
+#endif
 
   if (!homieNode) {
     Interface::get().getLogger() << F("Node ") << node << F(" not registered") << endl;
     return true;
   }
+
+  #ifdef DEBUG
+    Interface::get().getLogger() << F("Received network message for ") << homieNode->getId() << endl;
+  #endif // DEBUG
 
   if (homieNode->isRange()) {
     if (range.index < homieNode->getLower() || range.index > homieNode->getUpper()) {

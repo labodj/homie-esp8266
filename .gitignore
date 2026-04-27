@@ -1,5 +1,9 @@
 # Output of mkdocs
 /site/
+
+# Output of PlatformIO package builds
+Homie-*.tar.gz
+
 /config.json
 *.filters
 *.vcxitems

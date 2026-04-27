@@ -32,14 +32,27 @@ DEFAULT_BASE_TOPIC = "homie/"
 DEFAULT_KEEPALIVE_SECONDS = 60
 DEFAULT_TIMEOUT_SECONDS = 300
 DEFAULT_CLIENT_ID_PREFIX = "homie-ota-updater"
+DEFAULT_HOMIE_VERSION = "3"
+SUPPORTED_HOMIE_VERSIONS = ("3", "4", "5")
 PROGRESS_BAR_WIDTH = 30
 
 
-def normalize_base_topic(value: str) -> str:
-    """Ensure the MQTT base topic always ends with a slash."""
+def base_topic_ends_with_segment(value: str, segment: str) -> bool:
+    """Return True when the normalized topic already ends with a path segment."""
+
+    stripped = str(value).rstrip("/")
+    return stripped.endswith(f"/{segment}")
+
+
+def normalize_base_topic(value: str, homie_version: str = DEFAULT_HOMIE_VERSION) -> str:
+    """Normalize the MQTT root for the selected Homie convention generation."""
 
     value = str(value)
-    return value if value.endswith("/") else f"{value}/"
+    if not value.endswith("/"):
+        value = f"{value}/"
+    if str(homie_version) == "5" and not base_topic_ends_with_segment(value, "5"):
+        value = f"{value}5/"
+    return value
 
 
 def mqtt_error_name(code: int) -> str:
@@ -90,6 +103,7 @@ class OTAUpdater:
         client_id: Optional[str],
         firmware: bytes,
         timeout_seconds: int,
+        homie_version: str = DEFAULT_HOMIE_VERSION,
     ) -> None:
         self.broker_host = broker_host
         self.broker_port = broker_port
@@ -99,7 +113,8 @@ class OTAUpdater:
         self.broker_tls_certfile = broker_tls_certfile
         self.broker_tls_keyfile = broker_tls_keyfile
         self.broker_tls_insecure = broker_tls_insecure
-        self.base_topic = normalize_base_topic(base_topic)
+        self.homie_version = str(homie_version)
+        self.base_topic = normalize_base_topic(base_topic, self.homie_version)
         self.device_id = device_id
         self.client_id = client_id or f"{DEFAULT_CLIENT_ID_PREFIX}-{device_id}"
         self.firmware = firmware
@@ -533,9 +548,22 @@ def parse_args(argv: List[str]) -> argparse.Namespace:
     parser.add_argument(
         "-t",
         "--base-topic",
-        type=normalize_base_topic,
         default=DEFAULT_BASE_TOPIC,
-        help="base topic of the Homie devices on the broker",
+        help=(
+            "base topic/domain of the Homie devices on the broker. "
+            "With --homie-version 5, the updater appends the required /5/ segment "
+            "unless it is already present."
+        ),
+    )
+    parser.add_argument(
+        "--homie-version",
+        "--convention-version",
+        choices=SUPPORTED_HOMIE_VERSIONS,
+        default=DEFAULT_HOMIE_VERSION,
+        help=(
+            "Homie convention generation used by the target firmware. "
+            "Use 5 for devices built with HOMIE_CONVENTION_VERSION=5."
+        ),
     )
     parser.add_argument(
         "-i",
@@ -601,6 +629,7 @@ def parse_args(argv: List[str]) -> argparse.Namespace:
         parser.error("--broker-password requires --broker-username")
     if args.broker_tls_keyfile is not None and args.broker_tls_certfile is None:
         parser.error("--broker-tls-keyfile requires --broker-tls-certfile")
+    args.base_topic = normalize_base_topic(args.base_topic, args.homie_version)
     return args
 
 
@@ -648,6 +677,7 @@ def main(argv: List[str]) -> int:
         client_id=args.client_id,
         firmware=firmware,
         timeout_seconds=args.timeout,
+        homie_version=args.homie_version,
     )
     return updater.run()
 

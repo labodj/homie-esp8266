@@ -75,11 +75,13 @@ class BootNormal : public Boot {
     bool done = false;
     enum class GlobalStep {
       PUB_INIT,
+      PUB_DESCRIPTION,
       PUB_HOMIE,
       PUB_NAME,
       PUB_MAC,
       PUB_LOCALIP,
       PUB_NODES_ATTR,
+      PUB_EXTENSIONS,
       PUB_STATS,
       PUB_STATS_INTERVAL,
       PUB_FW_NAME,
@@ -234,6 +236,12 @@ class BootNormal : public Boot {
   void _handleMqttConnected();
   void _handleMqttDisconnected(AsyncMqttClientDisconnectReason reason);
   void _resetAdvertisementProgress();
+  // Homie v5 discovery is a single retained JSON document. These helpers keep
+  // sizing, version hashing and publishing separate from the v3/v4 per-topic
+  // advertisement state machine.
+  size_t _estimateV5DescriptionLength() const;
+  uint32_t _computeV5DescriptionVersion() const;
+  uint16_t _publishV5Description();
   void _advertise();
   void _onMqttConnected();
   void _onMqttDisconnected(AsyncMqttClientDisconnectReason reason);

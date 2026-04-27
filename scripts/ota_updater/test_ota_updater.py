@@ -71,7 +71,7 @@ def _quiet_stderr():
         yield
 
 
-def _make_updater(firmware=b"test firmware"):
+def _make_updater(firmware=b"test firmware", homie_version=ota_updater.DEFAULT_HOMIE_VERSION):
     return ota_updater.OTAUpdater(
         broker_host="127.0.0.1",
         broker_port=1883,
@@ -86,6 +86,7 @@ def _make_updater(firmware=b"test firmware"):
         client_id=None,
         firmware=firmware,
         timeout_seconds=10,
+        homie_version=homie_version,
     )
 
 
@@ -93,6 +94,13 @@ class OTAUpdaterTests(unittest.TestCase):
     def test_base_topic_and_md5_helpers(self):
         self.assertEqual(ota_updater.normalize_base_topic("homie"), "homie/")
         self.assertEqual(ota_updater.normalize_base_topic("homie/"), "homie/")
+        self.assertEqual(ota_updater.normalize_base_topic("homie", "5"), "homie/5/")
+        self.assertEqual(ota_updater.normalize_base_topic("homie/5/", "5"), "homie/5/")
+        self.assertEqual(ota_updater.normalize_base_topic("5", "5"), "5/5/")
+        self.assertEqual(ota_updater.normalize_base_topic("lab", "4"), "lab/")
+        self.assertTrue(ota_updater.base_topic_ends_with_segment("homie/5/", "5"))
+        self.assertFalse(ota_updater.base_topic_ends_with_segment("5/", "5"))
+        self.assertFalse(ota_updater.base_topic_ends_with_segment("homie/15/", "5"))
         self.assertTrue(ota_updater.is_valid_md5("0123456789abcdef0123456789ABCDEF"))
         self.assertFalse(ota_updater.is_valid_md5("not-a-checksum"))
         self.assertEqual(
@@ -237,6 +245,11 @@ class OTAUpdaterTests(unittest.TestCase):
                 ota_updater.parse_args(["--broker-password", "secret", "-i", "device", "fw.bin"])
             with self.assertRaises(SystemExit):
                 ota_updater.parse_args(["--broker-tls-keyfile", "key.pem", "-i", "device", "fw.bin"])
+
+    def test_parse_args_normalizes_homie_v5_base_topic(self):
+        args = ota_updater.parse_args(["--homie-version", "5", "-t", "lab", "-i", "device", "fw.bin"])
+
+        self.assertEqual(args.base_topic, "lab/5/")
 
 
 if __name__ == "__main__":

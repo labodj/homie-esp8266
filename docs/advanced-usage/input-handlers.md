@@ -1,6 +1,6 @@
 There are four types of input handlers:
 
-* Global input handler. This unique handler will handle every changed settable properties for all nodes
+- Global input handler. This unique handler will handle every changed settable properties for all nodes
 
 ```c++
 bool globalInputHandler(const HomieNode& node, const HomieRange& range, const String& property, const String& value) {
@@ -13,7 +13,7 @@ void setup() {
 }
 ```
 
-* Node input handlers. This handler will handle every changed settable properties of a specific node
+- Node input handlers. This handler will handle every changed settable properties of a specific node
 
 ```c++
 bool nodeInputHandler(const HomieRange& range, const String& property, const String& value) {
@@ -23,7 +23,7 @@ bool nodeInputHandler(const HomieRange& range, const String& property, const Str
 HomieNode node("id", "type", false, 0, 0, nodeInputHandler);
 ```
 
-* Virtual callback from node input handler
+- Virtual callback from node input handler
 
 You can create your own class derived from HomieNode that implements the virtual method `bool HomieNode::handleInput(const HomieRange& range, const String& property, const String& value)`. The default node input handler then automatically calls your callback.
 
@@ -39,7 +39,7 @@ class RelaisNode : public HomieNode {
 };
 ```
 
-* Property input handlers. This handler will handle changes for a specific settable property of a specific node
+- Property input handlers. This handler will handle changes for a specific settable property of a specific node
 
 ```c++
 bool propertyInputHandler(const HomieRange& range, const String& value) {
@@ -58,6 +58,5 @@ You can see that input handlers return a boolean. An input handler can decide wh
 
 For example, imagine you defined three input handlers: the global one, the node one, and the property one. If the global input handler returns `false`, the node input handler will be called. If the node input handler returns `true`, the propagation is stopped and the property input handler won't be called. You can think of it as middlewares.
 
-
 !!! warning
-    Homie uses [ESPAsyncTCP](https://github.com/me-no-dev/ESPAsyncTCP) for network communication that make uses of asynchronous callback from the ESP8266 framework for incoming network packets. Thus the input handler runs in a different task than the `loopHandler()`. So keep in mind that the network task may interrupt your loop at any time.
+Homie uses [ESPAsyncTCP](https://github.com/me-no-dev/ESPAsyncTCP) for network communication that make uses of asynchronous callback from the ESP8266 framework for incoming network packets. Thus the input handler runs in a different task than the `loopHandler()`. So keep in mind that the network task may interrupt your loop at any time.

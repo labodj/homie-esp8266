@@ -9,7 +9,7 @@ void setup();
 Setup Homie.
 
 !!! warning "Mandatory!"
-    Must be called once in `setup()`.
+Must be called once in `setup()`.
 
 ```c++
 void loop();
@@ -18,9 +18,9 @@ void loop();
 Handle Homie work.
 
 !!! warning "Mandatory!"
-    Must be called once in `loop()`.
+Must be called once in `loop()`.
 
-## Functions to call *before* `Homie.setup()`
+## Functions to call _before_ `Homie.setup()`
 
 ```c++
 void Homie_setFirmware(const char* name, const char* version);
@@ -30,14 +30,13 @@ void Homie_setFirmware(const char* name, const char* version);
 Set the name and version of the firmware.
 This is useful for OTA, as Homie will check against the server if there is a newer version.
 Be aware, that the function is implemented as a `define` macro.
-If you want to define the name or version outside the function call, you need to do so in the form of a `define` as well. 
+If you want to define the name or version outside the function call, you need to do so in the form of a `define` as well.
 
 !!! warning "Mandatory!"
-    You need to set the firmware for your sketch to work.
+You need to set the firmware for your sketch to work.
 
-
-* **`name`**: Name of the firmware. Default value is `undefined`
-* **`version`**: Version of the firmware. Default value is `undefined`
+- **`name`**: Name of the firmware. Default value is `undefined`
+- **`version`**: Version of the firmware. Default value is `undefined`
 
 ```c++
 void Homie_setBrand(const char* name);
@@ -46,7 +45,7 @@ void Homie_setBrand(const char* name);
 
 Set the brand of the device, used in the configuration AP, the device hostname and the MQTT client ID.
 
-* **`name`**: Name of the brand. Default value is `Homie`
+- **`name`**: Name of the brand. Default value is `Homie`
 
 ```c++
 Homie& disableLogging();
@@ -60,10 +59,10 @@ Homie& setLoggingPrinter(Print* printer);
 
 Set the Print instance used for logging.
 
-* **`printer`**: Print instance to log to. By default, `Serial` is used
+- **`printer`**: Print instance to log to. By default, `Serial` is used
 
 !!! warning
-    It's up to you to call `Serial.begin()`
+It's up to you to call `Serial.begin()`
 
 ```c++
 Homie& disableLedFeedback();
@@ -77,8 +76,8 @@ Homie& setLedPin(uint8_t pin, uint8_t on);
 
 Set pin of the LED to control.
 
-* **`pin`**: LED to control
-* **`on`**: state when the light is on (HIGH or LOW)
+- **`pin`**: LED to control
+- **`on`**: state when the light is on (HIGH or LOW)
 
 ```c++
 Homie& setConfigurationApPassword(const char* password);
@@ -86,7 +85,7 @@ Homie& setConfigurationApPassword(const char* password);
 
 Set the configuration AP password.
 
-* **`password`**: the configuration AP password
+- **`password`**: the configuration AP password
 
 ```c++
 Homie& setGlobalInputHandler(std::function<bool(const HomieNode& node, const HomieRange& range, const String& property, const String& value)> handler);
@@ -94,11 +93,11 @@ Homie& setGlobalInputHandler(std::function<bool(const HomieNode& node, const Hom
 
 Set input handler for subscribed properties.
 
-* **`handler`**: Global input handler
-* **`node`**: Name of the node getting updated
-* **`property`**: Property of the node getting updated
-* **`range`**: Range of the property of the node getting updated
-* **`value`**: Value of the new property
+- **`handler`**: Global input handler
+- **`node`**: Name of the node getting updated
+- **`property`**: Property of the node getting updated
+- **`range`**: Range of the property of the node getting updated
+- **`value`**: Value of the new property
 
 ```c++
 Homie& setBroadcastHandler(std::function<bool(const String& level, const String& value)> handler);
@@ -106,9 +105,9 @@ Homie& setBroadcastHandler(std::function<bool(const String& level, const String&
 
 Set broadcast handler.
 
-* **`handler`**: Broadcast handler
-* **`level`**: Level of the broadcast
-* **`value`**: Value of the broadcast
+- **`handler`**: Broadcast handler
+- **`level`**: Level of the broadcast
+- **`value`**: Value of the broadcast
 
 ```c++
 Homie& onEvent(std::function<void(const HomieEvent& event)> callback);
@@ -116,10 +115,10 @@ Homie& onEvent(std::function<void(const HomieEvent& event)> callback);
 
 Set the event handler. Useful if you want to hook to Homie events.
 
-* **`callback`**: Event handler
+- **`callback`**: Event handler
 
 !!! warning "Callback context"
-    Connectivity, inbound MQTT, publish-acknowledgement and OTA events are dispatched from the main `Homie.loop()` flow on this fork. The reset path is still driven by the reset-handler timer, so keep event handlers short and avoid unsynchronized shared-state mutations if you combine Homie events with other asynchronous code.
+Connectivity, inbound MQTT, publish-acknowledgement and OTA events are dispatched from the main `Homie.loop()` flow on this fork. The reset path is still driven by the reset-handler timer, so keep event handlers short and avoid unsynchronized shared-state mutations if you combine Homie events with other asynchronous code.
 
 ```c++
 Homie& setResetTrigger(uint8_t pin, uint8_t state, uint16_t time);
@@ -127,9 +126,9 @@ Homie& setResetTrigger(uint8_t pin, uint8_t state, uint16_t time);
 
 Set the reset trigger. By default, the device will reset when pin `0` is `LOW` for `5000`ms.
 
-* **`pin`**: Pin of the reset trigger
-* **`state`**: Reset when the pin reaches this state for the given time
-* **`time`**: Time necessary to reset
+- **`pin`**: Pin of the reset trigger
+- **`state`**: Reset when the pin reaches this state for the given time
+- **`time`**: Time necessary to reset
 
 ```c++
 Homie& disableResetTrigger();
@@ -143,7 +142,7 @@ Homie& setSetupFunction(std::function<void()> callback);
 
 You can provide the function that will be called when operating in `normal` mode.
 
-* **`callback`**: Setup function
+- **`callback`**: Setup function
 
 ```c++
 Homie& setLoopFunction(std::function<void()> callback);
@@ -151,7 +150,7 @@ Homie& setLoopFunction(std::function<void()> callback);
 
 You can provide the function that will be looped in normal mode.
 
-* **`callback`**: Loop function
+- **`callback`**: Loop function
 
 ```c++
 Homie& setStandalone();
@@ -159,7 +158,7 @@ Homie& setStandalone();
 
 This will mark the Homie firmware as standalone, meaning it will first boot in `standalone` mode. To configure it and boot to `configuration` mode, the device has to be resetted.
 
-## Functions to call *after* `Homie.setup()`
+## Functions to call _after_ `Homie.setup()`
 
 ```c++
 void reset();
@@ -173,7 +172,7 @@ void setIdle(bool idle);
 
 Set the device as idle or not. This is useful at runtime, because you might want the device not to be resettable when you have another library that is doing some unfinished work, like moving shutters for example.
 
-* **`idle`**: Device in an idle state or not
+- **`idle`**: Device in an idle state or not
 
 ```c++
 void prepareToSleep();
@@ -206,7 +205,7 @@ const ConfigStruct& getConfiguration() const;
 Get the configuration struct.
 
 !!! danger
-    Be careful with this struct, never attempt to change it.
+Be careful with this struct, never attempt to change it.
 
 ```c++
 AsyncMqttClient& getMqttClient();
@@ -220,7 +219,7 @@ Logger& getLogger();
 
 Get the underlying `Logger` object, which is only a wrapper around `Serial` by default.
 
--------
+---
 
 # HomieNode
 
@@ -230,9 +229,9 @@ HomieNode(const char* id, const char* name, const char* type, bool range, uint16
 
 Constructor of an HomieNode object.
 
-* **`id`**: ID of the node
-* **`type`**: Type of the node
-* **`handler`**: Optional. Input handler of the node
+- **`id`**: ID of the node
+- **`type`**: Type of the node
+- **`handler`**: Optional. Input handler of the node
 
 ```c++
 const char* getId() const;
@@ -252,7 +251,7 @@ PropertyInterface& advertise(const char* property);
 
 Advertise a property / range property on the node.
 
-* **`property`**: Property to advertise
+- **`property`**: Property to advertise
 
 This returns a reference to `PropertyInterface` on which you can call:
 
@@ -267,7 +266,17 @@ PropertyInterface& settable(std::function<bool(const HomieRange& range, const St
 
 Set the advertised property metadata and optionally make the property settable.
 
-* **`handler`**: Optional. Input handler of the property
+- **`handler`**: Optional. Input handler of the property
+
+When `HOMIE_CONVENTION_VERSION=4` is enabled, Homie v4 discovery requires every
+advertised property to publish `$name` and `$datatype`. The runtime falls back to
+the property id and `string` respectively if older sketches omit those calls, but
+explicit `setName()` and `setDatatype()` calls remain the recommended API.
+
+When `HOMIE_CONVENTION_VERSION=5` is enabled, property metadata is written into
+the retained `$description` JSON document. A missing or invalid v5 datatype is
+advertised as `string` so the description remains spec-valid, but explicit
+`setDatatype()` calls are still recommended for useful controller discovery.
 
 `setRetained(false)` marks the advertised property as non-retained and makes
 `HomieNode::setProperty()` start from a non-retained publish default for that
@@ -280,7 +289,7 @@ SendingPromise& setProperty(const String& property);
 
 Using this function, you can set the value of a node property, like a temperature for example.
 
-* **`property`**: Property to send
+- **`property`**: Property to send
 
 This returns a reference to `SendingPromise`, on which you can call:
 
@@ -295,7 +304,10 @@ uint16_t send(const String& value);  // finally send the property, return the pa
 ```
 
 Method names should be self-explanatory.
-`setSetRetained()` is a fork extension and only affects the mirrored `/set` topic published by `overwriteSetter(true)`.
+`setSetRetained()` is a fork extension and only affects the mirrored `/set`
+topic published by `overwriteSetter(true)`. In Homie v5 mode
+`overwriteSetter(true)` is ignored because devices must not publish command
+topics.
 
 # HomieSetting
 
@@ -305,9 +317,9 @@ HomieSetting<T>(const char* name, const char* description);
 
 Constructor of an HomieSetting object.
 
-* **`T`**: Type of the setting. Either `bool`, `unsigned long`, `long`, `double` or `const char*`
-* **`name`**: Name of the setting
-* **`description`**: Description of the setting
+- **`T`**: Type of the setting. Either `bool`, `unsigned long`, `long`, `double` or `const char*`
+- **`name`**: Name of the setting
+- **`description`**: Description of the setting
 
 ```c++
 T get() const;
@@ -327,7 +339,7 @@ Set the default value and make the setting optional.
 HomieSetting<T>& setDefaultValue(T defaultValue);
 ```
 
-* **`defaultValue`**: The default value
+- **`defaultValue`**: The default value
 
 ```c++
 HomieSetting<T>& setValidator(std::function<bool(T candidate)> validator);
@@ -335,4 +347,4 @@ HomieSetting<T>& setValidator(std::function<bool(T candidate)> validator);
 
 Set a validation function for the setting. The validator must return `true` if the candidate is correct, `false` otherwise.
 
-* **`validator`**: The validation function
+- **`validator`**: The validation function
