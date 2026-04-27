@@ -10,7 +10,7 @@ permissions:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
-  PLATFORMIO_PACKAGE_OWNER: labodj
+  PLATFORMIO_PACKAGE_OWNER: ${{ vars.PLATFORMIO_PACKAGE_OWNER }}
   PLATFORMIO_PACKAGE_NAME: Homie
 
 jobs:
@@ -98,8 +98,10 @@ jobs:
             exit 1
           fi
 
+          account_username="$(pio account show --json-output | python -c 'import json, sys; print(json.load(sys.stdin)["username"])')"
+          package_owner="${PLATFORMIO_PACKAGE_OWNER:-${account_username}}"
           package_version="$(python -c 'import json, pathlib; print(json.loads(pathlib.Path("library.json").read_text(encoding="utf-8"))["version"])')"
-          package_ref="${PLATFORMIO_PACKAGE_OWNER}/${PLATFORMIO_PACKAGE_NAME}@${package_version}"
+          package_ref="${package_owner}/${PLATFORMIO_PACKAGE_NAME}@${package_version}"
 
           if pio pkg show "${package_ref}" >/dev/null 2>&1; then
             echo "PlatformIO package ${package_ref} already exists; skipping publish."
@@ -111,8 +113,9 @@ jobs:
             exit 1
           fi
 
-          pio account show >/dev/null
-          pio pkg publish "${packages[0]}" \
-            --owner "${PLATFORMIO_PACKAGE_OWNER}" \
-            --type library \
-            --no-interactive
+          publish_args=("${packages[0]}" --type library --no-interactive)
+          if [ -n "${PLATFORMIO_PACKAGE_OWNER}" ]; then
+            publish_args+=(--owner "${PLATFORMIO_PACKAGE_OWNER}")
+          fi
+
+          pio pkg publish "${publish_args[@]}"
