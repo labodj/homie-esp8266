@@ -40,6 +40,10 @@ The library package pins its internal AsyncMqttClient dependency to a commit has
 instead of a moving tag so dependency resolution stays repeatable across CI and
 developer machines.
 
+That dependency currently points to a small fork of `AsyncMqttClient`. The fork
+only updates the async TCP dependency metadata to the maintained `esp32async`
+packages required by modern ESP8266 / ESP32 Arduino toolchains.
+
 SPIFFS remains the default storage backend for compatibility with existing
 devices. To build and upload LittleFS images, configure both PlatformIO and
 Homie:

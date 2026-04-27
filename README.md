@@ -75,6 +75,10 @@ reliable OTA behavior. That flag is not part of the maintained ESP32 path.
 If you need unreleased changes from `develop`, use the git dependency and pin a
 commit SHA instead of the branch name in `lib_deps`.
 
+The PlatformIO package currently pins a small fork of `AsyncMqttClient`. That
+fork only updates the async TCP dependency metadata to the maintained
+`esp32async` packages required by modern ESP8266 / ESP32 Arduino toolchains.
+
 ### Compile-time tuning
 
 This fork exposes a small number of internal queue sizes as build-time overrides

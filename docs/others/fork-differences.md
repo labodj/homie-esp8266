@@ -44,6 +44,10 @@ builds with strict library compatibility. The package also pins its
 AsyncMqttClient dependency to a commit hash so CI and production builds do not
 silently move to a different MQTT client implementation.
 
+The pinned `AsyncMqttClient` source is a small fork used only to point PlatformIO
+at the maintained `esp32async` async TCP packages. It is not intended to diverge
+from AsyncMqttClient behavior.
+
 ## Network And MQTT Recovery
 
 The normal-mode boot flow still follows upstream Homie, but connection recovery
