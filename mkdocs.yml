@@ -37,6 +37,7 @@ nav:
       - HTTP JSON API: configuration/http-json-api.md
   - Others:
       - Maintained fork differences: others/fork-differences.md
+      - Homie v4/v5 compatibility outlook: others/homie-v4-v5-compatibility.md
       - OTA/configuration updates: others/ota-configuration-updates.md
       - Homie implementation specifics: others/homie-implementation-specifics.md
       - Limitations and known issues: others/limitations-and-known-issues.md

@@ -31,6 +31,7 @@ DEFAULT_BROKER_PORT = 1883
 DEFAULT_BASE_TOPIC = "homie/"
 DEFAULT_KEEPALIVE_SECONDS = 60
 DEFAULT_TIMEOUT_SECONDS = 300
+DEFAULT_CLIENT_ID_PREFIX = "homie-ota-updater"
 PROGRESS_BAR_WIDTH = 30
 
 
@@ -53,6 +54,15 @@ def is_valid_md5(value: str) -> bool:
     return len(value) == 32 and all(character in "0123456789abcdefABCDEF" for character in value)
 
 
+def md5_digest(value: str) -> str:
+    """Argparse type that normalizes and validates an MD5 digest."""
+
+    normalized = value.strip().lower()
+    if not is_valid_md5(normalized):
+        raise argparse.ArgumentTypeError("value must be a 32-character hexadecimal MD5 digest")
+    return normalized
+
+
 def positive_int(value: str) -> int:
     """Argparse type that rejects zero and negative integers."""
 
@@ -72,8 +82,12 @@ class OTAUpdater:
         broker_username: Optional[str],
         broker_password: Optional[str],
         broker_ca_cert: Optional[str],
+        broker_tls_certfile: Optional[str],
+        broker_tls_keyfile: Optional[str],
+        broker_tls_insecure: bool,
         base_topic: str,
         device_id: str,
+        client_id: Optional[str],
         firmware: bytes,
         timeout_seconds: int,
     ) -> None:
@@ -82,8 +96,12 @@ class OTAUpdater:
         self.broker_username = broker_username
         self.broker_password = broker_password
         self.broker_ca_cert = broker_ca_cert
+        self.broker_tls_certfile = broker_tls_certfile
+        self.broker_tls_keyfile = broker_tls_keyfile
+        self.broker_tls_insecure = broker_tls_insecure
         self.base_topic = normalize_base_topic(base_topic)
         self.device_id = device_id
+        self.client_id = client_id or f"{DEFAULT_CLIENT_ID_PREFIX}-{device_id}"
         self.firmware = firmware
         self.firmware_md5 = md5(firmware).hexdigest()
         self.timeout_seconds = timeout_seconds
@@ -107,15 +125,14 @@ class OTAUpdater:
         client = self._create_client()
         self._client = client
 
-        if self.broker_username and self.broker_password:
-            client.username_pw_set(self.broker_username, self.broker_password)
-
-        if self.broker_ca_cert is not None:
-            client.tls_set(ca_certs=self.broker_ca_cert)
-
-        print(f"Connecting to mqtt broker {self.broker_host} on port {self.broker_port}")
-        client.connect(self.broker_host, self.broker_port, DEFAULT_KEEPALIVE_SECONDS)
-        client.loop_start()
+        try:
+            self._configure_auth_and_tls(client)
+            print(f"Connecting to mqtt broker {self.broker_host} on port {self.broker_port}")
+            client.connect(self.broker_host, self.broker_port, DEFAULT_KEEPALIVE_SECONDS)
+            client.loop_start()
+        except Exception as exc:
+            self._finish(False, f"Failed to prepare or connect MQTT client: {exc}")
+            return 1
 
         try:
             finished = self._done.wait(self.timeout_seconds)
@@ -175,9 +192,12 @@ class OTAUpdater:
         """Create a Paho client compatible with both 1.x and 2.x."""
 
         if hasattr(mqtt, "CallbackAPIVersion"):
-            client = mqtt.Client(callback_api_version=mqtt.CallbackAPIVersion.VERSION1)
+            client = mqtt.Client(
+                callback_api_version=mqtt.CallbackAPIVersion.VERSION1,
+                client_id=self.client_id,
+            )
         else:
-            client = mqtt.Client()
+            client = mqtt.Client(client_id=self.client_id)
 
         if hasattr(client, "reconnect_delay_set"):
             client.reconnect_delay_set(min_delay=1, max_delay=5)
@@ -186,6 +206,31 @@ class OTAUpdater:
         client.on_disconnect = self._on_disconnect
         client.on_message = self._on_message
         return client
+
+    def _configure_auth_and_tls(self, client: mqtt.Client) -> None:
+        """Apply optional MQTT authentication and TLS settings to a client."""
+
+        if self.broker_username is not None:
+            client.username_pw_set(self.broker_username, self.broker_password)
+
+        tls_requested = any(
+            (
+                self.broker_ca_cert,
+                self.broker_tls_certfile,
+                self.broker_tls_keyfile,
+                self.broker_tls_insecure,
+            )
+        )
+        if not tls_requested:
+            return
+
+        client.tls_set(
+            ca_certs=self.broker_ca_cert,
+            certfile=self.broker_tls_certfile,
+            keyfile=self.broker_tls_keyfile,
+        )
+        if self.broker_tls_insecure:
+            client.tls_insecure_set(True)
 
     def _finish(self, success: bool, message: str) -> None:
         """Finish the session exactly once."""
@@ -280,7 +325,15 @@ class OTAUpdater:
         written_text, separator, total_text = payload.partition("/")
         if separator != "/":
             raise ValueError(f"invalid OTA progress payload: {payload!r}")
-        return int(written_text), int(total_text)
+        written = int(written_text)
+        total = int(total_text)
+        if total <= 0:
+            raise ValueError("OTA progress total must be positive")
+        if written < 0:
+            raise ValueError("OTA progress cannot be negative")
+        if written > total:
+            raise ValueError("OTA progress cannot exceed the total")
+        return written, total
 
     def _handle_status(self, payload: str) -> None:
         """Handle `$implementation/ota/status` updates."""
@@ -367,7 +420,12 @@ class OTAUpdater:
     def _handle_ota_enabled(self, payload: str) -> None:
         """Handle `$implementation/ota/enabled`."""
 
-        enabled = payload.strip().lower() == "true"
+        normalized = payload.strip().lower()
+        if normalized not in ("true", "false"):
+            self._finish(False, f"Received malformed OTA enabled payload: {payload!r}")
+            return
+
+        enabled = normalized == "true"
         self._ota_enabled = enabled
 
         if not enabled and not self._published:
@@ -494,6 +552,38 @@ def parse_args(argv: List[str]) -> argparse.Namespace:
         ),
     )
     parser.add_argument(
+        "--broker-tls-certfile",
+        default=None,
+        help="client certificate file used for mutual TLS authentication",
+    )
+    parser.add_argument(
+        "--broker-tls-keyfile",
+        default=None,
+        help="private key file used with --broker-tls-certfile",
+    )
+    parser.add_argument(
+        "--broker-tls-insecure",
+        action="store_true",
+        help=(
+            "enable TLS but skip broker certificate verification. "
+            "Use only for temporary tests with private brokers."
+        ),
+    )
+    parser.add_argument(
+        "--client-id",
+        default=None,
+        help=(
+            "MQTT client id used by the updater. "
+            f"Defaults to {DEFAULT_CLIENT_ID_PREFIX}-<device-id>."
+        ),
+    )
+    parser.add_argument(
+        "--expected-md5",
+        type=md5_digest,
+        default=None,
+        help="expected firmware MD5; aborts before publishing if the file does not match",
+    )
+    parser.add_argument(
         "--timeout",
         type=positive_int,
         default=DEFAULT_TIMEOUT_SECONDS,
@@ -506,14 +596,43 @@ def parse_args(argv: List[str]) -> argparse.Namespace:
     )
 
     parser._optionals.title = "arguments"
-    return parser.parse_args(argv)
+    args = parser.parse_args(argv)
+    if args.broker_password is not None and args.broker_username is None:
+        parser.error("--broker-password requires --broker-username")
+    if args.broker_tls_keyfile is not None and args.broker_tls_certfile is None:
+        parser.error("--broker-tls-keyfile requires --broker-tls-certfile")
+    return args
+
+
+def read_firmware(path: Path, expected_md5: Optional[str]) -> bytes:
+    """Read firmware bytes and fail early on empty or unexpected files."""
+
+    try:
+        firmware = path.read_bytes()
+    except OSError as exc:
+        raise RuntimeError(f"failed to read firmware file {path}: {exc}") from exc
+
+    if not firmware:
+        raise RuntimeError(f"firmware file {path} is empty")
+
+    firmware_md5 = md5(firmware).hexdigest()
+    if expected_md5 is not None and firmware_md5 != expected_md5:
+        raise RuntimeError(
+            f"firmware MD5 mismatch: expected {expected_md5}, got {firmware_md5}"
+        )
+
+    return firmware
 
 
 def main(argv: List[str]) -> int:
     """CLI entry point."""
 
     args = parse_args(argv)
-    firmware = args.firmware.read_bytes()
+    try:
+        firmware = read_firmware(args.firmware, args.expected_md5)
+    except RuntimeError as exc:
+        print(exc, file=sys.stderr)
+        return 1
 
     updater = OTAUpdater(
         broker_host=args.broker_host,
@@ -521,8 +640,12 @@ def main(argv: List[str]) -> int:
         broker_username=args.broker_username,
         broker_password=args.broker_password,
         broker_ca_cert=args.broker_tls_cacert,
+        broker_tls_certfile=args.broker_tls_certfile,
+        broker_tls_keyfile=args.broker_tls_keyfile,
+        broker_tls_insecure=args.broker_tls_insecure,
         base_topic=args.base_topic,
         device_id=args.device_id,
+        client_id=args.client_id,
         firmware=firmware,
         timeout_seconds=args.timeout,
     )

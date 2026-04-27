@@ -16,6 +16,10 @@ usage: ota_updater.py [-h] [-l BROKER_HOST] [-p BROKER_PORT]
                       [-u BROKER_USERNAME] [-d BROKER_PASSWORD]
                       [-t BASE_TOPIC] -i DEVICE_ID
                       [--broker-tls-cacert BROKER_TLS_CACERT]
+                      [--broker-tls-certfile BROKER_TLS_CERTFILE]
+                      [--broker-tls-keyfile BROKER_TLS_KEYFILE]
+                      [--broker-tls-insecure] [--client-id CLIENT_ID]
+                      [--expected-md5 EXPECTED_MD5]
                       [--timeout TIMEOUT]
                       firmware
 
@@ -43,6 +47,20 @@ arguments:
                         CA certificate bundle used to validate TLS
                         connections. If set, TLS is enabled on the broker
                         connection.
+  --broker-tls-certfile BROKER_TLS_CERTFILE
+                        client certificate file used for mutual TLS
+                        authentication
+  --broker-tls-keyfile BROKER_TLS_KEYFILE
+                        private key file used with --broker-tls-certfile
+  --broker-tls-insecure
+                        enable TLS but skip broker certificate verification.
+                        Use only for temporary tests with private brokers.
+  --client-id CLIENT_ID
+                        MQTT client id used by the updater. Defaults to
+                        homie-ota-updater-<device-id>.
+  --expected-md5 EXPECTED_MD5
+                        expected firmware MD5; aborts before publishing if the
+                        file does not match
   --timeout TIMEOUT     maximum time in seconds to wait for the OTA workflow
                         to complete
 ```
@@ -50,7 +68,9 @@ arguments:
 * `BROKER_HOST` and `BROKER_PORT` defaults to 127.0.0.1 and 1883 respectively if not set.
 * `BROKER_USERNAME` and `BROKER_PASSWORD` are optional.
 * `BASE_TOPIC` has to end with a slash, defaults to `homie/` if not set.
+* TLS is enabled automatically when any `--broker-tls-*` option is set.
 * `--timeout` defaults to `300` seconds.
+* `--expected-md5` is optional, but useful in scripted deployments where the firmware checksum is produced by a build step.
 * The script exits with code `0` on success or when the device is already up to date, and with a non-zero code on failure.
 * The helper is compatible with the maintained `homie-esp8266` OTA status codes, including `400 BAD_*` and `500 FLASH_ERROR`.
 
