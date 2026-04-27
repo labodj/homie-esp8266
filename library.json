@@ -1,19 +1,22 @@
 {
   "name": "Homie",
   "version": "3.3.0",
-  "keywords": "iot, home, automation, mqtt, esp8266, async, sensor",
-  "description": "Maintained Homie fork for ESP8266 / ESP32 with targeted fixes for newer Arduino cores",
+  "keywords": "iot, home, automation, mqtt, esp8266, esp32, async, sensor, homie-v4, homie-v5, ota, platformio",
+  "description": "Maintained Homie MQTT framework fork for ESP8266 / ESP32 with opt-in Homie v4/v5 support, OTA tooling, recovery fixes, and updated dependencies",
   "homepage": "https://github.com/labodj/homie-esp8266",
   "license": "MIT",
   "authors": [
     {
       "name": "Marvin Roger",
-      "url": "https://www.marvinroger.fr",
-      "maintainer": true
+      "url": "https://www.marvinroger.fr"
     },
     {
       "name": "Ian Hubbertz",
-      "url": "https://github.com/euphi",
+      "url": "https://github.com/euphi"
+    },
+    {
+      "name": "Jacopo Labardi",
+      "url": "https://github.com/labodj",
       "maintainer": true
     }
   ],

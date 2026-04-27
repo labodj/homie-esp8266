@@ -10,6 +10,8 @@ permissions:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+  PLATFORMIO_PACKAGE_OWNER: labodj
+  PLATFORMIO_PACKAGE_NAME: Homie
 
 jobs:
   release:
@@ -59,23 +61,58 @@ jobs:
           python -m py_compile scripts/ota_updater/ota_updater.py
           python scripts/ota_updater/test_ota_updater.py
           mkdocs build --strict
+          package_version="$(python -c 'import json, pathlib; print(json.loads(pathlib.Path("library.json").read_text(encoding="utf-8"))["version"])')"
           mkdir -p dist
-          pio pkg pack -o dist .
+          pio pkg pack -o "dist/Homie-${package_version}.tar.gz" .
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           shopt -s nullglob
           assets=(dist/*.tar.gz dist/*.zip)
-          args=(
-            "${GITHUB_REF_NAME}"
-            --title "${GITHUB_REF_NAME}"
-            --verify-tag
-            --generate-notes
-            --latest
-            --fail-on-no-commits
-          )
-          if [[ "${GITHUB_REF_NAME}" == *-* ]]; then
-            args+=(--prerelease)
+
+          if gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1; then
+            gh release upload "${GITHUB_REF_NAME}" "${assets[@]}" --clobber
+          else
+            args=(
+              "${GITHUB_REF_NAME}"
+              --title "${GITHUB_REF_NAME}"
+              --verify-tag
+              --generate-notes
+              --latest
+              --fail-on-no-commits
+            )
+            if [[ "${GITHUB_REF_NAME}" == *-* ]]; then
+              args+=(--prerelease)
+            fi
+            gh release create "${args[@]}" "${assets[@]}"
           fi
-          gh release create "${args[@]}" "${assets[@]}"
+      - name: Publish to PlatformIO Registry
+        env:
+          PLATFORMIO_AUTH_TOKEN: ${{ secrets.PLATFORMIO_AUTH_TOKEN }}
+        run: |
+          shopt -s nullglob
+          packages=(dist/*.tar.gz)
+          if [ "${#packages[@]}" -ne 1 ]; then
+            echo "::error::Expected exactly one PlatformIO package archive in dist/"
+            exit 1
+          fi
+
+          package_version="$(python -c 'import json, pathlib; print(json.loads(pathlib.Path("library.json").read_text(encoding="utf-8"))["version"])')"
+          package_ref="${PLATFORMIO_PACKAGE_OWNER}/${PLATFORMIO_PACKAGE_NAME}@${package_version}"
+
+          if pio pkg show "${package_ref}" >/dev/null 2>&1; then
+            echo "PlatformIO package ${package_ref} already exists; skipping publish."
+            exit 0
+          fi
+
+          if [ -z "${PLATFORMIO_AUTH_TOKEN}" ]; then
+            echo "::error::Set the PLATFORMIO_AUTH_TOKEN repository secret before publishing ${package_ref}."
+            exit 1
+          fi
+
+          pio account show >/dev/null
+          pio pkg publish "${packages[0]}" \
+            --owner "${PLATFORMIO_PACKAGE_OWNER}" \
+            --type library \
+            --no-interactive
