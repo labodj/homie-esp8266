@@ -1,7 +1,8 @@
 # PlatformIO / PioArduino
 
-This fork is maintained primarily through PlatformIO git dependencies. For ESP32
-projects that track current Arduino cores, use the PioArduino platform package:
+This fork is maintained primarily through the `labodj/homie-v5` PlatformIO
+Registry package. For ESP32 projects that track current Arduino cores, use the
+PioArduino platform package:
 
 ```ini
 [env:esp32dev]
@@ -10,11 +11,11 @@ board = esp32dev
 framework = arduino
 lib_compat_mode = strict
 lib_deps =
-  https://github.com/labodj/homie-esp8266.git#develop
+  labodj/homie-v5 @ ^3.3.1
 ```
 
-For reproducible firmware builds, pin the Homie dependency to a commit SHA
-instead of `develop`.
+For unreleased `develop` changes, use the git URL dependency and pin it to a
+commit SHA instead of tracking the branch.
 
 ESP8266 projects should keep the ESP8266 PlatformIO platform:
 
@@ -27,7 +28,7 @@ lib_compat_mode = strict
 build_flags =
   -D PIO_FRAMEWORK_ARDUINO_LWIP2_LOW_MEMORY
 lib_deps =
-  https://github.com/labodj/homie-esp8266.git#develop
+  labodj/homie-v5 @ ^3.3.1
 ```
 
 `lib_compat_mode = strict` is recommended because the async networking

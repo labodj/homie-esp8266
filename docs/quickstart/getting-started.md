@@ -4,7 +4,9 @@ board. These restrictions can be lifted (see next pages).
 
 This page intentionally stays close to the original upstream guide, so several examples remain ESP8266-centric. This fork is maintained primarily against current ESP32 Arduino cores while keeping the Homie 3.0.1 API and flow as close as possible to the original library.
 
-The maintained installation path for this fork is PlatformIO with a git dependency. The Arduino IDE / ZIP flow below is legacy upstream documentation and is not the recommended path for this fork.
+The maintained installation path for this fork is PlatformIO with the
+`labodj/homie-v5` Registry package. The Arduino IDE / ZIP flow below is legacy
+upstream documentation and is not the recommended path for this fork.
 See [PlatformIO / PioArduino](platformio-pioarduino.md) for the maintained ESP32
 and ESP8266 project configuration examples.
 
@@ -24,21 +26,23 @@ There are two ways to install Homie for ESP8266.
 Add this to your `platformio.ini`:
 
 !!! warning "Maintained path for this fork"
-This fork is consumed through a git dependency. The primary maintained target
-today is ESP32 on `pioarduino/platform-espressif32`:
+This fork is consumed through the `labodj/homie-v5` PlatformIO Registry package.
+The primary maintained target today is ESP32 on `pioarduino/platform-espressif32`:
 
     ```
     platform = https://github.com/pioarduino/platform-espressif32/releases/download/stable/platform-espressif32.zip
     framework = arduino
     board = esp32dev
-    lib_deps = https://github.com/labodj/homie-esp8266.git#develop
+    lib_compat_mode = strict
+    lib_deps = labodj/homie-v5 @ ^3.3.1
     ```
 
     ESP8266 can still work on a best-effort basis, but it is not the main validation target
     of this fork. If you use ESP8266, keep the ESP8266 platform and add
     `PIO_FRAMEWORK_ARDUINO_LWIP2_LOW_MEMORY` when needed for reliable OTA behavior.
 
-If you need reproducible builds, pin a commit SHA instead of the branch name.
+If you need unreleased changes from `develop`, use the git dependency and pin a
+commit SHA instead of the branch name.
 
 Dependencies are installed automatically.
 

@@ -13,7 +13,8 @@ This branch of Homie for ESP8266 implements [Homie 3.0.1](https://github.com/hom
 ## Download
 
 This repository contains the maintained development branch of the fork.
-The supported consumption path is a git dependency from PlatformIO.
+The supported consumption path is the `labodj/homie-v5` PlatformIO Registry
+package. Use a git dependency only when testing unreleased `develop` changes.
 
 ## Documentation
 
@@ -56,21 +57,23 @@ These values are defined in `src/Homie/Constants.hpp`.
 
 ### Maintained fork
 
-4. Add "Homie" to project using `platformio.ini` and [lib_deps](http://docs.platformio.org/page/projectconf/section_env_library.html#lib-deps) option:
+4. Add `labodj/homie-v5` to project using `platformio.ini` and [lib_deps](http://docs.platformio.org/page/projectconf/section_env_library.html#lib-deps) option:
 
 ```ini
 [env:myboard]
 platform = https://github.com/pioarduino/platform-espressif32/releases/download/stable/platform-espressif32.zip
 board = ...
 framework = arduino
-lib_deps = https://github.com/labodj/homie-esp8266.git#develop
+lib_compat_mode = strict
+lib_deps = labodj/homie-v5 @ ^3.3.1
 ```
 
 For ESP8266 consumers, keep using the ESP8266 PlatformIO platform and add
 `PIO_FRAMEWORK_ARDUINO_LWIP2_LOW_MEMORY` if your network stack needs it for
 reliable OTA behavior. That flag is not part of the maintained ESP32 path.
 
-If you need reproducible builds, pin a commit SHA instead of the branch name in `lib_deps`.
+If you need unreleased changes from `develop`, use the git dependency and pin a
+commit SHA instead of the branch name in `lib_deps`.
 
 ### Compile-time tuning
 
@@ -199,7 +202,9 @@ void loop() {
 
 ## Requirements, installation and usage
 
-The project documentation in this repository is still derived from upstream Homie and is being updated incrementally for this fork. For the maintained path today, prefer the PlatformIO git dependency described above.
+The project documentation in this repository is still derived from upstream
+Homie and is being updated incrementally for this fork. For the maintained path
+today, prefer the PlatformIO Registry package described above.
 
 Fork-specific behavior already documented in this repository includes:
 

@@ -11,7 +11,7 @@ permissions:
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
   PLATFORMIO_PACKAGE_OWNER: ${{ vars.PLATFORMIO_PACKAGE_OWNER }}
-  PLATFORMIO_PACKAGE_NAME: Homie
+  PLATFORMIO_PACKAGE_NAME: homie-v5
 
 jobs:
   release:
@@ -63,7 +63,7 @@ jobs:
           mkdocs build --strict
           package_version="$(python -c 'import json, pathlib; print(json.loads(pathlib.Path("library.json").read_text(encoding="utf-8"))["version"])')"
           mkdir -p dist
-          pio pkg pack -o "dist/Homie-${package_version}.tar.gz" .
+          pio pkg pack -o "dist/homie-v5-${package_version}.tar.gz" .
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -98,7 +98,7 @@ jobs:
             exit 1
           fi
 
-          account_username="$(pio account show --json-output | python -c 'import json, sys; print(json.load(sys.stdin)["username"])')"
+          account_username="$(pio account show --json-output | python -c 'import json, sys; print(json.load(sys.stdin)["profile"]["username"])')"
           package_owner="${PLATFORMIO_PACKAGE_OWNER:-${account_username}}"
           package_version="$(python -c 'import json, pathlib; print(json.loads(pathlib.Path("library.json").read_text(encoding="utf-8"))["version"])')"
           package_ref="${package_owner}/${PLATFORMIO_PACKAGE_NAME}@${package_version}"
