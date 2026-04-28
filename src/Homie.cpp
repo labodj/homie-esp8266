@@ -1,4 +1,5 @@
 #include "Homie.hpp"
+#include "Homie/Utils/ResetHandler.hpp"
 
 using namespace HomieInternals;
 
@@ -183,6 +184,10 @@ void HomieClass::setup() {
 
 void HomieClass::loop() {
   _boot->loop();
+
+#if HOMIE_CONFIG
+  ResetHandler::Loop();
+#endif
 
   if (_flaggedForReboot && Interface::get().reset.idle) {
     Interface::get().getLogger() << F("Device is idle") << endl;

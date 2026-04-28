@@ -34,7 +34,7 @@ The primary maintained target today is ESP32 on `pioarduino/platform-espressif32
     framework = arduino
     board = esp32dev
     lib_compat_mode = strict
-    lib_deps = labodj/homie-v5 @ ^3.3.1
+lib_deps = labodj/homie-v5 @ ^3.4.0
     ```
 
     ESP8266 can still work on a best-effort basis, but it is not the main validation target

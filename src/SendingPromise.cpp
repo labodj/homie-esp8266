@@ -3,6 +3,17 @@
 
 using namespace HomieInternals;
 
+namespace {
+uint8_t decimalDigits(uint16_t value) {
+  uint8_t digits = 1;
+  while (value >= 10) {
+    value = static_cast<uint16_t>(value / 10);
+    ++digits;
+  }
+  return digits;
+}
+}  // namespace
+
 SendingPromise::SendingPromise()
 : _node(nullptr)
 , _property(nullptr)
@@ -62,24 +73,50 @@ uint16_t SendingPromise::send(const String& value) {
     Interface::get().getLogger() << F("✖ setNodeProperty(): impossible now") << endl;
     return 0;
   }
+  if (!_node || !_property) {
+    Interface::get().getLogger() << F("✖ setNodeProperty(): missing node or property") << endl;
+    return 0;
+  }
 
-  char* topic = new char[Helpers::mqttDeviceBaseTopicLength(Interface::get().getConfig().get().mqtt.baseTopic, Interface::get().getConfig().get().deviceId) + 1 + strlen(_node->getId()) + 1 + strlen(_property->c_str()) + 6 + 4 + 1];  // last + 6 for range -65535/_65535, last + 4 for /set
-  Helpers::buildMqttDeviceBaseTopic(topic, Interface::get().getConfig().get().mqtt.baseTopic, Interface::get().getConfig().get().deviceId);
-  strcat_P(topic, PSTR("/"));
-  strcat(topic, _node->getId());
+  char rangeSuffix[1 + 5 + 1] = {0};  // separator + max uint16_t + NUL
   if (_range.isRange) {
-    char rangeStr[5 + 1];  // max 65536
-    itoa(_range.index, rangeStr, 10);
+    char rangeStr[5 + 1];  // max 65535
+    utoa(_range.index, rangeStr, 10);
 #if HOMIE_CONVENTION_V5
-    strcat_P(topic, PSTR("-"));
+    rangeSuffix[0] = '-';
 #else
-    strcat_P(topic, PSTR("_"));
+    rangeSuffix[0] = '_';
 #endif
-    strcat(topic, rangeStr);
+    memcpy(rangeSuffix + 1, rangeStr, decimalDigits(_range.index) + 1);
     _range.isRange = false;                  //FIXME: This is a workaround. Problem is that Range is loaded from the property into SendingPromise, but the SendingPromise is global. (one SendingPromise for the HomieClass instance
     _range.index = 0;
   }
 
+  const size_t topicLength = Helpers::mqttDeviceBaseTopicLength(
+                               Interface::get().getConfig().get().mqtt.baseTopic,
+                               Interface::get().getConfig().get().deviceId
+                             )
+                           + 1
+                           + strlen(_node->getId())
+                           + strlen(rangeSuffix)
+                           + 1
+                           + _property->length();
+#if HOMIE_CONVENTION_V5
+  const size_t requiredTopicLength = topicLength;
+#else
+  const size_t requiredTopicLength = _overwriteSetter ? topicLength + strlen_P(PSTR("/set")) : topicLength;
+#endif
+
+  if (requiredTopicLength + 1 > MAX_MQTT_TOPIC_LENGTH) {
+    Interface::get().getLogger() << F("✖ setNodeProperty(): MQTT topic too long") << endl;
+    return 0;
+  }
+
+  char topic[MAX_MQTT_TOPIC_LENGTH];
+  Helpers::buildMqttDeviceBaseTopic(topic, Interface::get().getConfig().get().mqtt.baseTopic, Interface::get().getConfig().get().deviceId);
+  strcat_P(topic, PSTR("/"));
+  strcat(topic, _node->getId());
+  strcat(topic, rangeSuffix);
   strcat_P(topic, PSTR("/"));
   strcat(topic, _property->c_str());
 
@@ -107,8 +144,6 @@ uint16_t SendingPromise::send(const String& value) {
     Interface::get().getMqttClient().publish(topic, 2, _setRetained, value.c_str());
   }
 #endif
-
-  delete[] topic;
 
   return packetId;
 }

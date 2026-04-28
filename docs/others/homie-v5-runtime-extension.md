@@ -48,12 +48,17 @@ $stats/uptimemqtt
 $stats/freeheap
 $stats/mqttinbounddropped
 $stats/mqttackdropped
+$stats/mqttinboundmaxdepth
+$stats/mqttackmaxdepth
 $fw/name
 $fw/version
 $fw/checksum
 $implementation
 $implementation/config
 $implementation/version
+$implementation/reset/reason
+$implementation/wifi/last_disconnect_reason
+$implementation/mqtt/last_disconnect_reason
 $implementation/ota/enabled
 $implementation/ota/status
 ```
@@ -68,6 +73,13 @@ stripped. In v5 mode its `mqtt` object also contains the generated
 mandatory v5 segment is applied, so a saved `mqtt.base_topic` of `homie/`
 advertises `mqtt.effective_base_topic` as `homie/5/`. The field is read-only and
 is removed from `/config/set` patches before they are written to the filesystem.
+
+`$implementation/reset/reason` publishes the platform reset reason observed on
+the current boot. `$implementation/wifi/last_disconnect_reason` and
+`$implementation/mqtt/last_disconnect_reason` publish the most recent disconnect
+reason seen during the current boot, or `none` before a disconnect has been
+observed. ESP32 Wi-Fi reasons are published as platform reason names when
+available. They are retained diagnostics intended for post-incident inspection.
 
 ## Command Topics
 

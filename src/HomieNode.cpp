@@ -1,6 +1,8 @@
 #include "HomieNode.hpp"
 #include "Homie.hpp"
 
+#include <new>
+
 using namespace HomieInternals;
 
 std::vector<HomieNode*> HomieNode::nodes;
@@ -69,7 +71,16 @@ HomieNode::~HomieNode() {
 }
 
 PropertyInterface& HomieNode::advertise(const char* id) {
-  Property* propertyObject = new Property(id);
+  if (!id || strlen(id) + 1 > MAX_NODE_PROPERTY_LENGTH) {
+    Helpers::abort(F("✖ HomieNode::advertise(): property id string is too long"));
+    return _propertyInterface;  // never reached, here for clarity
+  }
+
+  Property* propertyObject = new (std::nothrow) Property(id);
+  if (!propertyObject || !propertyObject->getId()) {
+    Helpers::abort(F("✖ HomieNode::advertise(): cannot allocate property"));
+    return _propertyInterface;  // never reached, here for clarity
+  }
 
   _properties.push_back(propertyObject);
 

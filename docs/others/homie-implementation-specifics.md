@@ -6,6 +6,14 @@ The Homie `$implementation` identifier is platform-dependent on this fork:
 # Version
 
 - `$implementation/version`: maintained fork version
+- `$implementation/reset/reason`: reset reason reported by the platform on the
+  current boot, for example `poweron`, `software`, `brownout`, `task_watchdog`
+  or the platform-provided ESP8266 reset string
+- `$implementation/wifi/last_disconnect_reason`: Wi-Fi disconnect reason
+  observed during the current boot, or `none`. ESP32 builds publish the
+  platform reason name when available, for example `NO_AP_FOUND`.
+- `$implementation/mqtt/last_disconnect_reason`: MQTT disconnect reason
+  observed during the current boot, or `none`
 
 # Homie Convention Advertisement
 
@@ -98,3 +106,5 @@ topics:
 - `$stats/uptimemqtt`: seconds since MQTT connectivity was established
 - `$stats/mqttackdropped`: cumulative MQTT publish acknowledgement queue drops
 - `$stats/mqttinbounddropped`: cumulative deferred inbound MQTT queue drops
+- `$stats/mqttackmaxdepth`: maximum MQTT publish acknowledgement queue depth since boot
+- `$stats/mqttinboundmaxdepth`: maximum deferred inbound MQTT queue depth since boot

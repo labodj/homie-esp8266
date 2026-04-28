@@ -10,9 +10,6 @@ on:
 permissions:
   contents: read
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
-
 jobs:
   platformio:
     runs-on: ubuntu-latest
@@ -40,6 +37,10 @@ jobs:
             board: nodemcuv2
             platform: ""
             build_flags: -DPIO_FRAMEWORK_ARDUINO_LWIP2_LOW_MEMORY -DHOMIE_PENDING_MQTT_ACK_QUEUE_SIZE=64 -DHOMIE_PENDING_MQTT_MESSAGE_QUEUE_SIZE=32
+          - name: esp8266-preallocated-queue
+            board: nodemcuv2
+            platform: ""
+            build_flags: -DPIO_FRAMEWORK_ARDUINO_LWIP2_LOW_MEMORY -DHOMIE_PENDING_MQTT_MESSAGE_PREALLOCATED=1
           - name: esp8266-homie-v4
             board: nodemcuv2
             platform: ""
@@ -76,6 +77,10 @@ jobs:
             board: esp32dev
             platform: ""
             build_flags: -DHOMIE_CONVENTION_VERSION=5
+          - name: esp32-preallocated-queue
+            board: esp32dev
+            platform: ""
+            build_flags: -DHOMIE_PENDING_MQTT_MESSAGE_PREALLOCATED=1
           - name: esp32-littlefs-only
             board: esp32dev
             platform: ""

@@ -1,6 +1,6 @@
 # Homie for ESP8266 / ESP32
 
-![homie-esp8266 banner](banner.png)
+![homie-esp8266 banner][banner]
 
 An Arduino for ESP8266 / ESP32 implementation of [Homie](https://github.com/homieiot/convention), an MQTT convention for the IoT.
 
@@ -24,14 +24,14 @@ Fork documentation is published at:
 
 Key pages:
 
-- Getting started: https://labodj.github.io/homie-esp8266/quickstart/getting-started/
-- PlatformIO / PioArduino setup: https://labodj.github.io/homie-esp8266/quickstart/platformio-pioarduino/
-- JSON configuration file: https://labodj.github.io/homie-esp8266/configuration/json-configuration-file/
-- HTTP JSON API: https://labodj.github.io/homie-esp8266/configuration/http-json-api/
-- OTA over MQTT: https://labodj.github.io/homie-esp8266/others/ota-configuration-updates/
-- Maintained fork differences: https://labodj.github.io/homie-esp8266/others/fork-differences/
-- Implementation specifics: https://labodj.github.io/homie-esp8266/others/homie-implementation-specifics/
-- Homie v5 runtime extension: https://labodj.github.io/homie-esp8266/others/homie-v5-runtime-extension/
+- [Getting started][docs-getting-started]
+- [PlatformIO / PioArduino setup][docs-platformio-pioarduino]
+- [JSON configuration file][docs-json-config]
+- [HTTP JSON API][docs-http-api]
+- [OTA over MQTT][docs-ota]
+- [Maintained fork differences][docs-fork-differences]
+- [Implementation specifics][docs-implementation-specifics]
+- [Homie v5 runtime extension][docs-v5-runtime-extension]
 
 The generated site reflects the maintained fork. When a fork-specific page differs
 from upstream, prefer the fork site and the documents tracked in this repository.
@@ -65,7 +65,7 @@ platform = https://github.com/pioarduino/platform-espressif32/releases/download/
 board = ...
 framework = arduino
 lib_compat_mode = strict
-lib_deps = labodj/homie-v5 @ ^3.3.1
+lib_deps = labodj/homie-v5 @ ^3.4.0
 ```
 
 For ESP8266 consumers, keep using the ESP8266 PlatformIO platform and add
@@ -91,19 +91,27 @@ The queue overrides are:
 build_flags =
   -D HOMIE_PENDING_MQTT_ACK_QUEUE_SIZE=64
   -D HOMIE_PENDING_MQTT_MESSAGE_QUEUE_SIZE=32
+  -D HOMIE_PENDING_MQTT_MESSAGE_PREALLOCATED=1
 ```
 
 Defaults:
 
 ```ini
--D HOMIE_PENDING_MQTT_ACK_QUEUE_SIZE=16
+-D HOMIE_PENDING_MQTT_ACK_QUEUE_SIZE=32
 -D HOMIE_PENDING_MQTT_MESSAGE_QUEUE_SIZE=16
+-D HOMIE_PENDING_MQTT_MESSAGE_PREALLOCATED=0
+-D HOMIE_PENDING_MQTT_MESSAGE_MAX_TOPIC_LENGTH=192
+-D HOMIE_PENDING_MQTT_MESSAGE_MAX_PAYLOAD_LENGTH=512
+-D HOMIE_PENDING_MQTT_MESSAGE_MAX_TOPIC_LEVELS=12
 ```
 
 The ACK queue stores MQTT publish acknowledgement events before
 `BootNormal::loop()` dispatches them. The message queue defers non-OTA MQTT input
 from async callbacks into the main loop. Increase them only when the device logs
-the related queue warning under expected traffic.
+the related queue warning under expected traffic. Advanced ESP32 consumers can
+enable the preallocated message queue to avoid per-message heap allocation in
+the async MQTT callback path; messages exceeding the configured topic, payload
+or topic-level limits are rejected and counted as inbound drops.
 
 Storage defaults to SPIFFS for backward compatibility. LittleFS can be enabled
 explicitly:
@@ -161,12 +169,12 @@ property IDs must be valid Homie v5 IDs: lowercase letters, digits and hyphens.
 ## Features
 
 - Automatic connection/reconnection to Wi-Fi/MQTT
-- [JSON configuration file](https://labodj.github.io/homie-esp8266/configuration/json-configuration-file/) to configure the device
-- [Cute HTTP API / Web UI / App](https://labodj.github.io/homie-esp8266/configuration/http-json-api/) to remotely send the configuration to the device and get information about it
-- [Custom settings](https://labodj.github.io/homie-esp8266/advanced-usage/custom-settings/)
-- [OTA over MQTT](https://labodj.github.io/homie-esp8266/others/ota-configuration-updates/)
-- [Magic bytes](https://labodj.github.io/homie-esp8266/advanced-usage/magic-bytes/)
-- Pretty [straightforward sketches](./examples), a simple light for example:
+- [JSON configuration file][docs-json-config] to configure the device
+- [Cute HTTP API / Web UI / App][docs-http-api] to remotely send the configuration to the device and get information about it
+- [Custom settings][docs-custom-settings]
+- [OTA over MQTT][docs-ota]
+- [Magic bytes][docs-magic-bytes]
+- Pretty [straightforward sketches][examples], a simple light for example:
 
 ```c++
 #include <Homie.h>
@@ -222,3 +230,16 @@ Fork-specific behavior already documented in this repository includes:
   legacy stats extensions
 - fork-specific statistics such as `$stats/uptimewifi`, `$stats/uptimemqtt`,
   `$stats/mqttackdropped` and `$stats/mqttinbounddropped`
+
+[banner]: https://raw.githubusercontent.com/labodj/homie-esp8266/develop/banner.png
+[docs-getting-started]: https://labodj.github.io/homie-esp8266/quickstart/getting-started/
+[docs-platformio-pioarduino]: https://labodj.github.io/homie-esp8266/quickstart/platformio-pioarduino/
+[docs-json-config]: https://labodj.github.io/homie-esp8266/configuration/json-configuration-file/
+[docs-http-api]: https://labodj.github.io/homie-esp8266/configuration/http-json-api/
+[docs-ota]: https://labodj.github.io/homie-esp8266/others/ota-configuration-updates/
+[docs-fork-differences]: https://labodj.github.io/homie-esp8266/others/fork-differences/
+[docs-implementation-specifics]: https://labodj.github.io/homie-esp8266/others/homie-implementation-specifics/
+[docs-v5-runtime-extension]: https://labodj.github.io/homie-esp8266/others/homie-v5-runtime-extension/
+[docs-custom-settings]: https://labodj.github.io/homie-esp8266/advanced-usage/custom-settings/
+[docs-magic-bytes]: https://labodj.github.io/homie-esp8266/advanced-usage/magic-bytes/
+[examples]: https://github.com/labodj/homie-esp8266/tree/develop/examples

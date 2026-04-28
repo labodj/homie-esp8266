@@ -5,7 +5,7 @@ using namespace HomieInternals;
 char DeviceId::_deviceId[];  // need to define the static variable
 
 void DeviceId::generate() {
-  uint8_t mac[6];
+  uint8_t mac[6] = {0};
 #ifdef ESP32
   if (esp_read_mac(mac, ESP_MAC_WIFI_STA) != ESP_OK) {
     WiFi.macAddress(mac);

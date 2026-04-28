@@ -14,7 +14,9 @@ bool ExponentialBackoffTimer::check() {
   if (_timer.check()) {
     if (_retryCount != _maxBackoff) _retryCount++;
 
-    uint32_t fixedDelay = pow(_retryCount, 2) * _initialInterval;
+    const uint32_t fixedDelay = static_cast<uint32_t>(_retryCount)
+                              * static_cast<uint32_t>(_retryCount)
+                              * static_cast<uint32_t>(_initialInterval);
     uint32_t randomDifference = random(0, (fixedDelay / 10) + 1);
     uint32_t nextInterval = fixedDelay - randomDifference;
 

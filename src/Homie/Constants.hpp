@@ -45,7 +45,7 @@ const char HOMIE_EXTENSIONS[] = "org.homie.legacy-firmware:0.1.1:[4.x],org.homie
 const char HOMIE_VERSION[] = "3.0.1";
 #endif
 
-const char HOMIE_ESP8266_VERSION[] = "3.3.1";
+const char HOMIE_ESP8266_VERSION[] = "3.4.0";
 const char HOMIE_DEFAULT_PROPERTY_DATATYPE[] = "string";
 
   const IPAddress ACCESS_POINT_IP(192, 168, 123, 1);

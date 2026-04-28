@@ -74,9 +74,25 @@ build_flags =
   -D HOMIE_PENDING_MQTT_MESSAGE_QUEUE_SIZE=32
 ```
 
+On ESP32 builds that must avoid heap churn in the async MQTT callback path, the
+message queue can be preallocated:
+
+```ini
+build_flags =
+  -D HOMIE_PENDING_MQTT_MESSAGE_PREALLOCATED=1
+  -D HOMIE_PENDING_MQTT_MESSAGE_MAX_TOPIC_LENGTH=192
+  -D HOMIE_PENDING_MQTT_MESSAGE_MAX_PAYLOAD_LENGTH=512
+  -D HOMIE_PENDING_MQTT_MESSAGE_MAX_TOPIC_LEVELS=12
+```
+
+Oversized messages are rejected and counted as inbound drops.
+
 Keep `Homie.loop()` frequent; increasing the queue only absorbs bursts.
 
 Both queue drop counters are published in the regular Homie statistics as
-`$stats/mqttackdropped` and `$stats/mqttinbounddropped`. If either value grows
-after boot under normal traffic, tune the related queue or reduce retained MQTT
-traffic delivered to the device.
+`$stats/mqttackdropped` and `$stats/mqttinbounddropped`. The retained
+`$stats/mqttackmaxdepth` and `$stats/mqttinboundmaxdepth` values show the
+highest queue depth reached since boot. If a drop counter grows after boot under
+normal traffic, tune the related queue or reduce retained MQTT traffic delivered
+to the device. If max depth stays far below the configured queue size during
+stress tests, the configured queue has real headroom.

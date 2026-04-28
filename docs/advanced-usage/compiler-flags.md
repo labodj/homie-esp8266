@@ -121,7 +121,24 @@ build_flags =
 Default:
 
 ```
--D HOMIE_PENDING_MQTT_ACK_QUEUE_SIZE=16
+-D HOMIE_PENDING_MQTT_ACK_QUEUE_SIZE=32
+```
+
+**HOMIE_PENDING_MQTT_ACKS_PER_LOOP**
+
+Controls how many queued MQTT publish acknowledgement events are dispatched from
+one `BootNormal::loop()` iteration. Raising it drains ACK bursts faster; lowering
+it gives more loop fairness to sketch code and other Homie work.
+
+```
+build_flags =
+  -D HOMIE_PENDING_MQTT_ACKS_PER_LOOP=8
+```
+
+Default:
+
+```
+-D HOMIE_PENDING_MQTT_ACKS_PER_LOOP=8
 ```
 
 This is an advanced tuning option. Increase it only if the default queue size is
@@ -148,6 +165,69 @@ Default:
 
 ```
 -D HOMIE_PENDING_MQTT_MESSAGE_QUEUE_SIZE=16
+```
+
+**HOMIE_PENDING_MQTT_MESSAGES_PER_LOOP**
+
+Controls how many queued non-OTA MQTT input messages are processed from one
+`BootNormal::loop()` iteration. Raising it drains inbound bursts faster; lowering
+it makes long command bursts yield back to the rest of the firmware sooner.
+
+```
+build_flags =
+  -D HOMIE_PENDING_MQTT_MESSAGES_PER_LOOP=4
+```
+
+Default:
+
+```
+-D HOMIE_PENDING_MQTT_MESSAGES_PER_LOOP=4
+```
+
+**HOMIE_PENDING_MQTT_MESSAGE_PREALLOCATED**
+
+Set this flag to `1` to make the deferred inbound MQTT queue use fixed-size
+topic and payload storage instead of allocating one topic and one payload buffer
+per queued message from the async MQTT callback path:
+
+```
+build_flags =
+  -D HOMIE_PENDING_MQTT_MESSAGE_PREALLOCATED=1
+```
+
+Default:
+
+```
+-D HOMIE_PENDING_MQTT_MESSAGE_PREALLOCATED=0
+```
+
+When enabled, the fixed buffers are controlled by these limits:
+
+```
+-D HOMIE_PENDING_MQTT_MESSAGE_MAX_TOPIC_LENGTH=192
+-D HOMIE_PENDING_MQTT_MESSAGE_MAX_PAYLOAD_LENGTH=512
+-D HOMIE_PENDING_MQTT_MESSAGE_MAX_TOPIC_LEVELS=12
+```
+
+Messages exceeding those limits are rejected and counted in
+`$stats/mqttinbounddropped`. Keep the feature disabled on memory-constrained
+ESP8266 builds unless the reserved RAM budget is acceptable.
+
+**HOMIE_OTA_STATUS_INFO_MAX_LENGTH**
+
+Controls the fixed-size buffer used to queue short OTA status text from the OTA
+path into the main loop before publishing the status event. Increase it only if
+custom OTA status strings are being truncated.
+
+```
+build_flags =
+  -D HOMIE_OTA_STATUS_INFO_MAX_LENGTH=48
+```
+
+Default:
+
+```
+-D HOMIE_OTA_STATUS_INFO_MAX_LENGTH=48
 ```
 
 **HOMIE_USE_LITTLEFS**

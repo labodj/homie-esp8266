@@ -36,7 +36,7 @@ platform = https://github.com/pioarduino/platform-espressif32/releases/download/
 framework = arduino
 lib_compat_mode = strict
 lib_deps =
-  https://github.com/labodj/homie-esp8266.git#develop
+  labodj/homie-v5 @ ^3.4.0
 ```
 
 Dependency metadata has been updated so PlatformIO can resolve ESP8266 and ESP32
@@ -86,13 +86,18 @@ The fork exposes two internal queue sizes:
 build_flags =
   -D HOMIE_PENDING_MQTT_ACK_QUEUE_SIZE=64
   -D HOMIE_PENDING_MQTT_MESSAGE_QUEUE_SIZE=32
+  -D HOMIE_PENDING_MQTT_MESSAGE_PREALLOCATED=1
 ```
 
 Defaults:
 
 ```ini
--D HOMIE_PENDING_MQTT_ACK_QUEUE_SIZE=16
+-D HOMIE_PENDING_MQTT_ACK_QUEUE_SIZE=32
 -D HOMIE_PENDING_MQTT_MESSAGE_QUEUE_SIZE=16
+-D HOMIE_PENDING_MQTT_MESSAGE_PREALLOCATED=0
+-D HOMIE_PENDING_MQTT_MESSAGE_MAX_TOPIC_LENGTH=192
+-D HOMIE_PENDING_MQTT_MESSAGE_MAX_PAYLOAD_LENGTH=512
+-D HOMIE_PENDING_MQTT_MESSAGE_MAX_TOPIC_LEVELS=12
 ```
 
 Use larger queues only when production devices log queue-full warnings under
@@ -103,6 +108,11 @@ expected traffic. Queue drops are also published as retained Homie statistics:
 
 Those counters are cumulative for the current boot and are intended for fleet
 monitoring.
+
+When `HOMIE_PENDING_MQTT_MESSAGE_PREALLOCATED=1`, queued inbound MQTT messages
+use fixed-size slot storage. This removes per-message heap allocation from the
+async MQTT callback path at the cost of reserved RAM and explicit topic/payload
+size limits.
 
 ## OTA Hardening
 

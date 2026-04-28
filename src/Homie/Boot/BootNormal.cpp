@@ -1,6 +1,11 @@
 #include "BootNormal.hpp"
 
+#include <climits>
 #include <new>
+
+#ifdef ESP32
+#include <esp_system.h>
+#endif
 
 using namespace HomieInternals;
 
@@ -8,6 +13,10 @@ namespace {
 #ifdef ESP32
 portMUX_TYPE asyncStateMux = portMUX_INITIALIZER_UNLOCKED;
 #endif
+
+constexpr int32_t NO_DISCONNECT_REASON = INT32_MIN;
+constexpr size_t OTA_FLASH_WRITE_SLICE_SIZE = 4096;
+constexpr uint32_t OTA_REBOOT_STATUS_GRACE_MS = 1000;
 
 // Async network callbacks may run outside the main Homie.loop() flow. Keep the
 // callback side limited to flags, counters, and bounded queues protected by this
@@ -61,24 +70,20 @@ uint16_t takeAndResetCounter(volatile uint16_t& counter) {
   return value;
 }
 
-void incrementCounter(volatile uint16_t& counter) {
-  AsyncStateCriticalGuard lock;
-  if (counter != 0xffffU) counter = counter + 1;
-}
-
-void incrementCounter(volatile uint32_t& counter) {
-  AsyncStateCriticalGuard lock;
-  if (counter != 0xffffffffUL) counter = counter + 1;
-}
-
 uint32_t readCounter(volatile uint32_t& counter) {
   AsyncStateCriticalGuard lock;
   return counter;
 }
 
+uint8_t readCounter(volatile uint8_t& counter) {
+  AsyncStateCriticalGuard lock;
+  return counter;
+}
+
 void incrementDropCounters(volatile uint16_t& intervalCounter, volatile uint32_t& totalCounter) {
-  incrementCounter(intervalCounter);
-  incrementCounter(totalCounter);
+  AsyncStateCriticalGuard lock;
+  if (intervalCounter != 0xffffU) intervalCounter = intervalCounter + 1;
+  if (totalCounter != 0xffffffffUL) totalCounter = totalCounter + 1;
 }
 
 HomieEvent makeEvent(HomieEventType type) {
@@ -89,6 +94,93 @@ HomieEvent makeEvent(HomieEventType type) {
 
 void dispatchEvent(const HomieEvent& event) {
   Interface::get().eventHandler(event);
+}
+
+uint8_t decimalDigits16(uint16_t value) {
+  uint8_t digits = 1;
+  while (value >= 10) {
+    value = static_cast<uint16_t>(value / 10);
+    ++digits;
+  }
+  return digits;
+}
+
+#ifdef ESP32
+const char* espResetReasonName(esp_reset_reason_t reason) {
+  switch (reason) {
+    case ESP_RST_POWERON:
+      return "poweron";
+    case ESP_RST_EXT:
+      return "external";
+    case ESP_RST_SW:
+      return "software";
+    case ESP_RST_PANIC:
+      return "panic";
+    case ESP_RST_INT_WDT:
+      return "interrupt_watchdog";
+    case ESP_RST_TASK_WDT:
+      return "task_watchdog";
+    case ESP_RST_WDT:
+      return "watchdog";
+    case ESP_RST_DEEPSLEEP:
+      return "deep_sleep";
+    case ESP_RST_BROWNOUT:
+      return "brownout";
+    case ESP_RST_SDIO:
+      return "sdio";
+    case ESP_RST_UNKNOWN:
+      return "unknown";
+    default:
+      return "other";
+  }
+}
+#endif
+
+const char* mqttDisconnectReasonName(AsyncMqttClientDisconnectReason reason) {
+  switch (reason) {
+    case AsyncMqttClientDisconnectReason::TCP_DISCONNECTED:
+      return "tcp_disconnected";
+    case AsyncMqttClientDisconnectReason::MQTT_UNACCEPTABLE_PROTOCOL_VERSION:
+      return "mqtt_unacceptable_protocol_version";
+    case AsyncMqttClientDisconnectReason::MQTT_IDENTIFIER_REJECTED:
+      return "mqtt_identifier_rejected";
+    case AsyncMqttClientDisconnectReason::MQTT_SERVER_UNAVAILABLE:
+      return "mqtt_server_unavailable";
+    case AsyncMqttClientDisconnectReason::MQTT_MALFORMED_CREDENTIALS:
+      return "mqtt_malformed_credentials";
+    case AsyncMqttClientDisconnectReason::MQTT_NOT_AUTHORIZED:
+      return "mqtt_not_authorized";
+    case AsyncMqttClientDisconnectReason::ESP8266_NOT_ENOUGH_SPACE:
+      return "esp8266_not_enough_space";
+    case AsyncMqttClientDisconnectReason::TLS_BAD_FINGERPRINT:
+      return "tls_bad_fingerprint";
+    default:
+      return "unknown";
+  }
+}
+
+const char* formatOptionalInt32(int32_t value, char* buffer, size_t bufferSize) {
+  if (value == NO_DISCONNECT_REASON) {
+    return "none";
+  }
+
+  snprintf(buffer, bufferSize, "%ld", static_cast<long>(value));
+  return buffer;
+}
+
+const char* formatWifiDisconnectReason(int32_t value, char* buffer, size_t bufferSize) {
+  if (value == NO_DISCONNECT_REASON) {
+    return "none";
+  }
+
+#ifdef ESP32
+  const char* name = WiFi.disconnectReasonName(static_cast<wifi_err_reason_t>(value));
+  if (name && name[0] != '\0') {
+    return name;
+  }
+#endif
+
+  return formatOptionalInt32(value, buffer, bufferSize);
 }
 
 bool isValidHomieId(const char* value) {
@@ -340,6 +432,11 @@ std::unique_ptr<char[]> buildV5AdvertisedSafeConfigFile(const char* safeConfigFi
 
 BootNormal::BootNormal()
   : Boot("normal")
+  , _advertisementProgress()
+  , _uptime()
+  , _uptimeWifi()
+  , _uptimeMqtt()
+  , _statsTimer()
   , _mqttReconnectTimer(MQTT_RECONNECT_INITIAL_INTERVAL, MQTT_RECONNECT_MAX_BACKOFF)
   , _wifiReconnectTimer(MQTT_RECONNECT_INITIAL_INTERVAL, MQTT_RECONNECT_MAX_BACKOFF)
   , _setupFunctionCalled(false)
@@ -352,6 +449,8 @@ BootNormal::BootNormal()
   , _wifiConnectAttemptAt(0)
   , _mqttConnectAttemptAt(0)
   , _recoveryStartedAt(0)
+  , _lastWifiDisconnectReason(NO_DISCONNECT_REASON)
+  , _lastMqttDisconnectReason(NO_DISCONNECT_REASON)
   , _wifiEventPending(false)
   , _wifiDisconnectReasonPending(0)
   , _mqttEventPending(false)
@@ -361,24 +460,30 @@ BootNormal::BootNormal()
   , _pendingMqttMessageCount(0)
   , _pendingMqttMessagesDropped(0)
   , _pendingMqttMessagesDroppedTotal(0)
-  , _pendingMqttMessageQueueLocked(false)
+  , _pendingMqttMessageMaxDepth(0)
   , _pendingMqttAckReadIndex(0)
   , _pendingMqttAckWriteIndex(0)
   , _pendingMqttAckCount(0)
   , _pendingMqttAcksDropped(0)
   , _pendingMqttAcksDroppedTotal(0)
-  , _pendingMqttAckQueueLocked(false)
+  , _pendingMqttAckMaxDepth(0)
   , _otaStartedPending(false)
   , _otaProgressPending(false)
   , _otaProgressSizeDone(0)
   , _otaProgressSizeTotal(0)
   , _otaSuccessfulPending(false)
   , _otaFailedPending(false)
+  , _otaStatusPending(false)
+  , _otaStatusCode(0)
+  , _otaStatusSequence(0)
+  , _otaStatusQueuedAt(0)
+  , _otaStatusInfo{0}
   , _mqttConnectNotified(false)
   , _mqttDisconnectNotified(true)
   , _otaOngoing(false)
   , _flaggedForReboot(false)
   , _mqttOfflineMessageId(0)
+  , _fwChecksum{0}
   , _otaRequestedChecksum{0}
   , _otaIsBase64(false)
   , _otaBase64Pads(0)
@@ -388,12 +493,27 @@ BootNormal::BootNormal()
   , _otaPayloadProcessed(0)
   , _otaProgressPublishCounter(0)
   , _mqttTopic(nullptr)
+  , _mqttRootTopic(nullptr)
+  , _mqttRootTopicLength(0)
   , _mqttClientId(nullptr)
   , _mqttWillTopic(nullptr)
   , _mqttPayloadBuffer(nullptr)
+  , _mqttPayloadBufferCapacity(0)
   , _mqttTopicLevels(nullptr)
+  , _mqttTopicLevelsCapacity(0)
   , _mqttTopicLevelsCount(0)
-  , _mqttTopicCopy(nullptr) {
+  , _mqttTopicCopy(nullptr)
+  , _mqttTopicCopyCapacity(0)
+  , _mqttTopicValid(false)
+#if HOMIE_PENDING_MQTT_MESSAGE_PREALLOCATED
+  , _mqttPreallocatedTopicCopy()
+  , _mqttPreallocatedPayloadBuffer()
+  , _mqttPreallocatedTopicLevels()
+  , _mqttPreallocatedTopicLevelsCount(0)
+  , _mqttPreallocatedTopicValid(false)
+#endif
+  , _pendingMqttMessages()
+  , _pendingMqttAckIds() {
 }
 
 BootNormal::~BootNormal() {
@@ -424,18 +544,31 @@ void BootNormal::setup() {
   }
 #endif
 
-  // Generate topic buffer
-  size_t baseTopicLength = Helpers::mqttDeviceBaseTopicLength(Interface::get().getConfig().get().mqtt.baseTopic, Interface::get().getConfig().get().deviceId);
-  size_t longestSubtopicLength = 31 + 1;  // /$implementation/ota/firmware/+
+  // Generate topic buffers once. MQTT callbacks reuse the root topic for
+  // filtering, and the publisher reuses the device-topic scratch buffer.
+  _mqttRootTopicLength = Helpers::mqttRootTopicLength(Interface::get().getConfig().get().mqtt.baseTopic);
+  _mqttRootTopic = std::unique_ptr<char[]>(new (std::nothrow) char[_mqttRootTopicLength + 1]);
+  if (!_mqttRootTopic) Helpers::abort(F("✖ Cannot allocate MQTT root topic buffer"));
+  Helpers::buildMqttRootTopic(_mqttRootTopic.get(), Interface::get().getConfig().get().mqtt.baseTopic);
+
+  size_t baseTopicLength = _mqttRootTopicLength + strlen(Interface::get().getConfig().get().deviceId);
+  size_t longestSubtopicLength = strlen_P(PSTR("/$implementation/mqtt/last_disconnect_reason")) + 1;
+  auto trackSubtopicLength = [&longestSubtopicLength](size_t lengthWithoutNull) {
+    const size_t lengthWithNull = lengthWithoutNull + 1;
+    if (lengthWithNull > longestSubtopicLength) longestSubtopicLength = lengthWithNull;
+  };
   for (HomieNode* iNode : HomieNode::nodes) {
-    size_t nodeMaxTopicLength = 1 + strlen(iNode->getId()) + 12 + 1;  // /id/$properties
-    if (nodeMaxTopicLength > longestSubtopicLength) longestSubtopicLength = nodeMaxTopicLength;
+    const size_t nodeIdLength = strlen(iNode->getId());
+    trackSubtopicLength(1 + nodeIdLength + strlen_P(PSTR("/$properties")));
+    if (iNode->isRange()) {
+      trackSubtopicLength(1 + nodeIdLength + 1 + decimalDigits16(iNode->getUpper()) + strlen_P(PSTR("/$name")));
+    }
 
     for (Property* iProperty : iNode->getProperties()) {
-      size_t propertyMaxTopicLength = 1 + strlen(iNode->getId()) + 1 + strlen(iProperty->getId()) + 1;
-      if (iProperty->isSettable()) propertyMaxTopicLength += 4;  // /set
-
-      if (propertyMaxTopicLength > longestSubtopicLength) longestSubtopicLength = propertyMaxTopicLength;
+      const size_t propertyTopicLength = 1 + nodeIdLength + 1 + strlen(iProperty->getId());
+      trackSubtopicLength(propertyTopicLength);
+      if (iProperty->isSettable()) trackSubtopicLength(propertyTopicLength + strlen_P(PSTR("/set")));
+      trackSubtopicLength(propertyTopicLength + strlen_P(PSTR("/$settable")));
     }
   }
   _mqttTopic = std::unique_ptr<char[]>(new (std::nothrow) char[baseTopicLength + longestSubtopicLength]);
@@ -523,8 +656,15 @@ void BootNormal::loop() {
 
   _processPendingAsyncEvents();
   _processPendingEventNotifications();
+  _processPendingOtaStatus();
 
-  if (_flaggedForReboot && Interface::get().reset.idle) {
+  uint32_t otaStatusQueuedAt = 0;
+  {
+    AsyncStateCriticalGuard lock;
+    otaStatusQueuedAt = _otaStatusQueuedAt;
+  }
+  const bool waitForOtaStatus = otaStatusQueuedAt != 0 && (millis() - otaStatusQueuedAt < OTA_REBOOT_STATUS_GRACE_MS);
+  if (_flaggedForReboot && Interface::get().reset.idle && !waitForOtaStatus) {
     Interface::get().getLogger() << F("Device is idle") << endl;
 
     Interface::get().getLogger() << F("↻ Rebooting...") << endl;
@@ -651,9 +791,22 @@ void BootNormal::loop() {
     utoa(ackDroppedTotal, droppedStr, 10);
     uint16_t ackDroppedPacketId = Interface::get().getMqttClient().publish(_prefixMqttTopic(PSTR("/$stats/mqttackdropped")), 1, true, droppedStr);
 
+    const uint8_t inboundMaxDepth = readCounter(_pendingMqttMessageMaxDepth);
+    const uint8_t ackMaxDepth = readCounter(_pendingMqttAckMaxDepth);
+    char depthStr[3 + 1];
+    utoa(inboundMaxDepth, depthStr, 10);
+    uint16_t inboundMaxDepthPacketId = Interface::get().getMqttClient().publish(_prefixMqttTopic(PSTR("/$stats/mqttinboundmaxdepth")), 1, true, depthStr);
+
+    utoa(ackMaxDepth, depthStr, 10);
+    uint16_t ackMaxDepthPacketId = Interface::get().getMqttClient().publish(_prefixMqttTopic(PSTR("/$stats/mqttackmaxdepth")), 1, true, depthStr);
+
     if (inboundDroppedTotal != 0 || ackDroppedTotal != 0) {
       Interface::get().getLogger() << F("  • MQTT drops: inbound=") << inboundDroppedTotal
                                    << F(", ack=") << ackDroppedTotal << endl;
+    }
+    if (inboundMaxDepth != 0 || ackMaxDepth != 0) {
+      Interface::get().getLogger() << F("  • MQTT queue max depth: inbound=") << inboundMaxDepth
+                                   << F(", ack=") << ackMaxDepth << endl;
     }
 
     if (intervalPacketId != 0
@@ -663,7 +816,9 @@ void BootNormal::loop() {
         && uptimeMqttPacketId != 0
         && freeHeapPacketId != 0
         && inboundDroppedPacketId != 0
-        && ackDroppedPacketId != 0) _statsTimer.tick();
+        && ackDroppedPacketId != 0
+        && inboundMaxDepthPacketId != 0
+        && ackMaxDepthPacketId != 0) _statsTimer.tick();
     const HomieEvent event = makeEvent(HomieEventType::SENDING_STATISTICS);
     dispatchEvent(event);
   }
@@ -711,6 +866,46 @@ bool BootNormal::_publishOtaStatus(int status, const char* info) {
             topic.get(), 0, true, payload.c_str()) != 0;
 }
 
+void BootNormal::_queueOtaStatus(int status, const char* info) {
+  const uint32_t queuedAt = millis();
+  AsyncStateCriticalGuard lock;
+  _otaStatusCode = status;
+  if (info && info[0] != '\0') {
+    strlcpy(_otaStatusInfo, info, sizeof(_otaStatusInfo));
+  } else {
+    _otaStatusInfo[0] = '\0';
+  }
+  _otaStatusQueuedAt = queuedAt;
+  _otaStatusPending = true;
+  _otaStatusSequence = static_cast<uint16_t>(_otaStatusSequence + 1);
+}
+
+void BootNormal::_processPendingOtaStatus() {
+  int status = 0;
+  uint16_t sequence = 0;
+  char info[HOMIE_OTA_STATUS_INFO_MAX_LENGTH];
+
+  {
+    AsyncStateCriticalGuard lock;
+    if (!_otaStatusPending) return;
+
+    status = _otaStatusCode;
+    sequence = _otaStatusSequence;
+    strlcpy(info, _otaStatusInfo, sizeof(info));
+  }
+
+  if (!_publishOtaStatus(status, info[0] != '\0' ? info : nullptr)) {
+    return;
+  }
+
+  {
+    AsyncStateCriticalGuard lock;
+    if (_otaStatusPending && _otaStatusSequence == sequence) {
+      _otaStatusPending = false;
+    }
+  }
+}
+
 void BootNormal::_resetOtaTransferState(bool preserveRequestedChecksum) {
   _otaOngoing = false;
   if (!preserveRequestedChecksum) _otaRequestedChecksum[0] = '\0';
@@ -724,7 +919,7 @@ void BootNormal::_resetOtaTransferState(bool preserveRequestedChecksum) {
 }
 
 void BootNormal::_failOtaUpdate(int status, const char* info, const __FlashStringHelper* reason) {
-  _publishOtaStatus(status, info);
+  _queueOtaStatus(status, info);
 
   Interface::get().getLogger() << F("✖ OTA failed (") << status;
   if (info && info[0] != '\0') {
@@ -756,7 +951,7 @@ void BootNormal::_endOtaUpdate(bool success, uint8_t update_error) {
   if (success) {
     Interface::get().getLogger() << F("✔ OTA succeeded") << endl;
     setFlag(_otaSuccessfulPending);
-    _publishOtaStatus(200);  // 200 OK
+    _queueOtaStatus(200);  // 200 OK
     _flaggedForReboot = true;
   } else {
     int code;
@@ -790,12 +985,29 @@ void BootNormal::_endOtaUpdate(bool success, uint8_t update_error) {
         info.concat(update_error);
         break;
     }
-    _publishOtaStatus(code, info.c_str());
+    _queueOtaStatus(code, info.c_str());
 
     Interface::get().getLogger() << F("✖ OTA failed (") << code << F(" ") << info << F(")") << endl;
     setFlag(_otaFailedPending);
   }
   _resetOtaTransferState(success);
+}
+
+bool BootNormal::_writeOtaPayload(char* payload, size_t length) {
+  size_t writtenTotal = 0;
+  while (writtenTotal < length) {
+    const size_t remaining = length - writtenTotal;
+    const size_t chunkLength = remaining < OTA_FLASH_WRITE_SLICE_SIZE ? remaining : OTA_FLASH_WRITE_SLICE_SIZE;
+    const size_t written = Update.write(reinterpret_cast<uint8_t*>(payload + writtenTotal), chunkLength);
+    if (written != chunkLength) {
+      return false;
+    }
+
+    writtenTotal += written;
+    yield();
+  }
+
+  return true;
 }
 
 void BootNormal::_markConnectivityRecovering() {
@@ -909,28 +1121,35 @@ void BootNormal::_processPendingEventNotifications() {
     dispatchEvent(event);
   }
 
-  while (true) {
-    _lockPendingMqttAckQueue();
-    if (_pendingMqttAckCount == 0) {
-      _unlockPendingMqttAckQueue();
-      break;
+  uint8_t processedAcks = 0;
+  while (processedAcks < PENDING_MQTT_ACKS_PER_LOOP_LIMIT) {
+    uint16_t id = 0;
+    bool hasMoreAcks = false;
+
+    {
+      AsyncStateCriticalGuard lock;
+      if (_pendingMqttAckCount == 0) break;
+
+      const uint8_t readIndex = _pendingMqttAckReadIndex;
+      id = _pendingMqttAckIds[readIndex];
+      _pendingMqttAckReadIndex = (readIndex + 1) % PENDING_MQTT_ACK_QUEUE_SIZE;
+      _pendingMqttAckCount = _pendingMqttAckCount - 1;
+      hasMoreAcks = _pendingMqttAckCount > 0;
     }
-
-    const uint8_t readIndex = _pendingMqttAckReadIndex;
-    const uint16_t id = _pendingMqttAckIds[readIndex];
-
-    _pendingMqttAckReadIndex = (readIndex + 1) % PENDING_MQTT_ACK_QUEUE_SIZE;
-    _pendingMqttAckCount = _pendingMqttAckCount - 1;
-    _unlockPendingMqttAckQueue();
 
     HomieEvent event = makeEvent(HomieEventType::MQTT_PACKET_ACKNOWLEDGED);
     event.packetId = id;
     dispatchEvent(event);
+    ++processedAcks;
 
     if (Interface::get().flaggedForSleep && id == _mqttOfflineMessageId) {
       Interface::get().getLogger() << F("Offline message acknowledged. Disconnecting MQTT...") << endl;
       Interface::get().getMqttClient().disconnect();
       break;
+    }
+
+    if (hasMoreAcks) {
+      yield();
     }
   }
 
@@ -940,52 +1159,11 @@ void BootNormal::_processPendingEventNotifications() {
   }
 }
 
-void BootNormal::_lockPendingMqttMessageQueue() {
-  // The queue is shared with MQTT callbacks. The spin is normally one iteration;
-  // delay(0) keeps the watchdog fed if the main loop and callback briefly race.
-  while (true) {
-    {
-      AsyncStateCriticalGuard lock;
-      if (!_pendingMqttMessageQueueLocked) {
-        _pendingMqttMessageQueueLocked = true;
-        return;
-      }
-    }
-    delay(0);
-  }
-}
-
-void BootNormal::_unlockPendingMqttMessageQueue() {
-  AsyncStateCriticalGuard lock;
-  _pendingMqttMessageQueueLocked = false;
-}
-
-void BootNormal::_lockPendingMqttAckQueue() {
-  // Publish acknowledgements can arrive from async MQTT context while the main
-  // loop is dispatching queued events, so the ACK ring uses the same tiny lock.
-  while (true) {
-    {
-      AsyncStateCriticalGuard lock;
-      if (!_pendingMqttAckQueueLocked) {
-        _pendingMqttAckQueueLocked = true;
-        return;
-      }
-    }
-    delay(0);
-  }
-}
-
-void BootNormal::_unlockPendingMqttAckQueue() {
-  AsyncStateCriticalGuard lock;
-  _pendingMqttAckQueueLocked = false;
-}
-
 bool BootNormal::_enqueuePendingMqttAck(uint16_t id) {
   // The callback path stores only the packet id. Event construction and user
   // dispatch happen later in _processPendingEventNotifications().
-  _lockPendingMqttAckQueue();
+  AsyncStateCriticalGuard lock;
   if (_pendingMqttAckCount >= PENDING_MQTT_ACK_QUEUE_SIZE) {
-    _unlockPendingMqttAckQueue();
     return false;
   }
 
@@ -993,115 +1171,196 @@ bool BootNormal::_enqueuePendingMqttAck(uint16_t id) {
   _pendingMqttAckIds[writeIndex] = id;
   _pendingMqttAckWriteIndex = (writeIndex + 1) % PENDING_MQTT_ACK_QUEUE_SIZE;
   _pendingMqttAckCount = _pendingMqttAckCount + 1;
-  _unlockPendingMqttAckQueue();
+  if (_pendingMqttAckCount > _pendingMqttAckMaxDepth) _pendingMqttAckMaxDepth = _pendingMqttAckCount;
   return true;
 }
 
-bool BootNormal::_enqueuePendingMqttMessage(const char* topic, const char* payload, const AsyncMqttClientMessageProperties& properties) {
-  // AsyncMqttClient owns topic/payload memory only for the callback duration.
-  // Copy first, then enter the queue lock only for the ring-buffer mutation.
+bool BootNormal::_enqueuePendingMqttMessage(const char* topic, const char* payload, size_t payloadLength, const AsyncMqttClientMessageProperties& properties) {
+#if HOMIE_PENDING_MQTT_MESSAGE_PREALLOCATED
   const size_t topicLength = strlen(topic);
-  std::unique_ptr<char[]> topicCopy(new (std::nothrow) char[topicLength + 1]);
-  if (!topicCopy) return false;
-  memcpy(topicCopy.get(), topic, topicLength + 1);
+  if (topicLength > PENDING_MQTT_MESSAGE_MAX_TOPIC_LENGTH || payloadLength > PENDING_MQTT_MESSAGE_MAX_PAYLOAD_LENGTH) {
+    return false;
+  }
 
-  const size_t payloadLength = strlen(payload);
-  std::unique_ptr<char[]> payloadCopy(new (std::nothrow) char[payloadLength + 1]);
-  if (!payloadCopy) return false;
-  memcpy(payloadCopy.get(), payload, payloadLength + 1);
-
-  // Allocate before taking the queue lock, then keep the critical section short.
-  _lockPendingMqttMessageQueue();
+  AsyncStateCriticalGuard lock;
   if (_pendingMqttMessageCount >= PENDING_MQTT_MESSAGE_QUEUE_SIZE) {
-    _unlockPendingMqttMessageQueue();
     return false;
   }
 
   const uint8_t writeIndex = _pendingMqttMessageWriteIndex;
   PendingMqttMessage& slot = _pendingMqttMessages[writeIndex];
-  slot.topic = std::move(topicCopy);
-  slot.payload = std::move(payloadCopy);
+  memcpy(slot.topic, topic, topicLength + 1);
+  memcpy(slot.payload, payload, payloadLength);
+  slot.payload[payloadLength] = '\0';
+  slot.payloadLength = payloadLength;
   slot.properties = properties;
   _pendingMqttMessageWriteIndex = (writeIndex + 1) % PENDING_MQTT_MESSAGE_QUEUE_SIZE;
   _pendingMqttMessageCount = _pendingMqttMessageCount + 1;
-  _unlockPendingMqttMessageQueue();
+  if (_pendingMqttMessageCount > _pendingMqttMessageMaxDepth) _pendingMqttMessageMaxDepth = _pendingMqttMessageCount;
   return true;
+#else
+  // AsyncMqttClient owns topic/payload memory only for the callback duration.
+  // Preflight capacity before allocating, then enter the critical section only
+  // for the ring mutation.
+  {
+    AsyncStateCriticalGuard lock;
+    if (_pendingMqttMessageCount >= PENDING_MQTT_MESSAGE_QUEUE_SIZE) {
+      return false;
+    }
+  }
+
+  const size_t topicLength = strlen(topic);
+  std::unique_ptr<char[]> topicCopy(new (std::nothrow) char[topicLength + 1]);
+  if (!topicCopy) return false;
+  memcpy(topicCopy.get(), topic, topicLength + 1);
+
+  std::unique_ptr<char[]> payloadCopy(new (std::nothrow) char[payloadLength + 1]);
+  if (!payloadCopy) return false;
+  memcpy(payloadCopy.get(), payload, payloadLength);
+  payloadCopy.get()[payloadLength] = '\0';
+
+  // Allocate before taking the critical section, then mutate only ring-buffer
+  // metadata while interrupts are guarded. This prevents async MQTT callbacks
+  // and Homie.loop() from spinning against each other under bursts.
+  {
+    AsyncStateCriticalGuard lock;
+    if (_pendingMqttMessageCount >= PENDING_MQTT_MESSAGE_QUEUE_SIZE) {
+      return false;
+    }
+
+    const uint8_t writeIndex = _pendingMqttMessageWriteIndex;
+    PendingMqttMessage& slot = _pendingMqttMessages[writeIndex];
+    slot.topic = std::move(topicCopy);
+    slot.payload = std::move(payloadCopy);
+    slot.properties = properties;
+    _pendingMqttMessageWriteIndex = (writeIndex + 1) % PENDING_MQTT_MESSAGE_QUEUE_SIZE;
+    _pendingMqttMessageCount = _pendingMqttMessageCount + 1;
+    if (_pendingMqttMessageCount > _pendingMqttMessageMaxDepth) _pendingMqttMessageMaxDepth = _pendingMqttMessageCount;
+  }
+  return true;
+#endif
 }
 
 void BootNormal::_flushPendingMqttMessages() {
-  _lockPendingMqttMessageQueue();
-  for (PendingMqttMessage& slot : _pendingMqttMessages) {
-    slot.topic.reset();
-    slot.payload.reset();
-  }
-
+#if HOMIE_PENDING_MQTT_MESSAGE_PREALLOCATED
+  AsyncStateCriticalGuard lock;
   _pendingMqttMessageReadIndex = 0;
   _pendingMqttMessageWriteIndex = 0;
   _pendingMqttMessageCount = 0;
-  _unlockPendingMqttMessageQueue();
+#else
+  std::array<PendingMqttMessage, PENDING_MQTT_MESSAGE_QUEUE_SIZE> discardedMessages;
+
+  {
+    AsyncStateCriticalGuard lock;
+    const uint8_t pendingCount = _pendingMqttMessageCount;
+    uint8_t readIndex = _pendingMqttMessageReadIndex;
+
+    for (uint8_t i = 0; i < pendingCount; ++i) {
+      PendingMqttMessage& slot = _pendingMqttMessages[readIndex];
+      discardedMessages[i].topic = std::move(slot.topic);
+      discardedMessages[i].payload = std::move(slot.payload);
+      readIndex = (readIndex + 1) % PENDING_MQTT_MESSAGE_QUEUE_SIZE;
+    }
+
+    _pendingMqttMessageReadIndex = 0;
+    _pendingMqttMessageWriteIndex = 0;
+    _pendingMqttMessageCount = 0;
+  }
+#endif
 }
 
-void BootNormal::_handleQueuedMqttMessage(std::unique_ptr<char[]> topicCopy, std::unique_ptr<char[]> payloadBuffer, const AsyncMqttClientMessageProperties& properties) {
+void BootNormal::_handleQueuedMqttMessage(char* topic, char* payload, const AsyncMqttClientMessageProperties& properties) {
   std::unique_ptr<char*[]> topicLevels;
   uint8_t topicLevelsCount = 0;
-  if (!__splitTopic(topicCopy.get(), topicLevels, topicLevelsCount)) {
+  if (!__splitTopic(topic, topicLevels, topicLevelsCount)) {
     incrementDropCounters(_pendingMqttMessagesDropped, _pendingMqttMessagesDroppedTotal);
     return;
   }
   if (topicLevelsCount == 0) return;
 
-  const size_t payloadLength = strlen(payloadBuffer.get());
+  const size_t payloadLength = strlen(payload);
 
-  if (__handleBroadcasts(topicCopy.get(), payloadBuffer.get(), properties, payloadLength, 0, payloadLength, topicLevels.get(), topicLevelsCount))
+  if (__handleBroadcasts(topic, payload, properties, payloadLength, 0, payloadLength, topicLevels.get(), topicLevelsCount))
     return;
 
   if (strcmp(topicLevels.get()[0], Interface::get().getConfig().get().deviceId) != 0)
     return;
 
-  if (__handleResets(topicCopy.get(), payloadBuffer.get(), properties, payloadLength, 0, payloadLength, topicLevels.get(), topicLevelsCount))
+  if (__handleResets(topic, payload, properties, payloadLength, 0, payloadLength, topicLevels.get(), topicLevelsCount))
     return;
 
-  if (__handleConfig(topicCopy.get(), payloadBuffer.get(), properties, payloadLength, 0, payloadLength, topicLevels.get(), topicLevelsCount))
+  if (__handleConfig(topic, payload, properties, payloadLength, 0, payloadLength, topicLevels.get(), topicLevelsCount))
     return;
 
-  __handleNodeProperty(topicCopy.get(), payloadBuffer.get(), properties, payloadLength, 0, payloadLength, topicLevels.get(), topicLevelsCount);
+  __handleNodeProperty(topic, payload, properties, payloadLength, 0, payloadLength, topicLevels.get(), topicLevelsCount);
 }
 
 void BootNormal::_processPendingMqttMessages() {
-  while (_pendingMqttMessageCount > 0) {
+  uint8_t processedMessages = 0;
+  while (processedMessages < PENDING_MQTT_MESSAGES_PER_LOOP_LIMIT) {
+#if HOMIE_PENDING_MQTT_MESSAGE_PREALLOCATED
+    std::array<char, PENDING_MQTT_MESSAGE_MAX_TOPIC_LENGTH + 1> topicCopy;
+    std::array<char, PENDING_MQTT_MESSAGE_MAX_PAYLOAD_LENGTH + 1> payloadBuffer;
+    bool hasQueuedMessage = false;
+#else
     std::unique_ptr<char[]> topicCopy;
     std::unique_ptr<char[]> payloadBuffer;
+#endif
     AsyncMqttClientMessageProperties properties{};
+    bool hasMoreMessages = false;
 
-    _lockPendingMqttMessageQueue();
-    if (_pendingMqttMessageCount == 0) {
-      _unlockPendingMqttMessageQueue();
-      return;
-    }
+    {
+      AsyncStateCriticalGuard lock;
+      if (_pendingMqttMessageCount == 0) {
+        break;
+      }
 
-    // Move the queued buffers out while locked, then parse and dispatch outside
-    // the lock so application handlers cannot block async callback progress.
-    const uint8_t readIndex = _pendingMqttMessageReadIndex;
-    PendingMqttMessage& slot = _pendingMqttMessages[readIndex];
-    _pendingMqttMessageReadIndex = (readIndex + 1) % PENDING_MQTT_MESSAGE_QUEUE_SIZE;
-    _pendingMqttMessageCount = _pendingMqttMessageCount - 1;
+      // Move the queued buffers out while guarded, then parse and dispatch
+      // outside the critical section so application handlers cannot block async
+      // callback progress.
+      const uint8_t readIndex = _pendingMqttMessageReadIndex;
+      PendingMqttMessage& slot = _pendingMqttMessages[readIndex];
+      _pendingMqttMessageReadIndex = (readIndex + 1) % PENDING_MQTT_MESSAGE_QUEUE_SIZE;
+      _pendingMqttMessageCount = _pendingMqttMessageCount - 1;
 
-    if (slot.topic && slot.payload) {
-      topicCopy = std::move(slot.topic);
-      payloadBuffer = std::move(slot.payload);
+#if HOMIE_PENDING_MQTT_MESSAGE_PREALLOCATED
+      const size_t payloadLength = slot.payloadLength;
+      memcpy(topicCopy.data(), slot.topic, sizeof(slot.topic));
+      memcpy(payloadBuffer.data(), slot.payload, payloadLength + 1);
+      hasQueuedMessage = true;
+#else
+      if (slot.topic && slot.payload) {
+        topicCopy = std::move(slot.topic);
+        payloadBuffer = std::move(slot.payload);
+        properties = slot.properties;
+      }
+#endif
       properties = slot.properties;
+      hasMoreMessages = _pendingMqttMessageCount > 0;
     }
-    _unlockPendingMqttMessageQueue();
+    ++processedMessages;
 
+#if HOMIE_PENDING_MQTT_MESSAGE_PREALLOCATED
+    if (!hasQueuedMessage) {
+      continue;
+    }
+
+    _handleQueuedMqttMessage(topicCopy.data(), payloadBuffer.data(), properties);
+#else
     if (!topicCopy || !payloadBuffer) {
       continue;
     }
 
-    _handleQueuedMqttMessage(std::move(topicCopy), std::move(payloadBuffer), properties);
+    _handleQueuedMqttMessage(topicCopy.get(), payloadBuffer.get(), properties);
+#endif
 
     if (!Interface::get().getMqttClient().connected()) {
       _flushPendingMqttMessages();
       return;
+    }
+
+    if (hasMoreMessages) {
+      yield();
     }
   }
 }
@@ -1161,7 +1420,11 @@ void BootNormal::_handleWifiConnected(const IPAddress& ip, const IPAddress& mask
   _uptimeWifi.reset();
 
   if (!_mqttDisconnectNotified || _mqttConnectInProgress || Interface::get().getMqttClient().connected()) {
-    Interface::get().getMqttClient().disconnect(true);
+    // Wi-Fi is currently usable, so prefer an MQTT DISCONNECT packet over a
+    // forced TCP close. A forced close lets the broker publish the retained
+    // `lost` LWT even when this runtime is deliberately rebuilding the MQTT
+    // session after a fresh GOT_IP event.
+    Interface::get().getMqttClient().disconnect(false);
   }
   _handleMqttDisconnected(AsyncMqttClientDisconnectReason::TCP_DISCONNECTED);
   _mqttReconnectTimer.deactivate();
@@ -1187,6 +1450,7 @@ void BootNormal::_handleWifiDisconnected(int32_t reason) {
   if (!_wifiGotIp && !_wifiConnectInProgress && _wifiReconnectTimer.isActive()) return;
 
   _markConnectivityRecovering();
+  _lastWifiDisconnectReason = reason;
   _wifiGotIp = false;
   _wifiConnectInProgress = false;
 #if HOMIE_MDNS
@@ -1528,6 +1792,7 @@ void BootNormal::_handleMqttConnected() {
 void BootNormal::_handleMqttDisconnected(AsyncMqttClientDisconnectReason reason) {
   _abortOtaUpdateOnDisconnect();
 
+  _lastMqttDisconnectReason = static_cast<int32_t>(reason);
   Interface::get().ready = false;
   _mqttConnectNotified = false;
   _mqttConnectInProgress = false;
@@ -1640,7 +1905,7 @@ void BootNormal::_advertise() {
 #endif
       break;
     case AdvertisementProgress::GlobalStep::PUB_STATS:
-      packetId = Interface::get().getMqttClient().publish(_prefixMqttTopic(PSTR("/$stats")), 1, true, "signal,uptime,uptimewifi,uptimemqtt,freeheap,mqttinbounddropped,mqttackdropped");
+      packetId = Interface::get().getMqttClient().publish(_prefixMqttTopic(PSTR("/$stats")), 1, true, "signal,uptime,uptimewifi,uptimemqtt,freeheap,mqttinbounddropped,mqttackdropped,mqttinboundmaxdepth,mqttackmaxdepth");
       if (packetId != 0) _advertisementProgress.globalStep = AdvertisementProgress::GlobalStep::PUB_STATS_INTERVAL;
       break;
     case AdvertisementProgress::GlobalStep::PUB_STATS_INTERVAL:
@@ -1685,8 +1950,41 @@ void BootNormal::_advertise() {
     }
     case AdvertisementProgress::GlobalStep::PUB_IMPLEMENTATION_VERSION:
       packetId = Interface::get().getMqttClient().publish(_prefixMqttTopic(PSTR("/$implementation/version")), 1, true, HOMIE_ESP8266_VERSION);
+      if (packetId != 0) _advertisementProgress.globalStep = AdvertisementProgress::GlobalStep::PUB_IMPLEMENTATION_RESET_REASON;
+      break;
+    case AdvertisementProgress::GlobalStep::PUB_IMPLEMENTATION_RESET_REASON:
+    {
+#ifdef ESP32
+      packetId = Interface::get().getMqttClient().publish(_prefixMqttTopic(PSTR("/$implementation/reset/reason")), 1, true, espResetReasonName(esp_reset_reason()));
+#elif defined(ESP8266)
+      const String resetReason = ESP.getResetReason();
+      packetId = Interface::get().getMqttClient().publish(_prefixMqttTopic(PSTR("/$implementation/reset/reason")), 1, true, resetReason.c_str());
+#else
+      packetId = Interface::get().getMqttClient().publish(_prefixMqttTopic(PSTR("/$implementation/reset/reason")), 1, true, "unknown");
+#endif
+      if (packetId != 0) _advertisementProgress.globalStep = AdvertisementProgress::GlobalStep::PUB_IMPLEMENTATION_WIFI_LAST_DISCONNECT_REASON;
+      break;
+    }
+    case AdvertisementProgress::GlobalStep::PUB_IMPLEMENTATION_WIFI_LAST_DISCONNECT_REASON:
+    {
+      char reasonBuffer[12];
+      packetId = Interface::get().getMqttClient().publish(
+        _prefixMqttTopic(PSTR("/$implementation/wifi/last_disconnect_reason")),
+        1,
+        true,
+        formatWifiDisconnectReason(_lastWifiDisconnectReason, reasonBuffer, sizeof(reasonBuffer)));
+      if (packetId != 0) _advertisementProgress.globalStep = AdvertisementProgress::GlobalStep::PUB_IMPLEMENTATION_MQTT_LAST_DISCONNECT_REASON;
+      break;
+    }
+    case AdvertisementProgress::GlobalStep::PUB_IMPLEMENTATION_MQTT_LAST_DISCONNECT_REASON:
+    {
+      const char* reason = _lastMqttDisconnectReason == NO_DISCONNECT_REASON
+        ? "none"
+        : mqttDisconnectReasonName(static_cast<AsyncMqttClientDisconnectReason>(_lastMqttDisconnectReason));
+      packetId = Interface::get().getMqttClient().publish(_prefixMqttTopic(PSTR("/$implementation/mqtt/last_disconnect_reason")), 1, true, reason);
       if (packetId != 0) _advertisementProgress.globalStep = AdvertisementProgress::GlobalStep::PUB_IMPLEMENTATION_OTA_ENABLED;
       break;
+    }
     case AdvertisementProgress::GlobalStep::PUB_IMPLEMENTATION_OTA_ENABLED:
       packetId = Interface::get().getMqttClient().publish(_prefixMqttTopic(PSTR("/$implementation/ota/enabled")), 1, true, Interface::get().getConfig().get().ota.enabled ? "true" : "false");
       if (packetId != 0) {
@@ -1750,10 +2048,12 @@ void BootNormal::_advertise() {
           id.concat(node->getId());
           id.concat("_");
           id.concat(_advertisementProgress.currentArrayNodeIndex);
-          strcpy_P(subtopic.get(), PSTR("/"));
-          strcat(subtopic.get(), id.c_str());
-          strcat_P(subtopic.get(), PSTR("/$name"));
-          packetId = Interface::get().getMqttClient().publish(_prefixMqttTopic(subtopic.get()), 1, true, id.c_str());
+          std::unique_ptr<char[]> arraySubtopic(new (std::nothrow) char[1 + strlen(id.c_str()) + strlen_P(PSTR("/$name")) + 1]);
+          if (!arraySubtopic) return;
+          strcpy_P(arraySubtopic.get(), PSTR("/"));
+          strcat(arraySubtopic.get(), id.c_str());
+          strcat_P(arraySubtopic.get(), PSTR("/$name"));
+          packetId = Interface::get().getMqttClient().publish(_prefixMqttTopic(arraySubtopic.get()), 1, true, id.c_str());
           if (packetId != 0) {
             if (_advertisementProgress.currentArrayNodeIndex < node->getUpper()) {
               _advertisementProgress.currentArrayNodeIndex++;
@@ -1982,21 +2282,71 @@ void BootNormal::_onMqttDisconnected(AsyncMqttClientDisconnectReason reason) {
 
 void BootNormal::_onMqttMessage(char* topic, char* payload, AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total) {
   if (total == 0) return;  // no empty message possible
+  if (strlen(topic) < _mqttRootTopicLength || strncmp(topic, _mqttRootTopic.get(), _mqttRootTopicLength) != 0) return;
 
+#if HOMIE_PENDING_MQTT_MESSAGE_PREALLOCATED
   if (index == 0) {
-    // Copy and split the topic once. Chunked MQTT payload callbacks reuse this
-    // topic state until the final chunk is received.
-    size_t topicLength = strlen(topic);
-    _mqttTopicCopy = std::unique_ptr<char[]>(new (std::nothrow) char[topicLength + 1]);
-    if (!_mqttTopicCopy) {
+    _mqttPreallocatedTopicValid = false;
+    const size_t topicLength = strlen(topic);
+    if (topicLength > PENDING_MQTT_MESSAGE_MAX_TOPIC_LENGTH) {
       incrementDropCounters(_pendingMqttMessagesDropped, _pendingMqttMessagesDroppedTotal);
       return;
     }
-    memcpy(_mqttTopicCopy.get(), topic, topicLength);
-    _mqttTopicCopy.get()[topicLength] = '\0';
+    memcpy(_mqttPreallocatedTopicCopy.data(), topic, topicLength + 1);
+
+    if (!__splitTopicFixed(_mqttPreallocatedTopicCopy.data(), _mqttPreallocatedTopicLevels, _mqttPreallocatedTopicLevelsCount)) {
+      incrementDropCounters(_pendingMqttMessagesDropped, _pendingMqttMessagesDroppedTotal);
+      return;
+    }
+    if (_mqttPreallocatedTopicLevelsCount == 0) {
+      incrementDropCounters(_pendingMqttMessagesDropped, _pendingMqttMessagesDroppedTotal);
+      return;
+    }
+    _mqttPreallocatedTopicValid = true;
+  } else if (!_mqttPreallocatedTopicValid) {
+    incrementDropCounters(_pendingMqttMessagesDropped, _pendingMqttMessagesDroppedTotal);
+    return;
+  }
+
+  const bool isDeviceTopic = strcmp(_mqttPreallocatedTopicLevels[0], Interface::get().getConfig().get().deviceId) == 0;
+  const bool isBroadcastTopic = strcmp_P(_mqttPreallocatedTopicLevels[0], PSTR("$broadcast")) == 0;
+  if (!isDeviceTopic && !isBroadcastTopic) {
+    return;
+  }
+
+  // OTA chunks may contain binary/base64 payloads and are streamed directly to
+  // the Update API. All other MQTT messages are copied into the preallocated
+  // command queue after the complete payload has arrived.
+  if (__handleOTAUpdates(_mqttPreallocatedTopicCopy.data(), payload, properties, len, index, total, _mqttPreallocatedTopicLevels.data(), _mqttPreallocatedTopicLevelsCount))
+    return;
+
+  if (__fillPreallocatedPayloadBuffer(payload, len, index, total))
+    return;
+
+  if (!_enqueuePendingMqttMessage(topic, _mqttPreallocatedPayloadBuffer.data(), total, properties)) {
+    incrementDropCounters(_pendingMqttMessagesDropped, _pendingMqttMessagesDroppedTotal);
+  }
+#else
+  if (index == 0) {
+    _mqttTopicValid = false;
+    // Copy and split the topic once. Chunked MQTT payload callbacks reuse this
+    // topic state until the final chunk is received.
+    size_t topicLength = strlen(topic);
+    if (_mqttTopicCopyCapacity < topicLength + 1) {
+      std::unique_ptr<char[]> topicCopy(new (std::nothrow) char[topicLength + 1]);
+      if (!topicCopy) {
+        _mqttTopicCopy.reset();
+        _mqttTopicCopyCapacity = 0;
+        incrementDropCounters(_pendingMqttMessagesDropped, _pendingMqttMessagesDroppedTotal);
+        return;
+      }
+      _mqttTopicCopy = std::move(topicCopy);
+      _mqttTopicCopyCapacity = topicLength + 1;
+    }
+    memcpy(_mqttTopicCopy.get(), topic, topicLength + 1);
 
     // Split the topic copy on each "/"
-    if (!__splitTopic(_mqttTopicCopy.get(), _mqttTopicLevels, _mqttTopicLevelsCount)) {
+    if (!__splitTopic(_mqttTopicCopy.get(), _mqttTopicLevels, _mqttTopicLevelsCount, &_mqttTopicLevelsCapacity)) {
       incrementDropCounters(_pendingMqttMessagesDropped, _pendingMqttMessagesDroppedTotal);
       return;
     }
@@ -2004,8 +2354,15 @@ void BootNormal::_onMqttMessage(char* topic, char* payload, AsyncMqttClientMessa
       incrementDropCounters(_pendingMqttMessagesDropped, _pendingMqttMessagesDroppedTotal);
       return;
     }
-  } else if (!_mqttTopicCopy || !_mqttTopicLevels) {
+    _mqttTopicValid = true;
+  } else if (!_mqttTopicValid || !_mqttTopicCopy || !_mqttTopicLevels || _mqttTopicLevelsCount == 0) {
     incrementDropCounters(_pendingMqttMessagesDropped, _pendingMqttMessagesDroppedTotal);
+    return;
+  }
+
+  const bool isDeviceTopic = strcmp(_mqttTopicLevels.get()[0], Interface::get().getConfig().get().deviceId) == 0;
+  const bool isBroadcastTopic = strcmp_P(_mqttTopicLevels.get()[0], PSTR("$broadcast")) == 0;
+  if (!isDeviceTopic && !isBroadcastTopic) {
     return;
   }
 
@@ -2015,12 +2372,13 @@ void BootNormal::_onMqttMessage(char* topic, char* payload, AsyncMqttClientMessa
   if (__handleOTAUpdates(_mqttTopicCopy.get(), payload, properties, len, index, total, _mqttTopicLevels.get(), _mqttTopicLevelsCount))
     return;
 
-  if (__fillPayloadBuffer(_mqttPayloadBuffer, payload, len, index, total))
+  if (__fillPayloadBuffer(_mqttPayloadBuffer, _mqttPayloadBufferCapacity, payload, len, index, total))
     return;
 
-  if (!_enqueuePendingMqttMessage(topic, _mqttPayloadBuffer.get(), properties)) {
+  if (!_enqueuePendingMqttMessage(topic, _mqttPayloadBuffer.get(), total, properties)) {
     incrementDropCounters(_pendingMqttMessagesDropped, _pendingMqttMessagesDroppedTotal);
   }
+#endif
 }
 
 void BootNormal::_onMqttPublish(uint16_t id) {
@@ -2031,22 +2389,67 @@ void BootNormal::_onMqttPublish(uint16_t id) {
 
 // _onMqttMessage Helpers
 
-bool BootNormal::__splitTopic(char* topic, std::unique_ptr<char*[]>& topicLevels, uint8_t& topicLevelsCount) {
+bool BootNormal::__splitTopic(char* topic, std::unique_ptr<char*[]>& topicLevels, uint8_t& topicLevelsCount, uint8_t* topicLevelsCapacity) {
   // split topic on each "/"
-  const size_t rootTopicLength = Helpers::mqttRootTopicLength(Interface::get().getConfig().get().mqtt.baseTopic);
-  if (strlen(topic) < rootTopicLength) {
+  if (strlen(topic) < _mqttRootTopicLength || strncmp(topic, _mqttRootTopic.get(), _mqttRootTopicLength) != 0) {
     topicLevelsCount = 0;
     return false;
   }
-  char* afterBaseTopic = topic + rootTopicLength;
+  char* afterBaseTopic = topic + _mqttRootTopicLength;
 
-  uint8_t levelsCount = 1;
-  for (uint8_t i = 0; i < strlen(afterBaseTopic); i++) {
+  size_t levelsCount = 1;
+  const size_t afterBaseTopicLength = strlen(afterBaseTopic);
+  for (size_t i = 0; i < afterBaseTopicLength; i++) {
+    if (afterBaseTopic[i] == '/') levelsCount++;
+  }
+  if (levelsCount > 255) {
+    topicLevelsCount = 0;
+    if (topicLevelsCapacity) *topicLevelsCapacity = 0;
+    return false;
+  }
+
+  if (!topicLevelsCapacity || !topicLevels || *topicLevelsCapacity < levelsCount) {
+    std::unique_ptr<char*[]> newTopicLevels(new (std::nothrow) char*[levelsCount]);
+    if (!newTopicLevels) {
+      topicLevelsCount = 0;
+      if (topicLevelsCapacity) *topicLevelsCapacity = 0;
+      return false;
+    }
+
+    topicLevels = std::move(newTopicLevels);
+    if (topicLevelsCapacity) *topicLevelsCapacity = static_cast<uint8_t>(levelsCount);
+  }
+
+  const char* delimiter = "/";
+  uint8_t topicLevelIndex = 0;
+  char* saveptr = nullptr;
+
+  char* token = strtok_r(afterBaseTopic, delimiter, &saveptr);
+  while (token != nullptr) {
+    topicLevels[topicLevelIndex++] = token;
+
+    token = strtok_r(nullptr, delimiter, &saveptr);
+  }
+
+  topicLevelsCount = topicLevelIndex;
+  return true;
+}
+
+#if HOMIE_PENDING_MQTT_MESSAGE_PREALLOCATED
+bool BootNormal::__splitTopicFixed(char* topic, std::array<char*, PENDING_MQTT_MESSAGE_MAX_TOPIC_LEVELS>& topicLevels, uint8_t& topicLevelsCount) {
+  if (strlen(topic) < _mqttRootTopicLength || strncmp(topic, _mqttRootTopic.get(), _mqttRootTopicLength) != 0) {
+    topicLevelsCount = 0;
+    return false;
+  }
+  char* afterBaseTopic = topic + _mqttRootTopicLength;
+
+  size_t levelsCount = 1;
+  const size_t afterBaseTopicLength = strlen(afterBaseTopic);
+  for (size_t i = 0; i < afterBaseTopicLength; i++) {
     if (afterBaseTopic[i] == '/') levelsCount++;
   }
 
-  topicLevels = std::unique_ptr<char*[]>(new (std::nothrow) char*[levelsCount]);
-  if (!topicLevels) {
+  if (levelsCount > PENDING_MQTT_MESSAGE_MAX_TOPIC_LEVELS) {
     topicLevelsCount = 0;
     return false;
   }
@@ -2066,15 +2469,43 @@ bool BootNormal::__splitTopic(char* topic, std::unique_ptr<char*[]>& topicLevels
   return true;
 }
 
-bool HomieInternals::BootNormal::__fillPayloadBuffer(std::unique_ptr<char[]>& payloadBuffer, char* payload, size_t len, size_t index, size_t total) {
-  // Reallocate the payload buffer every time a new message is received.
-  if (index == 0) {
-    payloadBuffer = std::unique_ptr<char[]>(new (std::nothrow) char[total + 1]);
-    if (!payloadBuffer) {
+bool BootNormal::__fillPreallocatedPayloadBuffer(char* payload, size_t len, size_t index, size_t total) {
+  if (total > PENDING_MQTT_MESSAGE_MAX_PAYLOAD_LENGTH || index > total || len > total - index) {
+    incrementDropCounters(_pendingMqttMessagesDropped, _pendingMqttMessagesDroppedTotal);
+    return true;
+  }
+
+  memcpy(_mqttPreallocatedPayloadBuffer.data() + index, payload, len);
+
+  if (index + len != total)
+    return true;
+
+  _mqttPreallocatedPayloadBuffer[total] = '\0';
+  return false;
+}
+#endif
+
+bool HomieInternals::BootNormal::__fillPayloadBuffer(std::unique_ptr<char[]>& payloadBuffer, size_t& payloadBufferCapacity, char* payload, size_t len, size_t index, size_t total) {
+  if (total == static_cast<size_t>(-1) || index > total || len > total - index) {
+    incrementDropCounters(_pendingMqttMessagesDropped, _pendingMqttMessagesDroppedTotal);
+    return true;
+  }
+
+  if (index == 0 && payloadBufferCapacity < total + 1) {
+    std::unique_ptr<char[]> newPayloadBuffer(new (std::nothrow) char[total + 1]);
+    if (!newPayloadBuffer) {
+      payloadBuffer.reset();
+      payloadBufferCapacity = 0;
       incrementDropCounters(_pendingMqttMessagesDropped, _pendingMqttMessagesDroppedTotal);
       return true;
     }
+
+    payloadBuffer = std::move(newPayloadBuffer);
+    payloadBufferCapacity = total + 1;
   } else if (payloadBuffer == nullptr) {
+    incrementDropCounters(_pendingMqttMessagesDropped, _pendingMqttMessagesDroppedTotal);
+    return true;
+  } else if (payloadBufferCapacity < total + 1) {
     incrementDropCounters(_pendingMqttMessagesDropped, _pendingMqttMessagesDroppedTotal);
     return true;
   }
@@ -2103,13 +2534,13 @@ bool HomieInternals::BootNormal::__handleOTAUpdates(char* topic, char* payload, 
     if (index == 0 && !_otaOngoing) {
       if (_flaggedForReboot && _otaRequestedChecksum[0] != '\0' && strcmp(firmwareMd5, _otaRequestedChecksum) == 0) {
         Interface::get().getLogger() << F("! Ignoring duplicate OTA payload for firmware already flashed; reboot pending") << endl;
-        _publishOtaStatus(200);  // repeat terminal success for a retransmitted QoS1 publish
+        _queueOtaStatus(200);  // repeat terminal success for a retransmitted QoS1 publish
         return true;
       }
 
       Interface::get().getLogger() << F("Receiving OTA payload") << endl;
       if (!Interface::get().getConfig().get().ota.enabled) {
-        _publishOtaStatus(403);  // 403 Forbidden
+        _queueOtaStatus(403);  // 403 Forbidden
         Interface::get().getLogger() << F("✖ Aborting, OTA not enabled") << endl;
         return true;
       }
@@ -2119,7 +2550,7 @@ bool HomieInternals::BootNormal::__handleOTAUpdates(char* topic, char* payload, 
         Interface::get().getLogger() << F("✖ Aborting, invalid MD5") << endl;
         return true;
       } else if (strcmp(firmwareMd5, _fwChecksum) == 0) {
-        _publishOtaStatus(304);  // 304 Not Modified
+        _queueOtaStatus(304);  // 304 Not Modified
         Interface::get().getLogger() << F("✖ Aborting, firmware is the same") << endl;
         return true;
       } else {
@@ -2129,7 +2560,7 @@ bool HomieInternals::BootNormal::__handleOTAUpdates(char* topic, char* payload, 
         _otaPayloadTotal = total;
         _otaPayloadProcessed = 0;
         _otaProgressPublishCounter = 0;
-        _publishOtaStatus(202);
+        _queueOtaStatus(202);
         _otaOngoing = true;
 
         Interface::get().getLogger() << F("↕ OTA started") << endl;
@@ -2264,7 +2695,7 @@ bool HomieInternals::BootNormal::__handleOTAUpdates(char* topic, char* payload, 
       write_len = len;
     }
     if (write_len > 0) {
-      bool success = Update.write(reinterpret_cast<uint8_t*>(payload), write_len) > 0;
+      bool success = _writeOtaPayload(payload, write_len);
       if (success) {
         // Flash write successful.
         _otaSizeDone += write_len;
@@ -2290,7 +2721,7 @@ bool HomieInternals::BootNormal::__handleOTAUpdates(char* topic, char* payload, 
         }
 
         if (_otaProgressPublishCounter == 100) {
-          _publishOtaStatus(206, progress.c_str());  // 206 Partial Content
+          _queueOtaStatus(206, progress.c_str());  // 206 Partial Content
           _otaProgressPublishCounter = 0;
         }
         ++_otaProgressPublishCounter;

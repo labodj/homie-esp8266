@@ -44,6 +44,9 @@ class Property {
  public:
   explicit Property(const char* id) {
     _id = strdup(id); _name = ""; _unit = ""; _datatype = ""; _format = ""; _retained = true; _settable = false; }
+  ~Property() { free(const_cast<char*>(_id)); }
+  Property(const Property&) = delete;
+  Property& operator=(const Property&) = delete;
   void settable(const PropertyInputHandler& inputHandler) { _settable = true;  _inputHandler = inputHandler; }
   void setName(const char* name) { _name = name; }
   void setUnit(const char* unit) { _unit = unit; }

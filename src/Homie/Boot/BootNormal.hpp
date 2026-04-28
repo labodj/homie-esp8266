@@ -12,11 +12,39 @@
 #endif
 
 #ifndef HOMIE_PENDING_MQTT_ACK_QUEUE_SIZE
-#define HOMIE_PENDING_MQTT_ACK_QUEUE_SIZE 16
+#define HOMIE_PENDING_MQTT_ACK_QUEUE_SIZE 32
 #endif
 
 #ifndef HOMIE_PENDING_MQTT_MESSAGE_QUEUE_SIZE
 #define HOMIE_PENDING_MQTT_MESSAGE_QUEUE_SIZE 16
+#endif
+
+#ifndef HOMIE_PENDING_MQTT_MESSAGE_PREALLOCATED
+#define HOMIE_PENDING_MQTT_MESSAGE_PREALLOCATED 0
+#endif
+
+#ifndef HOMIE_PENDING_MQTT_MESSAGE_MAX_TOPIC_LENGTH
+#define HOMIE_PENDING_MQTT_MESSAGE_MAX_TOPIC_LENGTH 192
+#endif
+
+#ifndef HOMIE_PENDING_MQTT_MESSAGE_MAX_PAYLOAD_LENGTH
+#define HOMIE_PENDING_MQTT_MESSAGE_MAX_PAYLOAD_LENGTH 512
+#endif
+
+#ifndef HOMIE_PENDING_MQTT_MESSAGE_MAX_TOPIC_LEVELS
+#define HOMIE_PENDING_MQTT_MESSAGE_MAX_TOPIC_LEVELS 12
+#endif
+
+#ifndef HOMIE_PENDING_MQTT_MESSAGES_PER_LOOP
+#define HOMIE_PENDING_MQTT_MESSAGES_PER_LOOP 4
+#endif
+
+#ifndef HOMIE_PENDING_MQTT_ACKS_PER_LOOP
+#define HOMIE_PENDING_MQTT_ACKS_PER_LOOP 8
+#endif
+
+#ifndef HOMIE_OTA_STATUS_INFO_MAX_LENGTH
+#define HOMIE_OTA_STATUS_INFO_MAX_LENGTH 48
 #endif
 
 
@@ -57,19 +85,43 @@ class BootNormal : public Boot {
   void loop();
 
  private:
-  // These queues bridge AsyncMqttClient callbacks and Homie.loop(). The defaults
-  // match the historical footprint; advanced consumers can raise them with
-  // HOMIE_PENDING_MQTT_*_QUEUE_SIZE when retained MQTT bursts are expected.
+  // These queues bridge AsyncMqttClient callbacks and Homie.loop(). They are
+  // intentionally bounded; callback context never waits for loop context.
+  // Advanced consumers can raise them with HOMIE_PENDING_MQTT_*_QUEUE_SIZE when
+  // retained MQTT bursts are expected.
   static_assert(HOMIE_PENDING_MQTT_MESSAGE_QUEUE_SIZE > 0,
                 "HOMIE_PENDING_MQTT_MESSAGE_QUEUE_SIZE must be greater than zero");
   static_assert(HOMIE_PENDING_MQTT_MESSAGE_QUEUE_SIZE <= 255,
                 "HOMIE_PENDING_MQTT_MESSAGE_QUEUE_SIZE must fit in uint8_t");
   static constexpr uint8_t PENDING_MQTT_MESSAGE_QUEUE_SIZE = HOMIE_PENDING_MQTT_MESSAGE_QUEUE_SIZE;
+#if HOMIE_PENDING_MQTT_MESSAGE_PREALLOCATED
+  static_assert(HOMIE_PENDING_MQTT_MESSAGE_MAX_TOPIC_LENGTH > 0,
+                "HOMIE_PENDING_MQTT_MESSAGE_MAX_TOPIC_LENGTH must be greater than zero");
+  static_assert(HOMIE_PENDING_MQTT_MESSAGE_MAX_PAYLOAD_LENGTH > 0,
+                "HOMIE_PENDING_MQTT_MESSAGE_MAX_PAYLOAD_LENGTH must be greater than zero");
+  static_assert(HOMIE_PENDING_MQTT_MESSAGE_MAX_TOPIC_LEVELS > 0,
+                "HOMIE_PENDING_MQTT_MESSAGE_MAX_TOPIC_LEVELS must be greater than zero");
+  static_assert(HOMIE_PENDING_MQTT_MESSAGE_MAX_TOPIC_LEVELS <= 255,
+                "HOMIE_PENDING_MQTT_MESSAGE_MAX_TOPIC_LEVELS must fit in uint8_t");
+  static constexpr size_t PENDING_MQTT_MESSAGE_MAX_TOPIC_LENGTH = HOMIE_PENDING_MQTT_MESSAGE_MAX_TOPIC_LENGTH;
+  static constexpr size_t PENDING_MQTT_MESSAGE_MAX_PAYLOAD_LENGTH = HOMIE_PENDING_MQTT_MESSAGE_MAX_PAYLOAD_LENGTH;
+  static constexpr uint8_t PENDING_MQTT_MESSAGE_MAX_TOPIC_LEVELS = HOMIE_PENDING_MQTT_MESSAGE_MAX_TOPIC_LEVELS;
+#endif
   static_assert(HOMIE_PENDING_MQTT_ACK_QUEUE_SIZE > 0,
                 "HOMIE_PENDING_MQTT_ACK_QUEUE_SIZE must be greater than zero");
   static_assert(HOMIE_PENDING_MQTT_ACK_QUEUE_SIZE <= 255,
                 "HOMIE_PENDING_MQTT_ACK_QUEUE_SIZE must fit in uint8_t");
   static constexpr uint8_t PENDING_MQTT_ACK_QUEUE_SIZE = HOMIE_PENDING_MQTT_ACK_QUEUE_SIZE;
+  static_assert(HOMIE_PENDING_MQTT_MESSAGES_PER_LOOP > 0,
+                "HOMIE_PENDING_MQTT_MESSAGES_PER_LOOP must be greater than zero");
+  static_assert(HOMIE_PENDING_MQTT_MESSAGES_PER_LOOP <= 255,
+                "HOMIE_PENDING_MQTT_MESSAGES_PER_LOOP must fit in uint8_t");
+  static constexpr uint8_t PENDING_MQTT_MESSAGES_PER_LOOP_LIMIT = HOMIE_PENDING_MQTT_MESSAGES_PER_LOOP;
+  static_assert(HOMIE_PENDING_MQTT_ACKS_PER_LOOP > 0,
+                "HOMIE_PENDING_MQTT_ACKS_PER_LOOP must be greater than zero");
+  static_assert(HOMIE_PENDING_MQTT_ACKS_PER_LOOP <= 255,
+                "HOMIE_PENDING_MQTT_ACKS_PER_LOOP must fit in uint8_t");
+  static constexpr uint8_t PENDING_MQTT_ACKS_PER_LOOP_LIMIT = HOMIE_PENDING_MQTT_ACKS_PER_LOOP;
 
   struct AdvertisementProgress {
     bool done = false;
@@ -90,6 +142,9 @@ class BootNormal : public Boot {
       PUB_IMPLEMENTATION,
       PUB_IMPLEMENTATION_CONFIG,
       PUB_IMPLEMENTATION_VERSION,
+      PUB_IMPLEMENTATION_RESET_REASON,
+      PUB_IMPLEMENTATION_WIFI_LAST_DISCONNECT_REASON,
+      PUB_IMPLEMENTATION_MQTT_LAST_DISCONNECT_REASON,
       PUB_IMPLEMENTATION_OTA_ENABLED,
       PUB_NODES,
       SUB_IMPLEMENTATION_OTA,
@@ -123,10 +178,16 @@ class BootNormal : public Boot {
     size_t currentPropertyIndex;
   } _advertisementProgress;
   struct PendingMqttMessage {
+#if HOMIE_PENDING_MQTT_MESSAGE_PREALLOCATED
+    char topic[PENDING_MQTT_MESSAGE_MAX_TOPIC_LENGTH + 1];
+    char payload[PENDING_MQTT_MESSAGE_MAX_PAYLOAD_LENGTH + 1];
+    size_t payloadLength = 0;
+#else
     // Owning copies are required because AsyncMqttClient callback buffers are
     // no longer valid once the callback returns.
     std::unique_ptr<char[]> topic;
     std::unique_ptr<char[]> payload;
+#endif
     AsyncMqttClientMessageProperties properties{};
   };
   Uptime _uptime;
@@ -145,6 +206,8 @@ class BootNormal : public Boot {
   uint32_t _wifiConnectAttemptAt;
   uint32_t _mqttConnectAttemptAt;
   uint32_t _recoveryStartedAt;
+  int32_t _lastWifiDisconnectReason;
+  int32_t _lastMqttDisconnectReason;
   // Volatile fields below are written from async Wi-Fi/MQTT callbacks and
   // consumed from Homie.loop() under AsyncStateCriticalGuard in BootNormal.cpp.
   volatile bool _wifiEventPending;
@@ -156,19 +219,24 @@ class BootNormal : public Boot {
   volatile uint8_t _pendingMqttMessageCount;
   volatile uint16_t _pendingMqttMessagesDropped;
   volatile uint32_t _pendingMqttMessagesDroppedTotal;
-  volatile bool _pendingMqttMessageQueueLocked;
+  volatile uint8_t _pendingMqttMessageMaxDepth;
   volatile uint8_t _pendingMqttAckReadIndex;
   volatile uint8_t _pendingMqttAckWriteIndex;
   volatile uint8_t _pendingMqttAckCount;
   volatile uint16_t _pendingMqttAcksDropped;
   volatile uint32_t _pendingMqttAcksDroppedTotal;
-  volatile bool _pendingMqttAckQueueLocked;
+  volatile uint8_t _pendingMqttAckMaxDepth;
   volatile bool _otaStartedPending;
   volatile bool _otaProgressPending;
   volatile size_t _otaProgressSizeDone;
   volatile size_t _otaProgressSizeTotal;
   volatile bool _otaSuccessfulPending;
   volatile bool _otaFailedPending;
+  volatile bool _otaStatusPending;
+  volatile int _otaStatusCode;
+  volatile uint16_t _otaStatusSequence;
+  volatile uint32_t _otaStatusQueuedAt;
+  char _otaStatusInfo[HOMIE_OTA_STATUS_INFO_MAX_LENGTH];
   #ifdef ESP32
   WiFiEventId_t _wifiGotIpHandler;
   WiFiEventId_t _wifiDisconnectedHandler;
@@ -195,13 +263,26 @@ class BootNormal : public Boot {
   uint16_t _otaProgressPublishCounter;
 
   std::unique_ptr<char[]> _mqttTopic;
+  std::unique_ptr<char[]> _mqttRootTopic;
+  size_t _mqttRootTopicLength;
 
   std::unique_ptr<char[]> _mqttClientId;
   std::unique_ptr<char[]> _mqttWillTopic;
   std::unique_ptr<char[]> _mqttPayloadBuffer;
+  size_t _mqttPayloadBufferCapacity;
   std::unique_ptr<char*[]> _mqttTopicLevels;
+  uint8_t _mqttTopicLevelsCapacity;
   uint8_t _mqttTopicLevelsCount;
   std::unique_ptr<char[]> _mqttTopicCopy;
+  size_t _mqttTopicCopyCapacity;
+  bool _mqttTopicValid;
+#if HOMIE_PENDING_MQTT_MESSAGE_PREALLOCATED
+  std::array<char, PENDING_MQTT_MESSAGE_MAX_TOPIC_LENGTH + 1> _mqttPreallocatedTopicCopy;
+  std::array<char, PENDING_MQTT_MESSAGE_MAX_PAYLOAD_LENGTH + 1> _mqttPreallocatedPayloadBuffer;
+  std::array<char*, PENDING_MQTT_MESSAGE_MAX_TOPIC_LEVELS> _mqttPreallocatedTopicLevels;
+  uint8_t _mqttPreallocatedTopicLevelsCount;
+  bool _mqttPreallocatedTopicValid;
+#endif
   std::array<PendingMqttMessage, PENDING_MQTT_MESSAGE_QUEUE_SIZE> _pendingMqttMessages;
   std::array<uint16_t, PENDING_MQTT_ACK_QUEUE_SIZE> _pendingMqttAckIds;
 
@@ -212,15 +293,11 @@ class BootNormal : public Boot {
   bool _isWifiConnected() const;
   void _processPendingAsyncEvents();
   void _processPendingEventNotifications();
-  void _lockPendingMqttMessageQueue();
-  void _unlockPendingMqttMessageQueue();
-  void _lockPendingMqttAckQueue();
-  void _unlockPendingMqttAckQueue();
   void _processPendingMqttMessages();
   void _flushPendingMqttMessages();
   bool _enqueuePendingMqttAck(uint16_t id);
-  bool _enqueuePendingMqttMessage(const char* topic, const char* payload, const AsyncMqttClientMessageProperties& properties);
-  void _handleQueuedMqttMessage(std::unique_ptr<char[]> topicCopy, std::unique_ptr<char[]> payloadBuffer, const AsyncMqttClientMessageProperties& properties);
+  bool _enqueuePendingMqttMessage(const char* topic, const char* payload, size_t payloadLength, const AsyncMqttClientMessageProperties& properties);
+  void _handleQueuedMqttMessage(char* topic, char* payload, const AsyncMqttClientMessageProperties& properties);
   void _recoverIfNetworkStateDrifted();
   void _recoverIfConnectAttemptStalled();
   void _handleWifiConnected(const IPAddress& ip, const IPAddress& mask, const IPAddress& gateway);
@@ -250,14 +327,21 @@ class BootNormal : public Boot {
   void _prefixMqttTopic();
   char* _prefixMqttTopic(PGM_P topic);
   bool _publishOtaStatus(int status, const char* info = nullptr);
+  void _queueOtaStatus(int status, const char* info = nullptr);
+  void _processPendingOtaStatus();
   void _resetOtaTransferState(bool preserveRequestedChecksum = false);
   void _failOtaUpdate(int status, const char* info, const __FlashStringHelper* reason);
   void _abortOtaUpdateOnDisconnect();
   void _endOtaUpdate(bool success, uint8_t update_error = UPDATE_ERROR_OK);
+  bool _writeOtaPayload(char* payload, size_t length);
 
   // _onMqttMessage Helpers
-  bool __splitTopic(char* topic, std::unique_ptr<char*[]>& topicLevels, uint8_t& topicLevelsCount);
-  bool __fillPayloadBuffer(std::unique_ptr<char[]>& payloadBuffer, char* payload, size_t len, size_t index, size_t total);
+  bool __splitTopic(char* topic, std::unique_ptr<char*[]>& topicLevels, uint8_t& topicLevelsCount, uint8_t* topicLevelsCapacity = nullptr);
+#if HOMIE_PENDING_MQTT_MESSAGE_PREALLOCATED
+  bool __splitTopicFixed(char* topic, std::array<char*, PENDING_MQTT_MESSAGE_MAX_TOPIC_LEVELS>& topicLevels, uint8_t& topicLevelsCount);
+  bool __fillPreallocatedPayloadBuffer(char* payload, size_t len, size_t index, size_t total);
+#endif
+  bool __fillPayloadBuffer(std::unique_ptr<char[]>& payloadBuffer, size_t& payloadBufferCapacity, char* payload, size_t len, size_t index, size_t total);
   bool __handleOTAUpdates(char* topic, char* payload, const AsyncMqttClientMessageProperties& properties, size_t len, size_t index, size_t total, char* const* topicLevels, uint8_t topicLevelsCount);
   bool __handleBroadcasts(char* topic, char* payload, const AsyncMqttClientMessageProperties& properties, size_t len, size_t index, size_t total, char* const* topicLevels, uint8_t topicLevelsCount);
   bool __handleResets(char* topic, char* payload, const AsyncMqttClientMessageProperties& properties, size_t len, size_t index, size_t total, char* const* topicLevels, uint8_t topicLevelsCount);
