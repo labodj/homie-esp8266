@@ -1,4 +1,7 @@
-Your device can react to Homie broadcasts. To do that, you can use a broadcast handler:
+# Broadcast
+
+Your device can react to Homie broadcasts. To do that, you can use a broadcast
+handler:
 
 ```c++
 bool broadcastHandler(const String& level, const String& value) {

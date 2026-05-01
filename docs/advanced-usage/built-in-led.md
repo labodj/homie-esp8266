@@ -1,6 +1,13 @@
-By default, Homie for ESP8266 will blink the built-in LED to indicate its status. Note it does not indicate activity, only the status of the device (in `configuration` mode, connecting to Wi-Fi or connecting to MQTT), see [Getting started](../quickstart/getting-started.md) for more information.
+# Built-in LED
 
-However, on some boards like the ESP-01, the built-in LED is actually the TX port, so it is fine if Serial is not enabled, but if you enable Serial, this is a problem. You can easily disable the built-in LED blinking.
+By default, Homie for ESP8266 will blink the built-in LED to indicate its
+status. Note it does not indicate activity, only the status of the device (in
+`configuration` mode, connecting to Wi-Fi or connecting to MQTT), see
+[Getting started](../quickstart/getting-started.md) for more information.
+
+However, on some boards like the ESP-01, the built-in LED is tied to the TX
+port. That is fine when serial logging is disabled, but it becomes noisy when
+serial logging is enabled. You can disable the built-in LED feedback:
 
 ```c++
 void setup() {
@@ -9,11 +16,11 @@ void setup() {
 }
 ```
 
-You may, instead of completely disable the LED control, set a new LED to control:
+Instead of disabling LED feedback completely, you can move it to another pin:
 
 ```c++
 void setup() {
-  Homie.setLedPin(16, HIGH); // before Homie.setup() -- 2nd param is the state of the pin when the LED is o
+  Homie.setLedPin(16, HIGH); // before Homie.setup(); 2nd param is LED-off state
   // ...
 }
 ```

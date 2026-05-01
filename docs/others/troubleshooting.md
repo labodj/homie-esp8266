@@ -1,8 +1,11 @@
+# Troubleshooting
+
 ## 1. I see some garbage on the Serial monitor?
 
-You are probably using a generic ESP8266. The problem with these modules is the built-in LED is tied to the serial line. You can do two things:
+You are probably using a generic ESP8266. On these modules, the built-in LED is
+tied to the serial line. You have two options:
 
-- Disable the serial logging, to have the LED working:
+- Disable serial logging, so the LED can work normally:
 
 ```c++
 void setup() {
@@ -11,7 +14,7 @@ void setup() {
 }
 ```
 
-- Disable the LED blinking, to have the serial line working:
+- Disable LED blinking, so the serial line stays usable:
 
 ```c++
 void setup() {
@@ -22,35 +25,46 @@ void setup() {
 
 ## 2. I see an `abort` message on the Serial monitor?
 
-`abort()` is called by Homie for ESP8266 when the framework is used in a bad way. The possible causes are:
+`abort()` is called by Homie for ESP8266 when the framework is used in a bad
+way. The possible causes are:
 
-- You are calling a function that is meant to be called before `Homie.setup()`, after `Homie.setup()`
+- You are calling a function that is meant to be called before `Homie.setup()`,
+  after `Homie.setup()`
 
-- One of the string you've used (in `setFirmware()`, `subscribe()`, etc.) is too long. Check the `Limits.hpp` file to see the max length possible for each string.
+- One of the strings you've used (in `setFirmware()`, `subscribe()`, etc.) is too
+  long. Check the `Limits.hpp` file to see the max length possible for each
+  string.
 
-## 3. The network is completely unstable... What's going on?
+## 3. Why is the network unstable?
 
-The framework needs to work continuously (ie. `Homie.loop()` needs to be called very frequently). In other words, don't use `delay()` (see [avoid delay](http://playground.arduino.cc/Code/AvoidDelay)) or anything that might block the code for more than 50ms or so. There is also a known Arduino for ESP8266 issue with `analogRead()`, see [Limitations and known issues](limitations-and-known-issues.md#adc-readings).
+The framework needs to work continuously, so `Homie.loop()` needs to be called
+frequently. Avoid `delay()` (see
+[avoid delay](http://playground.arduino.cc/Code/AvoidDelay)) and any code that
+blocks execution for more than 50 ms at a time. There is also a known Arduino
+for ESP8266 issue with `analogRead()`, see
+[Limitations and known issues](limitations-and-known-issues.md#adc-readings).
 
-## 4. My device resets itself without me doing anything?
+## 4. My device resets itself unexpectedly
 
-You have probably connected a sensor to the default reset pin of the framework (D3 on NodeMCU, GPIO0 on other boards). See [Resetting](../advanced-usage/resetting.md).
+You have probably connected a sensor to the default reset pin of the framework
+(D3 on NodeMCU, GPIO0 on other boards). See
+[Resetting](../advanced-usage/resetting.md).
 
 ## 5. I see `MQTT ACK queue full` during startup or reconnect
 
 This means the device is receiving MQTT publish acknowledgements faster than
 Homie can dispatch the related internal events.
 
-On this maintained fork you can increase the internal acknowledgement queue
-size with:
+On this maintained fork you can increase the internal acknowledgement queue size
+with:
 
 ```ini
 build_flags =
   -D HOMIE_PENDING_MQTT_ACK_QUEUE_SIZE=64
 ```
 
-See [Compiler-Flags](../advanced-usage/compiler-flags.md) for details. Only
-increase it if you actually see this warning in practice.
+See [Compiler flags](../advanced-usage/compiler-flags.md) for details. Only
+increase it when this warning appears in practice.
 
 ## 6. PlatformIO tries to build `AsyncTCP`, `ESPAsyncTCP`, or `RPAsyncTCP` for the wrong board
 

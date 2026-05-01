@@ -1,4 +1,7 @@
-By default, Homie for ESP8266 will output a lot of useful debug messages on the Serial. You may want to disable this behavior if you want to use the Serial line for anything else.
+# Logging
+
+By default, Homie for ESP8266 writes debug messages to `Serial`. Disable logging
+when the sketch needs the serial line for something else.
 
 ```c++
 void setup() {
@@ -8,7 +11,7 @@ void setup() {
 ```
 
 !!! warning
-It's up to you to call `Serial.begin();`, whether logging is enabled or not.
+    It's up to you to call `Serial.begin();`, whether logging is enabled or not.
 
 You can also change the `Print` instance to log to:
 

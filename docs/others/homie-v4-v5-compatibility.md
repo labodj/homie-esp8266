@@ -1,10 +1,10 @@
 # Homie v4/v5 compatibility
 
 This maintained fork advertises the Homie `3.0.1` convention by default and can
-advertise Homie `4.0.0` or Homie `5.0` when explicitly built for it. The fork version in
-`library.json`, `library.properties` and `HOMIE_ESP8266_VERSION` is the package
-version of this maintained codebase; it does not change the advertised Homie
-convention version.
+advertise Homie `4.0.0` or Homie `5.0` when explicitly built for it. The fork
+version in `library.json`, `library.properties` and `HOMIE_ESP8266_VERSION` is
+the package version of this maintained codebase; it does not change the
+advertised Homie convention version.
 
 ## Homie v4
 
@@ -69,9 +69,9 @@ the root topic shape. In v5 mode this fork follows the Homie v5 core model:
 - the root topic is `<domain>/5/`, so the default device base becomes
   `homie/5/<device-id>`
 - the device publishes retained `$state` values under the v5 base topic
-- the device publishes a retained `$description` JSON document with `homie:
-"5.0"`, a numeric description `version`, `nodes`, node metadata and property
-  metadata
+- the device publishes a retained `$description` JSON document with
+  `homie: "5.0"`, a numeric description `version`, `nodes`, node metadata and
+  property metadata
 - property commands use `homie/5/<device-id>/<node-id>/<property-id>/set`
 - retained `/set` commands are ignored in v5 mode because controllers must send
   command messages as non-retained publishes
@@ -81,8 +81,8 @@ the root topic shape. In v5 mode this fork follows the Homie v5 core model:
 
 Homie v5 topic IDs allow lowercase letters, digits and hyphens. The v5 mode
 therefore treats invalid device, node and property IDs as boot errors. Range
-nodes also change their concrete MQTT topic IDs from the legacy
-`node_<index>` shape to `node-<index>`.
+nodes also change their concrete MQTT topic IDs from the legacy `node_<index>`
+shape to `node-<index>`.
 
 The existing OTA, configuration, firmware and runtime statistics topics are not
 part of Homie v5 core. This fork keeps them as an explicitly declared extension:

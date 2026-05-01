@@ -1,6 +1,10 @@
-# Know if the device is configured / connected
+# Miscellaneous
 
-If, for some reason, you want to run some code in the Arduino `loop()` function, it might be useful for you to know if the device is in configured (so in `normal` mode) and if the network connection is up.
+## Know if the device is configured / connected
+
+If you need to run code in the Arduino `loop()` function, it can be useful to
+know whether the device is configured (`normal` mode) and whether the network
+connection is up.
 
 ```c++
 void loop() {
@@ -17,15 +21,18 @@ void loop() {
 }
 ```
 
-# Organizing the sketch in good and safe order
+## Organize the sketch in a safe order
 
-The example above is good to demonstrate usage of `Homie.isConnected()`. However, consider to not add any code into `loop()` function. ESP8266 is relatively weak MCU and Homie manages a few important environmental tasks. Interferring with Homie might boomerang by sudden crashes. Advised sketch of Homie is:
+The example above demonstrates `Homie.isConnected()`, but most sketches should
+avoid adding application work directly to `loop()`. ESP8266 is a
+resource-constrained MCU, and Homie manages several runtime tasks. Interfering
+with those tasks can lead to crashes. A safer Homie sketch shape is:
 
 ```c++
 #include <Homie.h>
 
 void setupHandler() {
-  // Code which should run AFTER the WiFi is connected.
+  // Code which should run AFTER Wi-Fi is connected.
 }
 
 void loopHandler() {
@@ -36,10 +43,11 @@ void setup() {
   Serial.begin(115200);
   Serial << endl << endl;
 
-  Homie_setFirmware("bare-minimum", "1.0.0"); // The underscore is not a typo! See Magic bytes
+  // The underscore is not a typo. See Magic bytes.
+  Homie_setFirmware("bare-minimum", "1.0.0");
   Homie.setSetupFunction(setupHandler).setLoopFunction(loopHandler);
 
- // Code which should run BEFORE the WiFi is connected.
+  // Code which should run BEFORE Wi-Fi is connected.
 
   Homie.setup();
 }
@@ -49,29 +57,40 @@ void loop() {
 }
 ```
 
-This way you can be sure the run is safe enough (unless you use blocking delay, then it is not) and the sketch keeps 'regular' structure of `setup()`/`loop()` just in terms of Homie.
+This keeps the regular `setup()` / `loop()` structure while letting Homie decide
+when your application setup and loop handlers can run safely. Avoid blocking
+delays in those handlers as well.
 
 ## Why is `setupHandler()` needed in addition to `setup()` in Homie?
 
-`setup()` starts execution immediately after power on/wake up. `setupHandler()` starts to run after WiFi established the connection.
+`setup()` starts execution immediately after power on or wake-up.
+`setupHandler()` starts after Wi-Fi has established the connection.
 
-## Why it's needed `loopHandler()` in addition to `loop()` in Homie?
+## Why is `loopHandler()` needed in addition to `loop()` in Homie?
 
-`loop()` starts to run then `setup()` is completed. This somehow controls a run of `setupHandler()`. The `loopHandler()` serves safe way to run the loop.
+`loop()` starts after `setup()` is completed. `loopHandler()` is the safer place
+for regular Homie work that should run only after network setup.
 
 ## Why is this understanding important?
 
-1. Once your code in `setupHandler()` and `loopHandler()` engaged, you can be pretty sure the `Homie.isConnected()` is true without checking it. Unless, you intend your device is mobile and might reach out of WiFi coverage in the middle of the run.
-1. The `loop()` often starts before Wifi is connected. "Wifi connected" event causes significant load on the MCU with Wifi related tasks, also with sending initial MQTT reports. Therefore, running complex commands around the moment of "Wifi connected" might cause malfunction/crash.
+1. Once your code in `setupHandler()` and `loopHandler()` is running,
+   `Homie.isConnected()` is expected to be true unless the device moves out of
+   Wi-Fi coverage.
+2. The regular Arduino `loop()` often starts before Wi-Fi is connected. The
+   Wi-Fi connected event can add significant MCU load because Wi-Fi tasks and
+   initial MQTT reports happen around the same time.
 
-As solution, heavy commands (massive initializations, long calculations, filesystem reading/writing, etc.) should be initiated in one of 2 cases:
+Heavy commands, such as large initializations, long calculations, or filesystem
+work, should run in one of two places:
 
-- very early in setup() before "Wifi connected".
-- way after "Wifi connected" (non-blocking wait 3-5 seconds and then do the heavy commands).
+- early in `setup()`, before Wi-Fi is connected
+- after Wi-Fi is connected, using a non-blocking wait of a few seconds before
+  starting the heavy work
 
-# Get access to the configuration
+## Access the configuration
 
-You can get access to the configuration of the device. The representation of the configuration is:
+You can get access to the configuration of the device. The representation of the
+configuration is:
 
 ```c++
 struct ConfigStruct {
@@ -106,40 +125,42 @@ For example, to access the Wi-Fi SSID, you would do:
 Homie.getConfiguration().wifi.ssid;
 ```
 
-# Get access to the MQTT client
+## Get access to the MQTT client
 
-You can get access to the underlying MQTT client. For example, to disconnect from the broker:
+You can get access to the underlying MQTT client. For example, to disconnect
+from the broker:
 
 ```c++
 Homie.getMqttClient().disconnect();
 ```
 
-# Keep and get MQTT reports while WiFi is not connected
+## Queue MQTT reports while Wi-Fi is not connected
 
 ```c++
 #include <cppQueue.h>
 
 HomieNode myNode("q_test", "test");
 
-// Struct for Queueing of postponed MQTT messages. Needed to gather messages while Wifi isn't connected yet.
+// Queue postponed MQTT messages while Wi-Fi is not connected yet.
 typedef struct strRec {
   char topic[10];
   char msg[90];
 } Rec;
-Queue msg_q(sizeof(Rec), 7, FIFO, true);  // RAM is limited. Keep reasonable Q length (5-10 messages).
+// RAM is limited. Keep a reasonable queue length.
+Queue msg_q(sizeof(Rec), 7, FIFO, true);
 
-// Here comes all other stuff, inclusing setup() and loop().
+// Other code, including setup() and loop().
 
 ```
 
-In functions, where WiFi is not expected, keep the report as example:
+When Wi-Fi is not expected to be connected, queue the report:
 
 ```c++
-Rec r = {"alert", "Low storage space is free on SPIFF."};
+Rec r = {"alert", "Low free storage space on SPIFFS."};
 msg_q.push(&r);
 ```
 
-To release (AKA send) all kept messages from the queue, add in `loopHandler()`:
+To flush queued messages, add this to `loopHandler()`:
 
 ```c++
 while (!msg_q.isEmpty() && Homie.isConnected()) {
@@ -149,4 +170,5 @@ while (!msg_q.isEmpty() && Homie.isConnected()) {
 }
 ```
 
-It might be good practice to use the queue always, not only when WiFi is down. This might make Homie job easier, and you get stability as benefit.
+It can be useful to use the queue consistently, not only when Wi-Fi is down. This
+keeps MQTT publishing predictable and reduces work in timing-sensitive paths.

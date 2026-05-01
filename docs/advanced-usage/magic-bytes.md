@@ -1,8 +1,14 @@
-Homie for ESP8266 firmwares contain magic bytes allowing you to check if a firmware is actually an Homie for ESP8266 firmware, and if so, to get the name, the version and the brand of the firmware.
+# Magic bytes
 
-You might be wondering why `Homie_setFirmware()` instead of `Homie.setFirmware()`, this is because we use [special macros](https://github.com/labodj/homie-esp8266/blob/develop/src/Homie.hpp#L23-L24) to embed the magic bytes.
+Homie for ESP8266 firmware images contain magic bytes allowing you to check if a
+firmware image was built with Homie for ESP8266, and if so, to get the name,
+version and brand of the firmware.
 
-Values are encoded as such within the firmware binary:
+Use `Homie_setFirmware()` instead of `Homie.setFirmware()` because Homie uses
+[special macros](https://github.com/labodj/homie-esp8266/blob/develop/src/Homie.hpp#L23-L24)
+to embed the magic bytes.
+
+Values are encoded this way within the firmware binary:
 
 | Type                                                                        | Left boundary              | Value                                                                                       | Right boundary             |
 | --------------------------------------------------------------------------- | -------------------------- | ------------------------------------------------------------------------------------------- | -------------------------- |

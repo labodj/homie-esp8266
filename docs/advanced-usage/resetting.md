@@ -1,4 +1,9 @@
-Resetting the device means erasing the stored configuration and rebooting from `normal` mode to `configuration` mode. By default, you can do it by holding the configured reset trigger for 5 seconds. On many dev boards this is the `FLASH` or `BOOT` button.
+# Resetting
+
+Resetting the device means erasing the stored configuration and rebooting from
+`normal` mode to `configuration` mode. By default, you can do it by holding the
+configured reset trigger for 5 seconds. On many dev boards this is the `FLASH`
+or `BOOT` button.
 
 This behavior is configurable:
 
@@ -9,7 +14,8 @@ void setup() {
 }
 ```
 
-The device will now reset if pin `1` is `LOW` for `2000`ms. You can also disable completely this reset trigger:
+The device now resets if pin `1` is `LOW` for `2000` ms. You can also disable
+this reset trigger completely:
 
 ```c++
 void setup() {
@@ -18,7 +24,7 @@ void setup() {
 }
 ```
 
-In addition, you can also trigger a device reset from your sketch:
+You can also trigger a device reset from your sketch:
 
 ```c++
 void loop() {
@@ -26,10 +32,14 @@ void loop() {
 }
 ```
 
-This will reset the device as soon as it is idle. Indeed, sometimes, you might want to disable temporarily the ability to reset the device. For example, if your device is doing some background work like moving shutters, you will want to disable the ability to reset until the shutters are not moving anymore.
+This resets the device as soon as it is idle. If the device is running critical
+work, such as moving shutters, temporarily mark it as not idle until that work is
+finished.
 
 ```c++
 Homie.setIdle(false);
 ```
 
-Note that if a reset is asked while the device is not idle, the device will be flagged. In other words, when you will call `Homie.setIdle(true);` back, the device will immediately reset.
+If a reset is requested while the device is not idle, Homie records the pending
+reset. When you call `Homie.setIdle(true);` again, the device resets
+immediately.

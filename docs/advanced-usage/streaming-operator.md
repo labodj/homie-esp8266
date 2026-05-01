@@ -1,4 +1,6 @@
-Homie for ESP8266 includes a nice streaming operator to interact with `Print` objects.
+# Streaming operator
+
+Homie for ESP8266 includes a streaming operator for `Print` objects.
 
 Imagine the following code:
 
@@ -9,7 +11,8 @@ Homie.getLogger().print(temperature);
 Homie.getLogger().println(" °C.");
 ```
 
-With the streaming operator, the following code will do exactly the same thing, without performance penalties:
+With the streaming operator, the following code will do exactly the same thing,
+without performance penalties:
 
 ```c++
 int temperature = 32;

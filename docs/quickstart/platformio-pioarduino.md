@@ -1,8 +1,8 @@
 # PlatformIO / PioArduino
 
-This fork is maintained primarily through the `labodj/homie-v5` PlatformIO
-Registry package. For ESP32 projects that track current Arduino cores, use the
-PioArduino platform package:
+The maintained installation path for this fork is the `labodj/homie-v5`
+PlatformIO Registry package. For ESP32 projects that track current Arduino
+cores, use the PioArduino platform package:
 
 ```ini
 [env:esp32dev]
@@ -14,8 +14,8 @@ lib_deps =
   labodj/homie-v5 @ ^3.4.0
 ```
 
-For unreleased `develop` changes, use the git URL dependency and pin it to a
-commit SHA instead of tracking the branch.
+For unreleased changes, use the git URL dependency and pin it to a commit SHA
+instead of tracking the branch.
 
 ESP8266 projects should keep the ESP8266 PlatformIO platform:
 
@@ -36,12 +36,12 @@ dependencies are platform-specific. Without strict compatibility, PlatformIO may
 try to compile ESP32 or RP2040 async TCP dependencies for ESP8266 builds, or the
 other way around.
 
-The library package pins its internal AsyncMqttClient dependency to a commit hash
-instead of a moving tag so dependency resolution stays repeatable across CI and
-developer machines.
+The library package pins its internal AsyncMqttClient dependency to a commit
+hash instead of a moving tag so dependency resolution stays repeatable across CI
+and developer machines.
 
-That dependency currently points to a small fork of `AsyncMqttClient`. The fork
-only updates the async TCP dependency metadata to the maintained `esp32async`
+The pinned dependency points to a small metadata-only fork of `AsyncMqttClient`.
+It only updates the async TCP dependency metadata to the maintained `esp32async`
 packages required by modern ESP8266 / ESP32 Arduino toolchains.
 
 SPIFFS remains the default storage backend for compatibility with existing

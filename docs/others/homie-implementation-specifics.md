@@ -1,21 +1,23 @@
+# Homie implementation specifics
+
 The Homie `$implementation` identifier is platform-dependent on this fork:
 
 - `esp32` on ESP32 builds
 - `esp8266` on ESP8266 builds
 
-# Version
+## Version
 
 - `$implementation/version`: maintained fork version
 - `$implementation/reset/reason`: reset reason reported by the platform on the
   current boot, for example `poweron`, `software`, `brownout`, `task_watchdog`
   or the platform-provided ESP8266 reset string
 - `$implementation/wifi/last_disconnect_reason`: Wi-Fi disconnect reason
-  observed during the current boot, or `none`. ESP32 builds publish the
-  platform reason name when available, for example `NO_AP_FOUND`.
-- `$implementation/mqtt/last_disconnect_reason`: MQTT disconnect reason
-  observed during the current boot, or `none`
+  observed during the current boot, or `none`. ESP32 builds publish the platform
+  reason name when available, for example `NO_AP_FOUND`.
+- `$implementation/mqtt/last_disconnect_reason`: MQTT disconnect reason observed
+  during the current boot, or `none`
 
-# Homie Convention Advertisement
+## Homie convention advertisement
 
 The maintained fork advertises Homie `3.0.1` by default. Build with
 `HOMIE_CONVENTION_VERSION=4` to advertise Homie `4.0.0`, or with
@@ -45,14 +47,17 @@ See [Homie v5 fork runtime extension](homie-v5-runtime-extension.md) for the
 extension contract. These topics are intentionally documented as an extension in
 v5 mode because they are not part of Homie v5 core discovery.
 
-# Reset
+## Reset
 
-- `$implementation/reset`: You can publish a `true` to this topic to reset the device
+- `$implementation/reset`: You can publish `true` to this topic to reset the
+  device
 
-# Configuration
+## Configuration
 
-- `$implementation/config`: The `config.json` is published there, with `wifi.password`, `mqtt.username` and `mqtt.password` fields stripped
-- `$implementation/config/set`: You can update the `config.json` by sending incremental JSON on this topic
+- `$implementation/config`: the `config.json` is published there, with
+  `wifi.password`, `mqtt.username` and `mqtt.password` fields stripped
+- `$implementation/config/set`: you can update the `config.json` by sending
+  incremental JSON on this topic
 
 In Homie v5 mode the advertised `$implementation/config` also includes
 `mqtt.effective_base_topic`. This field is generated at publish time and shows
@@ -61,30 +66,36 @@ the actual MQTT root used by the runtime, for example `homie/5/` when the saved
 `/homie/config.json`, and `/config/set` removes it if a management tool echoes
 the advertised config back to the device.
 
-# OTA
+## OTA
 
 - `$implementation/ota/enabled`: `true` if OTA is enabled, `false` otherwise
-- `$implementation/ota/firmware/<md5 checksum>`: Send the firmware payload to this topic, where the last topic level is the hexadecimal MD5 checksum of the firmware image
-- `$implementation/ota/status`: HTTP-like status code indicating the status of the OTA. Might be:
+- `$implementation/ota/firmware/<md5 checksum>`: send the firmware payload to
+  this topic, where the last topic level is the hexadecimal MD5 checksum of the
+  firmware image
+- `$implementation/ota/status`: HTTP-like status code indicating the status of
+  the OTA. Common values are:
 
-| Code               | Description                                                                                                           |
-| ------------------ | --------------------------------------------------------------------------------------------------------------------- |
-| `200`              | OTA successfully flashed                                                                                              |
-| `202`              | OTA request / checksum accepted                                                                                       |
-| `206 465/349680`   | OTA in progress. The data after the status code corresponds to `<bytes written>/<bytes total>`                        |
-| `304`              | The current firmware is already up-to-date                                                                            |
-| `400 BAD_FIRMWARE` | OTA error from your side. The identifier might be `BAD_FIRMWARE`, `BAD_CHECKSUM`, `NOT_ENOUGH_SPACE`, `NOT_REQUESTED` |
-| `403`              | OTA not enabled                                                                                                       |
-| `500 FLASH_ERROR`  | OTA error in the device flash/update path. The identifier might be `FLASH_ERROR`                                      |
+- `200`: OTA successfully flashed.
+- `202`: OTA request or checksum accepted.
+- `206 465/349680`: OTA in progress. The data after the status code corresponds
+  to `<bytes written>/<bytes total>`.
+- `304`: The current firmware is already up-to-date.
+- `400 BAD_FIRMWARE`: the OTA request is invalid. The identifier might be
+  `BAD_FIRMWARE`, `BAD_CHECKSUM`, `NOT_ENOUGH_SPACE` or `NOT_REQUESTED`.
+- `403`: OTA is not enabled.
+- `500 FLASH_ERROR`: the device flash/update path failed. The identifier might
+  be `FLASH_ERROR`.
 
 On this fork, the OTA handler is hardened for MQTT QoS 1 delivery:
 
 - duplicate retransmissions of already-flashed payloads are ignored safely
 - overlapping retransmitted chunks are trimmed before flashing
-- out-of-sequence chunks fail explicitly instead of silently corrupting the update
-- if MQTT disconnects during OTA, the update is aborted cleanly and must be retried
+- out-of-sequence chunks fail explicitly instead of silently corrupting the
+  update
+- if MQTT disconnects during OTA, the update is aborted cleanly and must be
+  retried
 
-# Filesystem
+## Filesystem
 
 SPIFFS remains the default storage backend for compatibility with existing
 devices. LittleFS is selected only when `HOMIE_USE_LITTLEFS=1` is compiled into
@@ -96,7 +107,7 @@ The UI bundle is not migrated because SPIFFS and LittleFS share the same flash
 area and the bundle can be too large to hold in RAM while the destination
 filesystem is formatted.
 
-# Statistics
+## Statistics
 
 The fork publishes the standard Homie statistics plus these additional retained
 topics:
@@ -106,5 +117,7 @@ topics:
 - `$stats/uptimemqtt`: seconds since MQTT connectivity was established
 - `$stats/mqttackdropped`: cumulative MQTT publish acknowledgement queue drops
 - `$stats/mqttinbounddropped`: cumulative deferred inbound MQTT queue drops
-- `$stats/mqttackmaxdepth`: maximum MQTT publish acknowledgement queue depth since boot
-- `$stats/mqttinboundmaxdepth`: maximum deferred inbound MQTT queue depth since boot
+- `$stats/mqttackmaxdepth`: maximum MQTT publish acknowledgement queue depth
+  since boot
+- `$stats/mqttinboundmaxdepth`: maximum deferred inbound MQTT queue depth since
+  boot

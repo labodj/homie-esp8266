@@ -1,3 +1,10 @@
-The Homie for ESP8266 configuration AP implements a captive portal. When connecting to it, you will be prompted to connect, and your Web browser will open. By default, it will show an empty page with a text saying to install an `ui_bundle.gz` file.
+# UI bundle
 
-Indeed, you can serve the [configuration UI](https://labodj.github.io/homie-esp8266/configurators/v2/) directly from your device. See [the data/homie folder](https://github.com/labodj/homie-esp8266/tree/develop/data/homie).
+The Homie for ESP8266 configuration AP implements a captive portal. When
+connecting to it, the browser opens the configuration page. By default, the
+device shows an empty page asking for an `ui_bundle.gz` file.
+
+You can serve the
+[configuration UI](https://labodj.github.io/homie-esp8266/configurators/v2/)
+directly from your device. See
+[the data/homie folder](https://github.com/labodj/homie-esp8266/tree/develop/data/homie).

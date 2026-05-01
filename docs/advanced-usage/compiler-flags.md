@@ -1,37 +1,47 @@
-Compiler flags can be used to add or remove certain functionality from homie-esp8266.
+# Compiler flags
 
-Removing functionality can become useful if your firmware gets too large in size and is not upgradable any more over OTA. On the other hand these compiler flags allow to remove features from homie-esp8266, that you do not require or do not use.
+Compiler flags let you add, remove or tune Homie features at build time.
 
-Adding functionality or features is useful to enable only partly implemented features or unstable or experimental features.
+Use them when a firmware image is too large for OTA, when a deployment needs a
+specific storage backend, or when a device needs more room for MQTT bursts. The
+defaults are conservative: existing Homie 3.0.1 sketches should keep working
+unless you explicitly opt in to a different behavior.
 
-**HOMIE_CONFIG**
+## HOMIE_CONFIG
 
-This compiler flag allows to disable the configuration mode completely. To configure your homie-esp8266, you need to upload the configuration to the configured filesystem before starting the device. The default filesystem is SPIFFS, unless `HOMIE_USE_LITTLEFS=1` is set. Without a proper configuration the device will just restart after writing the error message about the missing configuration to the logger. Add the following to your platformio.ini file:
+Set `HOMIE_CONFIG=0` to disable configuration mode completely.
 
+When configuration mode is disabled, upload `/homie/config.json` to the selected
+filesystem before the device starts. SPIFFS is the default filesystem; LittleFS
+is used only when `HOMIE_USE_LITTLEFS=1` is compiled in. Without a valid
+configuration file, the device logs the missing configuration error and
+restarts.
+
+```ini
+build_flags =
+  -D HOMIE_CONFIG=0
 ```
-build_flags = -D HOMIE_CONFIG=0
+
+This reduces the firmware size by about 50 KB.
+
+## HOMIE_MDNS
+
+Set `HOMIE_MDNS=0` to disable publishing the device identifier through mDNS.
+
+```ini
+build_flags =
+  -D HOMIE_MDNS=0
 ```
 
-This reduces the firmware size by about 50000 bytes.
+This reduces the firmware size by about 6.4 KB.
 
-**HOMIE_MDNS**
-
-This compiler flag allows to disable the publishing of the device identifier via mDNS protocol. Add the following to your platformio.ini file:
-
-```
-build_flags = -D HOMIE_MDNS=0
-```
-
-This reduces the firmware size by about 6400 bytes.
-
-**HOMIE_CONVENTION_VERSION**
+## HOMIE_CONVENTION_VERSION
 
 This maintained fork advertises the Homie `3.0.1` MQTT convention by default to
 preserve existing deployments and consumers. Newer convention modes are
 build-time opt-ins because they change what controllers discover on MQTT.
 
-Set `HOMIE_CONVENTION_VERSION=4` to enable the opt-in Homie `4.0.0`
-compatibility mode:
+Set `HOMIE_CONVENTION_VERSION=4` to enable Homie `4.0.0` compatibility mode:
 
 ```ini
 build_flags =
@@ -45,11 +55,11 @@ legacy stats extensions:
 - `org.homie.legacy-firmware:0.1.1:[4.x]`
 - `org.homie.legacy-stats:0.1.1:[4.x]`
 
-For compatibility with existing sketches, v4 mode also fills missing required
+For compatibility with existing sketches, v4 mode fills missing required
 property metadata at advertisement time:
 
-- missing property `$name` falls back to the property id.
-- missing property `$datatype` falls back to `string`.
+- Missing property `$name` falls back to the property id.
+- Missing property `$datatype` falls back to `string`.
 
 Those fallbacks keep old sketches discoverable, but production v4 devices should
 still set explicit names and datatypes for every advertised property.
@@ -63,8 +73,8 @@ build_flags =
 
 In v5 mode the MQTT root is versioned as required by the specification. The
 default base topic `homie/` becomes `homie/5/<device-id>`. A custom base topic
-must be a single Homie domain segment such as `lab/`; the firmware then publishes
-under `lab/5/<device-id>`. Passing `homie/5/` is also accepted and is not
+must be a single Homie domain segment such as `lab/`; the firmware then
+publishes under `lab/5/<device-id>`. Passing `homie/5/` is accepted and is not
 rewritten to `homie/5/5/`.
 
 The v5 mode publishes a retained `$description` JSON document instead of the
@@ -72,11 +82,11 @@ Homie 3/4 per-topic discovery attributes for nodes and properties. The document
 contains:
 
 - `homie: "5.0"`
-- a deterministic numeric `version` that changes when advertised metadata changes
+- a deterministic numeric `version` that changes when advertised metadata
+  changes
 - `nodes` with node and property objects
 - property `datatype`, `settable`, `retained`, `unit` and `format` metadata
-- the fork runtime extension:
-  `io.github.labodj.esp-runtime`
+- the fork runtime extension `io.github.labodj.esp-runtime`
 
 Homie v5 topic IDs are stricter than older deployments. Device, node and
 property IDs must use lowercase letters, digits and hyphens only. Invalid IDs
@@ -92,162 +102,172 @@ remain available in v5 mode as fork extension topics declared in
 `$description.extensions`; strict Homie v5 consumers can ignore them if they do
 not implement the extension.
 
-**ASYNC_TCP_SSL_ENABLED**
+## ASYNC_TCP_SSL_ENABLED
 
-This compiler flag allows to use SSL encryption for MQTT connections. All other network connections still can not be encrypted like HTTP or OTA.
+Set `ASYNC_TCP_SSL_ENABLED=1` to use SSL encryption for MQTT connections. HTTP
+and OTA connections are still not encrypted by this flag.
 
-```
+```ini
 build_flags =
   -D ASYNC_TCP_SSL_ENABLED=1
   -D PIO_FRAMEWORK_ARDUINO_LWIP2_HIGHER_BANDWIDTH
 ```
 
-The additional flag `PIO_FRAMEWORK_ARDUINO_LWIP2_HIGHER_BANDWIDTH` is necessary for SSL encryption to work properly.
+The additional `PIO_FRAMEWORK_ARDUINO_LWIP2_HIGHER_BANDWIDTH` flag is necessary
+for SSL encryption to work properly on ESP8266.
 
-**HOMIE_PENDING_MQTT_ACK_QUEUE_SIZE**
+## HOMIE_PENDING_MQTT_ACK_QUEUE_SIZE
 
-This maintained fork exposes a build-time override for the internal queue that
-stores MQTT publish acknowledgement events before `BootNormal::loop()`
-dispatches them.
+This fork exposes a build-time override for the internal queue that stores MQTT
+publish acknowledgement events before `BootNormal::loop()` dispatches them.
 
 Use it when the device emits a large retained advertisement burst and logs
 `MQTT ACK queue full` during startup or reconnect:
 
-```
+```ini
 build_flags =
   -D HOMIE_PENDING_MQTT_ACK_QUEUE_SIZE=64
 ```
 
 Default:
 
-```
--D HOMIE_PENDING_MQTT_ACK_QUEUE_SIZE=32
+```ini
+build_flags =
+  -D HOMIE_PENDING_MQTT_ACK_QUEUE_SIZE=32
 ```
 
-**HOMIE_PENDING_MQTT_ACKS_PER_LOOP**
+## HOMIE_PENDING_MQTT_ACKS_PER_LOOP
 
-Controls how many queued MQTT publish acknowledgement events are dispatched from
-one `BootNormal::loop()` iteration. Raising it drains ACK bursts faster; lowering
-it gives more loop fairness to sketch code and other Homie work.
+This flag controls how many queued MQTT publish acknowledgement events are
+dispatched from one `BootNormal::loop()` iteration. Raising it drains ACK bursts
+faster; lowering it gives more loop fairness to sketch code and other Homie
+work.
 
-```
+```ini
 build_flags =
   -D HOMIE_PENDING_MQTT_ACKS_PER_LOOP=8
 ```
 
 Default:
 
-```
--D HOMIE_PENDING_MQTT_ACKS_PER_LOOP=8
+```ini
+build_flags =
+  -D HOMIE_PENDING_MQTT_ACKS_PER_LOOP=8
 ```
 
 This is an advanced tuning option. Increase it only if the default queue size is
 not sufficient for your device and broker timing.
 
-Both drop counters are also exposed in Homie statistics as
-`$stats/mqttackdropped` and `$stats/mqttinbounddropped`, so production devices
-can be monitored without relying only on serial logs.
+Both drop counters are exposed in Homie statistics as `$stats/mqttackdropped`
+and `$stats/mqttinbounddropped`, so production devices can be monitored without
+relying only on serial logs.
 
-**HOMIE_PENDING_MQTT_MESSAGE_QUEUE_SIZE**
+## HOMIE_PENDING_MQTT_MESSAGE_QUEUE_SIZE
 
-This maintained fork also exposes the size of the internal queue used to defer
-non-OTA MQTT input handling from async MQTT callbacks into `BootNormal::loop()`.
+This fork also exposes the size of the internal queue used to defer non-OTA MQTT
+input handling from async MQTT callbacks into `BootNormal::loop()`.
 
 Use it only when the device logs `MQTT inbound queue full` under expected broker
 traffic:
 
-```
+```ini
 build_flags =
   -D HOMIE_PENDING_MQTT_MESSAGE_QUEUE_SIZE=32
 ```
 
 Default:
 
-```
--D HOMIE_PENDING_MQTT_MESSAGE_QUEUE_SIZE=16
+```ini
+build_flags =
+  -D HOMIE_PENDING_MQTT_MESSAGE_QUEUE_SIZE=16
 ```
 
-**HOMIE_PENDING_MQTT_MESSAGES_PER_LOOP**
+## HOMIE_PENDING_MQTT_MESSAGES_PER_LOOP
 
-Controls how many queued non-OTA MQTT input messages are processed from one
-`BootNormal::loop()` iteration. Raising it drains inbound bursts faster; lowering
-it makes long command bursts yield back to the rest of the firmware sooner.
+This flag controls how many queued non-OTA MQTT input messages are processed
+from one `BootNormal::loop()` iteration. Raising it drains inbound bursts
+faster; lowering it makes long command bursts yield back to the rest of the
+firmware sooner.
 
-```
+```ini
 build_flags =
   -D HOMIE_PENDING_MQTT_MESSAGES_PER_LOOP=4
 ```
 
 Default:
 
-```
--D HOMIE_PENDING_MQTT_MESSAGES_PER_LOOP=4
+```ini
+build_flags =
+  -D HOMIE_PENDING_MQTT_MESSAGES_PER_LOOP=4
 ```
 
-**HOMIE_PENDING_MQTT_MESSAGE_PREALLOCATED**
+## HOMIE_PENDING_MQTT_MESSAGE_PREALLOCATED
 
 Set this flag to `1` to make the deferred inbound MQTT queue use fixed-size
 topic and payload storage instead of allocating one topic and one payload buffer
 per queued message from the async MQTT callback path:
 
-```
+```ini
 build_flags =
   -D HOMIE_PENDING_MQTT_MESSAGE_PREALLOCATED=1
 ```
 
 Default:
 
-```
--D HOMIE_PENDING_MQTT_MESSAGE_PREALLOCATED=0
+```ini
+build_flags =
+  -D HOMIE_PENDING_MQTT_MESSAGE_PREALLOCATED=0
 ```
 
 When enabled, the fixed buffers are controlled by these limits:
 
-```
--D HOMIE_PENDING_MQTT_MESSAGE_MAX_TOPIC_LENGTH=192
--D HOMIE_PENDING_MQTT_MESSAGE_MAX_PAYLOAD_LENGTH=512
--D HOMIE_PENDING_MQTT_MESSAGE_MAX_TOPIC_LEVELS=12
+```ini
+build_flags =
+  -D HOMIE_PENDING_MQTT_MESSAGE_MAX_TOPIC_LENGTH=192
+  -D HOMIE_PENDING_MQTT_MESSAGE_MAX_PAYLOAD_LENGTH=512
+  -D HOMIE_PENDING_MQTT_MESSAGE_MAX_TOPIC_LEVELS=12
 ```
 
 Messages exceeding those limits are rejected and counted in
 `$stats/mqttinbounddropped`. Keep the feature disabled on memory-constrained
 ESP8266 builds unless the reserved RAM budget is acceptable.
 
-**HOMIE_OTA_STATUS_INFO_MAX_LENGTH**
+## HOMIE_OTA_STATUS_INFO_MAX_LENGTH
 
-Controls the fixed-size buffer used to queue short OTA status text from the OTA
-path into the main loop before publishing the status event. Increase it only if
-custom OTA status strings are being truncated.
+This flag controls the fixed-size buffer used to queue short OTA status text
+from the OTA path into the main loop before publishing the status event.
+Increase it only if custom OTA status strings are being truncated.
 
-```
+```ini
 build_flags =
   -D HOMIE_OTA_STATUS_INFO_MAX_LENGTH=48
 ```
 
 Default:
 
-```
--D HOMIE_OTA_STATUS_INFO_MAX_LENGTH=48
+```ini
+build_flags =
+  -D HOMIE_OTA_STATUS_INFO_MAX_LENGTH=48
 ```
 
-**HOMIE_USE_LITTLEFS**
+## HOMIE_USE_LITTLEFS
 
-This maintained fork keeps SPIFFS as the default storage backend to preserve
-existing deployments. Set this flag to use LittleFS for configuration files,
-next-boot mode state, and the optional configuration UI bundle:
+This fork keeps SPIFFS as the default storage backend to preserve existing
+deployments. Set this flag to use LittleFS for configuration files, next-boot
+mode state, and the optional configuration UI bundle:
 
-```
+```ini
 board_build.filesystem = littlefs
 build_flags =
   -D HOMIE_USE_LITTLEFS=1
 ```
 
-**HOMIE_MIGRATE_SPIFFS_TO_LITTLEFS**
+## HOMIE_MIGRATE_SPIFFS_TO_LITTLEFS
 
 Build a temporary OTA migration firmware with this flag when already provisioned
 devices need to move from SPIFFS to LittleFS:
 
-```
+```ini
 board_build.filesystem = littlefs
 build_flags =
   -D HOMIE_USE_LITTLEFS=1
@@ -255,9 +275,9 @@ build_flags =
 ```
 
 The flag is disabled by default so normal LittleFS builds do not include SPIFFS
-or migration code. A migration build tries to copy data only when LittleFS cannot
-mount and a SPIFFS filesystem with `/homie/config.json` is still present. The
-migration copies:
+or migration code. A migration build tries to copy data only when LittleFS
+cannot mount and a SPIFFS filesystem with `/homie/config.json` is still present.
+The migration copies:
 
 - `/homie/config.json`
 - `/homie/NEXTMODE`, when present
@@ -266,8 +286,8 @@ The UI bundle at `/homie/ui_bundle.gz` is not migrated because it can be too
 large to hold in RAM while LittleFS formats the shared flash area. Upload the UI
 bundle again with PlatformIO `uploadfs` after switching to LittleFS.
 
-After the device has booted once and migrated successfully, replace the migration
-firmware with a normal LittleFS-only OTA build that keeps only
+After the device has booted once and migrated successfully, replace the
+migration firmware with a normal LittleFS-only OTA build that keeps only
 `HOMIE_USE_LITTLEFS=1`.
 
 ## ESP8266-only networking flags

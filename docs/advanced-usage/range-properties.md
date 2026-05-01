@@ -1,4 +1,9 @@
-In all the previous examples you have seen, node properties were advertised one-by-one (e.g. `temperature`, `unit`...). But what if you have a LED strip with, say, 100 properties, one for each LED? You won't advertise these 100 LEDs one-by-one. This is what range properties are meant for.
+# Range properties
+
+In the previous examples, node properties were advertised one by one, such as
+`temperature` or `unit`. A LED strip may expose many similar properties, one for
+each LED. Range properties let you model that repeated shape without declaring
+each property separately.
 
 ```c++
 HomieNode stripNode("strip", "strip");
@@ -16,16 +21,17 @@ void setup() {
 }
 ```
 
-On the mqtt broker you will see the following message show up:
+On the MQTT broker you will see the following message show up:
 
-```
+```text
 topic                               message
 --------------------------------------------------------
-homie/<device id>/strip/$type	      strip
-homie/<device id>/strip/$properties	led[1-100]:settable
+homie/<device id>/strip/$type       strip
+homie/<device id>/strip/$properties led[1-100]:settable
 ```
 
-You can then publish the value `on` to topic `homie/<device id>/strip/led_1/set` to turn on led number 1.
+You can then publish the value `on` to topic `homie/<device id>/strip/led_1/set`
+to turn on led number 1.
 
 See the following example for a concrete use case:
 

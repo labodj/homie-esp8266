@@ -1,19 +1,28 @@
-When in `configuration` mode, the device exposes a HTTP JSON API to send the configuration to it. When you send a valid configuration to the `/config` endpoint, the configuration file is stored in the filesystem at `/homie/config.json`.
+# HTTP JSON API
 
-If you don't want to mess with JSON, you have a Web UI / app available:
+When in `configuration` mode, the device exposes an HTTP JSON API for
+configuration. When you send a valid configuration to the `/config`
+endpoint, the configuration file is stored in the filesystem at
+`/homie/config.json`.
 
-- At https://labodj.github.io/homie-esp8266/configurators/v2/
-- As an [Android app](https://build.phonegap.com/apps/1906578/share)
+If you prefer not to edit JSON by hand, you can use the bundled Web UI:
 
-**Quick instructions to use the Web UI / app**:
+- At [the maintained fork configurator][fork-configurator]
 
-1. Open the Web UI / app
-2. Disconnect from your current Wi-Fi AP, and connect to the `Homie-xxxxxxxxxxxx` AP spawned in `configuration` mode
+**Quick instructions to use the Web UI**:
+
+1. Open the Web UI
+2. Disconnect from your current Wi-Fi AP, and connect to the
+   `Homie-xxxxxxxxxxxx` AP spawned in `configuration` mode
 3. Follow the instructions
 
-You can see the sources of the Web UI [here](https://github.com/homieiot/homie-esp8266-setup).
+You can see the
+[sources of the Web UI](https://github.com/homieiot/homie-esp8266-setup).
 
-Alternatively, you can use this `curl` command to send the configuration to the device. You must connect to the device in `configuration` mode (i.e. the device is an Access Point). This method will not work if not in `configuration` mode:
+Alternatively, you can use this `curl` command to send the configuration to the
+device. You must connect to the device in `configuration` mode, while it is
+acting as an access point. This method will not work outside `configuration`
+mode:
 
 ```shell
 curl -X PUT http://192.168.123.1/config --header "Content-Type: application/json" -d @config.json
@@ -21,17 +30,19 @@ curl -X PUT http://192.168.123.1/config --header "Content-Type: application/json
 
 This will send the `./config.json` file to the device.
 
-# Error handling
+## Error handling
 
-When everything went fine, a `2xx` HTTP code is returned, such as `200 OK`, `202 Accepted`, `204 No Content` and so on.
-If anything goes wrong, a return code != 2xx will be returned, with a JSON `error` field indicating the error, such as `500 Internal Server error`, `400 Bad request` and so on.
+When everything went fine, a `2xx` HTTP code is returned, such as `200 OK`,
+`202 Accepted`, `204 No Content` and so on. If anything goes wrong, a return
+code != 2xx will be returned, with a JSON `error` field indicating the error,
+such as `500 Internal Server error`, `400 Bad request` and so on.
 
-# Endpoints
+## Endpoints
 
 **API base address:** `http://192.168.123.1`
 
 ??? summary "GET `/heart`"
-This is useful to ensure we are connected to the device AP.
+    This is useful to ensure we are connected to the device AP.
 
     ## Response
 
@@ -40,7 +51,7 @@ This is useful to ensure we are connected to the device AP.
 ---
 
 ??? summary "GET `/device-info`"
-Get some information on the device.
+    Get some information on the device.
 
     ## Response
 
@@ -49,7 +60,7 @@ Get some information on the device.
     ```json
     {
       "hardware_device_id": "52a8fa5d",
-"homie_esp8266_version": "3.4.0",
+      "homie_esp8266_version": "3.4.0",
       "firmware": {
         "name": "awesome-device",
         "version": "1.0.0"
@@ -86,7 +97,7 @@ Get some information on the device.
 ---
 
 ??? summary "GET `/networks`"
-Retrieve the Wi-Fi networks the device can see.
+    Retrieve the Wi-Fi networks the device can see.
 
     ## Response
 
@@ -117,7 +128,7 @@ Retrieve the Wi-Fi networks the device can see.
 ---
 
 ??? summary "PUT `/config`"
-Save the config to the device.
+    Save the config to the device.
 
     ## Request body
 
@@ -159,7 +170,9 @@ Save the config to the device.
 ---
 
 ??? summary "PUT `/wifi/connect`"
-Initiates the connection of the device to the Wi-Fi network while in configuation mode. This request is not synchronous and the result (Wi-Fi connected or not) must be obtained by with `GET /wifi/status`.
+    Initiates the connection of the device to the Wi-Fi network while in
+    configuration mode. This request is not synchronous; obtain the result with
+    `GET /wifi/status`.
 
     ## Request body
 
@@ -196,7 +209,7 @@ Initiates the connection of the device to the Wi-Fi network while in configuatio
 ---
 
 ??? summary "GET `/wifi/status`"
-Returns the current Wi-Fi connection status.
+    Returns the current Wi-Fi connection status.
 
     Helpful when monitoring Wi-Fi connectivity after `PUT /wifi/connect`.
 
@@ -222,15 +235,24 @@ Returns the current Wi-Fi connection status.
 ---
 
 ??? summary "PUT `/proxy/control`"
-Enable/disable the device to act as a transparent proxy between AP and Station networks.
+    Enable or disable the transparent proxy between AP and Station networks.
 
-    All requests that don't collide with existing API paths will be bridged to the destination according to the `Host` HTTP header. The destination host is called using the existing Wi-Fi connection (established after a `PUT /wifi/connect`) and all contents are bridged back to the connection made to the AP side.
+    All requests that do not collide with existing API paths are bridged to the
+    destination according to the `Host` HTTP header. The destination host is
+    called using the Wi-Fi connection established after `PUT /wifi/connect`, and
+    all contents are bridged back to the connection made to the AP side.
 
-    This feature can be used to help captive portals to perform cloud API calls during device enrollment using the ESP8266 Wi-Fi AP connection without having to patch the Homie firmware. By using the transparent proxy, all operations can be performed by the custom JavaScript running on the browser (in the configured filesystem location `/data/homie/ui_bundle.gz`; SPIFFS by default).
+    This feature can be used to help captive portals perform cloud API calls
+    during device enrollment using the ESP8266 Wi-Fi AP connection without
+    patching the Homie firmware. By using the transparent proxy, all operations
+    can be performed by custom JavaScript running in the browser, from the
+    configured filesystem location `/data/homie/ui_bundle.gz`. SPIFFS is used by
+    default.
 
     HTTPS is not supported.
 
-    **Important**: The HTTP requests and responses must be kept as small as possible because all contents are transported using RAM memory, which is very limited.
+    **Important**: Keep HTTP requests and responses as small as possible because
+    all contents are transported through limited RAM.
 
     ## Request body
 
@@ -262,3 +284,5 @@ Enable/disable the device to act as a transparent proxy between AP and Station n
           "error": "Reason why the payload is invalid"
         }
         ```
+
+[fork-configurator]: https://labodj.github.io/homie-esp8266/configurators/v2/

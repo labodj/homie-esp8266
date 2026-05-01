@@ -1,38 +1,39 @@
-# Maintained Fork Differences
+# Maintained fork differences
 
-This repository is a maintained fork of upstream `homieiot/homie-esp8266`.
-The baseline used for the current fork line is upstream commit
+This repository is a maintained fork of upstream `homieiot/homie-esp8266`. The
+baseline used for the current fork line is upstream commit
 `ba452eae5e23d01463568756465be07f8dc3bfce` from 2023-07-24.
 
 The compatibility rule is conservative: existing sketches and configuration
-files should keep working unless a consumer explicitly enables a new compile-time
-option. Fork-only behavior is documented here so consumers can distinguish
-intentional maintenance work from upstream Homie behavior.
+files should keep working unless a consumer explicitly enables a new
+compile-time option. Fork-only behavior is documented here so consumers can
+distinguish intentional maintenance work from upstream Homie behavior.
 
-## Compatibility Policy
+## Compatibility policy
 
 The fork keeps the Homie 3.0.1 MQTT contract and the public sketch API intact.
 Changes are additive where possible:
 
 - SPIFFS remains the default filesystem.
 - LittleFS is opt-in with `HOMIE_USE_LITTLEFS=1`.
-- SPIFFS-to-LittleFS migration is a temporary OTA build option and is disabled by
-  default.
+- SPIFFS-to-LittleFS migration is a temporary OTA build option and is disabled
+  by default.
 - Homie `4.0.0` MQTT discovery is opt-in with `HOMIE_CONVENTION_VERSION=4`;
   Homie `3.0.1` remains the default advertised convention.
 - Homie `5.0` MQTT discovery is opt-in with `HOMIE_CONVENTION_VERSION=5` and
   uses the v5 `$description` model instead of changing the default runtime.
-- queue-size overrides keep the upstream-sized default queues.
+- Queue-size overrides keep the upstream-sized default queues.
 - ID validation warnings do not reject legacy node, property, or device IDs.
 - `setSetRetained()` only extends `overwriteSetter(true)` behavior.
 
-## Platform And Dependency Maintenance
+## Platform and dependency maintenance
 
 The fork is maintained primarily for PlatformIO consumers, including ESP32
 projects that track current Arduino cores through PioArduino:
 
 ```ini
 platform = https://github.com/pioarduino/platform-espressif32/releases/download/stable/platform-espressif32.zip
+board = esp32dev
 framework = arduino
 lib_compat_mode = strict
 lib_deps =
@@ -44,26 +45,26 @@ builds with strict library compatibility. The package also pins its
 AsyncMqttClient dependency to a commit hash so CI and production builds do not
 silently move to a different MQTT client implementation.
 
-The pinned `AsyncMqttClient` source is a small fork used only to point PlatformIO
-at the maintained `esp32async` async TCP packages. It is not intended to diverge
-from AsyncMqttClient behavior.
+The pinned `AsyncMqttClient` source is a small metadata-only fork used to point
+PlatformIO at the maintained `esp32async` async TCP packages. It is not intended
+to diverge from AsyncMqttClient behavior.
 
-## Network And MQTT Recovery
+## Network and MQTT recovery
 
 The normal-mode boot flow still follows upstream Homie, but connection recovery
 is more defensive:
 
 - Wi-Fi and MQTT reconnection use explicit backoff timers.
-- missed Wi-Fi and MQTT callbacks are reconciled against the current client
+- Missed Wi-Fi and MQTT callbacks are reconciled against the current client
   state from `Homie.loop()`.
-- stalled Wi-Fi and MQTT connection attempts are forced into a clean retry.
-- if the device cannot return to full `MQTT_READY` state within the recovery
+- Stalled Wi-Fi and MQTT connection attempts are forced into a clean retry.
+- If the device cannot return to full `MQTT_READY` state within the recovery
   window, it schedules a reboot to recover the networking stack.
 
 This avoids relying exclusively on asynchronous network callbacks, which can be
 missed or delayed on newer ESP32/ESP8266 Arduino core combinations.
 
-## Async Callback Dispatch
+## Async callback dispatch
 
 Several events that upstream handled directly from asynchronous callbacks are
 now queued and dispatched from the main `Homie.loop()` flow:
@@ -78,9 +79,9 @@ The purpose is to keep user callbacks, Homie event handlers, and most MQTT input
 processing on one predictable execution path. This reduces races between async
 network callbacks and sketch code.
 
-## MQTT Queue Tuning And Diagnostics
+## MQTT queue tuning and diagnostics
 
-The fork exposes two internal queue sizes:
+The fork exposes queue sizing and allocation flags for unusual MQTT bursts:
 
 ```ini
 build_flags =
@@ -92,12 +93,13 @@ build_flags =
 Defaults:
 
 ```ini
--D HOMIE_PENDING_MQTT_ACK_QUEUE_SIZE=32
--D HOMIE_PENDING_MQTT_MESSAGE_QUEUE_SIZE=16
--D HOMIE_PENDING_MQTT_MESSAGE_PREALLOCATED=0
--D HOMIE_PENDING_MQTT_MESSAGE_MAX_TOPIC_LENGTH=192
--D HOMIE_PENDING_MQTT_MESSAGE_MAX_PAYLOAD_LENGTH=512
--D HOMIE_PENDING_MQTT_MESSAGE_MAX_TOPIC_LEVELS=12
+build_flags =
+  -D HOMIE_PENDING_MQTT_ACK_QUEUE_SIZE=32
+  -D HOMIE_PENDING_MQTT_MESSAGE_QUEUE_SIZE=16
+  -D HOMIE_PENDING_MQTT_MESSAGE_PREALLOCATED=0
+  -D HOMIE_PENDING_MQTT_MESSAGE_MAX_TOPIC_LENGTH=192
+  -D HOMIE_PENDING_MQTT_MESSAGE_MAX_PAYLOAD_LENGTH=512
+  -D HOMIE_PENDING_MQTT_MESSAGE_MAX_TOPIC_LEVELS=12
 ```
 
 Use larger queues only when production devices log queue-full warnings under
@@ -114,7 +116,7 @@ use fixed-size slot storage. This removes per-message heap allocation from the
 async MQTT callback path at the cost of reserved RAM and explicit topic/payload
 size limits.
 
-## OTA Hardening
+## OTA hardening
 
 MQTT OTA handling is more robust for QoS 1 delivery and disconnect scenarios:
 
@@ -126,7 +128,7 @@ MQTT OTA handling is more robust for QoS 1 delivery and disconnect scenarios:
 The OTA helper script was also modernized, but the MQTT OTA topic contract is
 kept compatible with Homie 3.0.1.
 
-## Filesystem Selection And Migration
+## Filesystem selection and migration
 
 SPIFFS is still the default to protect deployed devices. LittleFS is selected
 only when the consumer builds with:
@@ -161,7 +163,7 @@ After one successful boot with the migration firmware, OTA a normal LittleFS
 firmware without `HOMIE_MIGRATE_SPIFFS_TO_LITTLEFS`. That removes the SPIFFS
 reader and migration code from the production image.
 
-## Public API Extensions
+## Public API extensions
 
 `PropertyInterface::setRetained()` controls whether an advertised property is
 retained and whether `HomieNode::setProperty()` starts from a retained or
@@ -171,7 +173,7 @@ non-retained publish default for that property.
 mirrored `/set` publish performed by `overwriteSetter(true)`. The main property
 publish remains controlled by `SendingPromise::setRetained()`.
 
-## Homie v4 Compatibility
+## Homie v4 compatibility
 
 The fork can advertise Homie `4.0.0` metadata when built with:
 
@@ -191,10 +193,10 @@ their consumers do not change behavior accidentally. In v4 mode the device:
 
 Homie v4 requires property `$name` and `$datatype`. Older sketches did not
 always set those fields, so v4 mode publishes safe fallbacks during discovery:
-the property id as `$name`, and `string` as `$datatype`. Explicit metadata in the
-sketch always wins and is still recommended for production firmware.
+the property id as `$name`, and `string` as `$datatype`. Explicit metadata in
+the sketch always wins and is still recommended for production firmware.
 
-## Homie v5 Compatibility
+## Homie v5 compatibility
 
 The fork can publish Homie `5.0` discovery metadata when built with:
 
@@ -216,9 +218,9 @@ In v5 mode the device:
   show the real v5 runtime root while the saved `mqtt.base_topic` remains stable
 
 The historical OTA, configuration, firmware and stats topics remain available as
-the declared extension `io.github.labodj.esp-runtime`. This keeps
-existing operational tooling usable while keeping Homie v5 core discovery
-strictly separated from fork-specific runtime topics.
+the declared extension `io.github.labodj.esp-runtime`. This keeps existing
+operational tooling usable while keeping Homie v5 core discovery strictly
+separated from fork-specific runtime topics.
 
 ## Statistics
 
@@ -230,9 +232,9 @@ The fork publishes the standard Homie statistics plus these retained topics:
 - `$stats/mqttackdropped`: cumulative MQTT publish acknowledgement queue drops
 - `$stats/mqttinbounddropped`: cumulative deferred inbound MQTT queue drops
 
-## Documentation Status
+## Documentation status
 
 Some legacy pages still intentionally preserve upstream wording for historical
 API behavior. When a behavior is fork-specific, prefer this page, the
-PlatformIO/PioArduino quickstart, the compiler-flags page, and the implementation
-specifics page in this repository.
+PlatformIO/PioArduino quickstart, the compiler-flags page, and the
+implementation specifics page in this repository.

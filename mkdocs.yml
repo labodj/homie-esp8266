@@ -25,13 +25,13 @@ nav:
       - Broadcast: advanced-usage/broadcast.md
       - Custom settings: advanced-usage/custom-settings.md
       - Resetting: advanced-usage/resetting.md
-      - Compiler-Flags: advanced-usage/compiler-flags.md
+      - Compiler flags: advanced-usage/compiler-flags.md
       - Standalone mode: advanced-usage/standalone-mode.md
       - Magic bytes: advanced-usage/magic-bytes.md
       - Range properties: advanced-usage/range-properties.md
       - Deep sleep: advanced-usage/deep-sleep.md
       - Miscellaneous: advanced-usage/miscellaneous.md
-      - UI Bundle: advanced-usage/ui-bundle.md
+      - UI bundle: advanced-usage/ui-bundle.md
   - Configuration:
       - JSON configuration file: configuration/json-configuration-file.md
       - HTTP JSON API: configuration/http-json-api.md

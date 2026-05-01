@@ -1,4 +1,4 @@
-# Homie v5 Fork Runtime Extension
+# Homie v5 fork runtime extension
 
 Homie v5 core discovery is intentionally compact: device, node and property
 metadata live in the retained `$description` JSON document. This maintained fork

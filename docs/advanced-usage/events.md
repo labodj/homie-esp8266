@@ -1,46 +1,50 @@
-You may want to hook to Homie events. Maybe you will want to control an RGB LED if the Wi-Fi connection is lost, or execute some code prior to a device reset, for example to clear some EEPROM you're using:
+# Events
+
+Homie events let your sketch react to lifecycle changes such as Wi-Fi loss, OTA
+progress or an upcoming reset. For example, you can update an RGB status LED or
+clear EEPROM before the device resets:
 
 ```c++
 void onHomieEvent(const HomieEvent& event) {
   switch(event.type) {
     case HomieEventType::STANDALONE_MODE:
-      // Do whatever you want when standalone mode is started
+      // Run code when standalone mode starts
       break;
     case HomieEventType::CONFIGURATION_MODE:
-      // Do whatever you want when configuration mode is started
+      // Run code when configuration mode starts
       break;
     case HomieEventType::NORMAL_MODE:
-      // Do whatever you want when normal mode is started
+      // Run code when normal mode starts
       break;
     case HomieEventType::OTA_STARTED:
-      // Do whatever you want when OTA is started
+      // Run code when OTA starts
       break;
     case HomieEventType::OTA_PROGRESS:
-      // Do whatever you want when OTA is in progress
+      // Track OTA progress
 
       // You can use event.sizeDone and event.sizeTotal
       break;
     case HomieEventType::OTA_FAILED:
-      // Do whatever you want when OTA is failed
+      // Handle a failed OTA update
       break;
     case HomieEventType::OTA_SUCCESSFUL:
-      // Do whatever you want when OTA is successful
+      // Handle a successful OTA update
       break;
     case HomieEventType::ABOUT_TO_RESET:
-      // Do whatever you want when the device is about to reset
+      // Run cleanup before the device resets
       break;
     case HomieEventType::WIFI_CONNECTED:
-      // Do whatever you want when Wi-Fi is connected in normal mode
+      // Run code after Wi-Fi connects in normal mode
 
       // You can use event.ip, event.gateway, event.mask
       break;
     case HomieEventType::WIFI_DISCONNECTED:
-      // Do whatever you want when Wi-Fi is disconnected in normal mode
+      // Run code after Wi-Fi disconnects in normal mode
 
       // You can use event.wifiReason
       /*
-        Wi-Fi Reason (souce: https://github.com/espressif/arduino-esp32/blob/master/libraries/WiFi/examples/WiFiClientEvents/WiFiClientEvents.ino)
-        0  SYSTEM_EVENT_WIFI_READY               < ESP32 WiFi ready
+        Wi-Fi Reason (source: https://github.com/espressif/arduino-esp32/blob/master/libraries/WiFi/examples/WiFiClientEvents/WiFiClientEvents.ino)
+        0  SYSTEM_EVENT_WIFI_READY               < ESP32 Wi-Fi ready
         1  SYSTEM_EVENT_SCAN_DONE                < ESP32 finish scanning AP
         2  SYSTEM_EVENT_STA_START                < ESP32 station start
         3  SYSTEM_EVENT_STA_STOP                 < ESP32 station stop
@@ -69,10 +73,10 @@ void onHomieEvent(const HomieEvent& event) {
       */
       break;
     case HomieEventType::MQTT_READY:
-      // Do whatever you want when MQTT is connected in normal mode
+      // Run code after MQTT connects in normal mode
       break;
     case HomieEventType::MQTT_DISCONNECTED:
-      // Do whatever you want when MQTT is disconnected in normal mode
+      // Run code after MQTT disconnects in normal mode
 
       // You can use event.mqttReason
       /*
@@ -88,15 +92,15 @@ void onHomieEvent(const HomieEvent& event) {
       */
       break;
     case HomieEventType::MQTT_PACKET_ACKNOWLEDGED:
-      // Do whatever you want when an MQTT packet with QoS > 0 is acknowledged by the broker
+      // Track MQTT packets with QoS > 0 acknowledged by the broker
 
       // You can use event.packetId
       break;
     case HomieEventType::READY_TO_SLEEP:
-      // After you've called `prepareToSleep()`, the event is triggered when MQTT is disconnected
+      // Triggered after prepareToSleep() disconnects MQTT
       break;
     case HomieEventType::SENDING_STATISTICS:
-      // Do whatever you want when statistics are sent in normal mode
+      // Run code before statistics are sent in normal mode
       break;
   }
 }

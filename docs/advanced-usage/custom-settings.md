@@ -1,9 +1,14 @@
-# Typical use case
+# Custom settings
 
-Homie for ESP8266 lets you implement custom settings that can be set from the JSON configuration file and the Configuration API. Below is an example of how to use this feature:
+Homie for ESP8266 lets you implement custom settings that can be set from the
+JSON configuration file and the Configuration API. Below is an example of how to
+use this feature:
 
 ```c++
-HomieSetting<long> percentageSetting("percentage", "A simple percentage");  // id, description
+HomieSetting<long> percentageSetting(
+  "percentage",
+  "A simple percentage"
+);  // id, description
 
 void setup() {
   percentageSetting.setDefaultValue(50).setValidator([] (long candidate) {
@@ -15,9 +20,9 @@ void setup() {
 ```
 
 !!! tip "setDefaultValue() before Homie.setup()"
-
-As shown in the example above, the **default value** has to be set **before** `Homie.setup()` is called.
-Otherwise you get an error on startup if there is also no value configured in JSON configuration file.
+    As shown in the example above, the **default value** has to be set
+    **before** `Homie.setup()` is called. Otherwise you get an error on startup
+    if there is also no value configured in the JSON configuration file.
 
 An `HomieSetting` instance can be of the following types:
 
@@ -28,9 +33,15 @@ An `HomieSetting` instance can be of the following types:
 | `double`      | A floating number that can fit into a `real64_t`    |
 | `const char*` | Any string                                          |
 
-By default, a setting is mandatory (you have to set it in the configuration file). If you give it a default value with `setDefaultValue()`, the setting becomes optional. You can validate a setting by giving a validator function to `setValidator()`. To get the setting from your code, use `get()`. To get whether the value returned is the optional one or the one provided, use `wasProvided()`.
+By default, a setting is mandatory, so it must be present in the configuration
+file. If you give it a default value with `setDefaultValue()`, the setting
+becomes optional. You can validate a setting by passing a validator function to
+`setValidator()`. To get the setting from your code, use `get()`. To check
+whether the returned value is the default or the configured value, use
+`wasProvided()`.
 
-For this example, if you want to provide the `percentage` setting, you will have to put in your configuration file:
+For this example, if you want to provide the `percentage` setting, put this in
+your configuration file:
 
 ```json
 {
@@ -40,22 +51,29 @@ For this example, if you want to provide the `percentage` setting, you will have
 }
 ```
 
-# Updating custom settings
+## Updating custom settings
 
-In order to change custom settings send via MQTT the JSON Object to: `homie/<device>/$implementation/config/set`. The JSON object might include all settings you need to update at once. As well, partial/incremental update is supported.
-JSON object should be flat string. From the example above it becomes:
-`{"settings":{"percentage":75}}`
+To change custom settings over MQTT, publish the JSON object to
+`homie/<device>/$implementation/config/set`. The object can include every
+setting you need to update, or only the fields that changed.
 
-!!! tip Updated custom settings are saved to the configured filesystem automatically. SPIFFS is used by default; LittleFS is opt-in with `HOMIE_USE_LITTLEFS=1`.
+From the example above, the compact payload is:
 
-Once you updated the custom settings Homie will save it to the Flash and reboot itself.
-The reboot causes the updated and stored setting be read into RAM and be used in actual code.
+```json
+{ "settings": { "percentage": 75 } }
+```
 
-!!! tip If function of your Homie device is sensitive to reboots, then consider other method of custom settings.
+!!! tip "Updated custom settings are saved automatically"
+    Homie saves updated custom settings to the configured filesystem, then
+    reboots. SPIFFS is used by default; LittleFS is opt-in with
+    `HOMIE_USE_LITTLEFS=1`. On the next boot, the stored value is read into RAM
+    and used by the sketch.
 
-Sometimes, the device is designed for non-interrupted service. So the reset by setting update is not acceptable and can affect the device function/behavior.
+!!! tip "If reboots are disruptive, choose another settings flow"
+    Sometimes the device is designed for uninterrupted service. In that case, a
+    reboot after a settings update may not be acceptable for the device behavior.
 
-# Example
+## Example
 
 See the following example for a concrete use case:
 
