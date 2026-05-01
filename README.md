@@ -89,7 +89,7 @@ board = esp32dev
 framework = arduino
 lib_compat_mode = strict
 lib_deps =
-  labodj/homie-v5 @ ^3.4.0
+  labodj/homie-v5 @ ^3.4.2
 ```
 
 For ESP8266 projects, keep the ESP8266 PlatformIO platform:
@@ -103,7 +103,7 @@ lib_compat_mode = strict
 build_flags =
   -D PIO_FRAMEWORK_ARDUINO_LWIP2_LOW_MEMORY
 lib_deps =
-  labodj/homie-v5 @ ^3.4.0
+  labodj/homie-v5 @ ^3.4.2
 ```
 
 `PIO_FRAMEWORK_ARDUINO_LWIP2_LOW_MEMORY` is useful for reliable OTA behavior on

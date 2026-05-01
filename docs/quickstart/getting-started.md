@@ -40,7 +40,7 @@ board = esp32dev
 framework = arduino
 lib_compat_mode = strict
 lib_deps =
-  labodj/homie-v5 @ ^3.4.0
+  labodj/homie-v5 @ ^3.4.2
 ```
 
 ESP8266 projects should keep the ESP8266 PlatformIO platform and can use the
