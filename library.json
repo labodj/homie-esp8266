@@ -1,6 +1,6 @@
 {
   "name": "homie-v5",
-  "version": "3.4.2",
+  "version": "3.5.0",
   "keywords": "iot, home, automation, mqtt, esp8266, esp32, async, sensor, homie-v4, homie-v5, ota, platformio",
   "description": "Maintained Homie MQTT framework fork for ESP8266 / ESP32, focused on Homie v5 support while keeping Homie v3/v4 compatibility",
   "homepage": "https://github.com/labodj/homie-esp8266",

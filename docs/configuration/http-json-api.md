@@ -60,7 +60,7 @@ such as `500 Internal Server error`, `400 Bad request` and so on.
     ```json
     {
       "hardware_device_id": "52a8fa5d",
-      "homie_esp8266_version": "3.4.2",
+      "homie_esp8266_version": "3.5.0",
       "firmware": {
         "name": "awesome-device",
         "version": "1.0.0"
