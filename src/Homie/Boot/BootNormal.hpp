@@ -181,12 +181,14 @@ class BootNormal : public Boot {
 #if HOMIE_PENDING_MQTT_MESSAGE_PREALLOCATED
     char topic[PENDING_MQTT_MESSAGE_MAX_TOPIC_LENGTH + 1];
     char payload[PENDING_MQTT_MESSAGE_MAX_PAYLOAD_LENGTH + 1];
-    size_t payloadLength = 0;
 #else
     // Owning copies are required because AsyncMqttClient callback buffers are
     // no longer valid once the callback returns.
     std::unique_ptr<char[]> topic;
     std::unique_ptr<char[]> payload;
+#endif
+#if HOMIE_STRICT_PROPERTY_VALIDATION
+    size_t payloadLength = 0;
 #endif
     AsyncMqttClientMessageProperties properties{};
   };
@@ -297,7 +299,7 @@ class BootNormal : public Boot {
   void _flushPendingMqttMessages();
   bool _enqueuePendingMqttAck(uint16_t id);
   bool _enqueuePendingMqttMessage(const char* topic, const char* payload, size_t payloadLength, const AsyncMqttClientMessageProperties& properties);
-  void _handleQueuedMqttMessage(char* topic, char* payload, const AsyncMqttClientMessageProperties& properties);
+  void _handleQueuedMqttMessage(char* topic, char* payload, size_t payloadLength, const AsyncMqttClientMessageProperties& properties);
   void _recoverIfNetworkStateDrifted();
   void _recoverIfConnectAttemptStalled();
   void _handleWifiConnected(const IPAddress& ip, const IPAddress& mask, const IPAddress& gateway);

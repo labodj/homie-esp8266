@@ -1,5 +1,7 @@
 #include "BootNormal.hpp"
 
+#include "../Utils/ConventionValidation.hpp"
+
 #include <climits>
 #include <new>
 
@@ -183,123 +185,26 @@ const char* formatWifiDisconnectReason(int32_t value, char* buffer, size_t buffe
   return formatOptionalInt32(value, buffer, bufferSize);
 }
 
-bool isValidHomieId(const char* value) {
-  if (!value || value[0] == '\0') return false;
-
-  const size_t length = strlen(value);
-  if (value[0] == '-' || value[length - 1] == '-') return false;
-
-  for (size_t i = 0; i < length; i++) {
-    const char c = value[i];
-    const bool isLowerAlpha = c >= 'a' && c <= 'z';
-    const bool isDigitChar = c >= '0' && c <= '9';
-    if (!isLowerAlpha && !isDigitChar && c != '-') {
-      return false;
-    }
-  }
-
-  return true;
-}
-
 void warnIfInvalidHomieId(const __FlashStringHelper* scope, const char* value) {
-  if (isValidHomieId(value)) return;
+  if (ConventionValidation::isValidTopicId(value)) return;
 
-#if HOMIE_CONVENTION_V5
   Interface::get().getLogger() << F("✖ ") << scope << F(" \"") << value
-                               << F("\" is not Homie v5 ID-compliant")
+                               << F("\" is not Homie ID-compliant")
                                << endl;
-  Helpers::abort(F("✖ Homie v5 requires lowercase topic IDs with digits and hyphens only"));
-#else
-  Interface::get().getLogger() << F("! ") << scope << F(" \"") << value
-                               << F("\" is not Homie ID-compliant; keeping it for backward compatibility")
-                               << endl;
-#endif
+  Helpers::abort(F("✖ Homie requires lowercase topic IDs with digits and hyphens only"));
 }
 
 void warnIfInvalidPropertyId(const char* nodeId, const char* propertyId) {
-  if (isValidHomieId(propertyId)) return;
+  if (ConventionValidation::isValidTopicId(propertyId)) return;
 
-#if HOMIE_CONVENTION_V5
   Interface::get().getLogger() << F("✖ Property ID \"") << propertyId
                                << F("\" on node \"") << nodeId
-                               << F("\" is not Homie v5 ID-compliant")
+                               << F("\" is not Homie ID-compliant")
                                << endl;
-  Helpers::abort(F("✖ Homie v5 requires lowercase property IDs with digits and hyphens only"));
-#else
-  Interface::get().getLogger() << F("! Property ID \"") << propertyId
-                               << F("\" on node \"") << nodeId
-                               << F("\" is not Homie ID-compliant; keeping it for backward compatibility")
-                               << endl;
-#endif
+  Helpers::abort(F("✖ Homie requires lowercase property IDs with digits and hyphens only"));
 }
 
 #if HOMIE_CONVENTION_V5
-bool isValidHomieV5BaseTopic(const char* baseTopic) {
-  size_t end = strlen(baseTopic);
-  if (end == 0) return false;
-  if (baseTopic[end - 1] == '/') end--;
-  if (end == 0) return false;
-
-  if (end >= 2 && baseTopic[end - 1] == '5' && baseTopic[end - 2] == '/') {
-    end -= 2;
-  }
-  if (end == 0) return false;
-
-  for (size_t i = 0; i < end; i++) {
-    if (baseTopic[i] == '/') return false;
-  }
-
-  char domain[MAX_MQTT_BASE_TOPIC_LENGTH];
-  if (end >= sizeof(domain)) return false;
-  memcpy(domain, baseTopic, end);
-  domain[end] = '\0';
-  return isValidHomieId(domain);
-}
-
-bool isValidHomieV5Datatype(const char* datatype) {
-  if (!datatype || datatype[0] == '\0') return false;
-
-  return strcmp_P(datatype, PSTR("integer")) == 0
-      || strcmp_P(datatype, PSTR("float")) == 0
-      || strcmp_P(datatype, PSTR("boolean")) == 0
-      || strcmp_P(datatype, PSTR("string")) == 0
-      || strcmp_P(datatype, PSTR("enum")) == 0
-      || strcmp_P(datatype, PSTR("color")) == 0
-      || strcmp_P(datatype, PSTR("datetime")) == 0
-      || strcmp_P(datatype, PSTR("duration")) == 0
-      || strcmp_P(datatype, PSTR("json")) == 0;
-}
-
-bool homieV5DatatypeRequiresFormat(const char* datatype) {
-  return strcmp_P(datatype, PSTR("enum")) == 0
-      || strcmp_P(datatype, PSTR("color")) == 0;
-}
-
-bool homieV5DatatypeSupportsFormat(const char* datatype) {
-  return strcmp_P(datatype, PSTR("integer")) == 0
-      || strcmp_P(datatype, PSTR("float")) == 0
-      || strcmp_P(datatype, PSTR("boolean")) == 0
-      || strcmp_P(datatype, PSTR("enum")) == 0
-      || strcmp_P(datatype, PSTR("color")) == 0
-      || strcmp_P(datatype, PSTR("json")) == 0;
-}
-
-const char* resolveHomieV5Datatype(const char* datatype, const char* format) {
-  if (!isValidHomieV5Datatype(datatype)) return HOMIE_DEFAULT_PROPERTY_DATATYPE;
-
-  if (homieV5DatatypeRequiresFormat(datatype) && (!format || format[0] == '\0')) {
-    // enum and color descriptions are invalid without a format. Advertising
-    // them as string keeps the $description valid while preserving payloads.
-    return HOMIE_DEFAULT_PROPERTY_DATATYPE;
-  }
-
-  return datatype;
-}
-
-bool shouldAdvertiseHomieV5Format(const char* datatype, const char* format) {
-  return format && format[0] != '\0' && homieV5DatatypeSupportsFormat(datatype);
-}
-
 uint8_t decimalDigits(uint16_t value) {
   uint8_t digits = 1;
   while (value >= 10) {
@@ -377,7 +282,7 @@ void appendV5NodeId(String& output, const HomieNode* node, uint16_t rangeIndex, 
   output.concat(node->getId());
   if (rangeNode) {
     // Homie v5 topic IDs may contain hyphens but not underscores. Range nodes
-    // therefore use "node-<index>" in v5 while v3/v4 keep the legacy "_<index>".
+    // therefore use "node-<index>" in v5. Homie v3 keeps the legacy "_<index>".
     output += '-';
     output.concat(rangeIndex);
   }
@@ -535,14 +440,16 @@ void BootNormal::setup() {
 
   if (Interface::get().led.enabled) Interface::get().getBlinker().start(LED_WIFI_DELAY);
 
-#if HOMIE_CONVENTION_V5
-  if (!isValidHomieV5BaseTopic(Interface::get().getConfig().get().mqtt.baseTopic)) {
+  if (!ConventionValidation::isValidRootTopic(Interface::get().getConfig().get().mqtt.baseTopic)) {
     Interface::get().getLogger() << F("✖ mqtt.base_topic \"")
                                  << Interface::get().getConfig().get().mqtt.baseTopic
-                                 << F("\" is not a valid Homie v5 root domain") << endl;
+                                 << F("\" is not a valid Homie root topic") << endl;
+#if HOMIE_CONVENTION_V5
     Helpers::abort(F("✖ Homie v5 requires mqtt.base_topic '<domain>/' or '<domain>/5/'"));
-  }
+#else
+    Helpers::abort(F("✖ Homie 3/4 require mqtt.base_topic '<root>/' with one valid topic ID"));
 #endif
+  }
 
   // Generate topic buffers once. MQTT callbacks reuse the root topic for
   // filtering, and the publisher reuses the device-topic scratch buffer.
@@ -621,28 +528,46 @@ void BootNormal::setup() {
 
   Interface::get().getConfig().log();
   warnIfInvalidHomieId(F("Device ID"), Interface::get().getConfig().get().deviceId);
+  warnIfInvalidHomieId(F("Firmware name"), Interface::get().firmware.name);
 
   for (HomieNode* iNode : HomieNode::nodes) {
     warnIfInvalidHomieId(F("Node ID"), iNode->getId());
+#if HOMIE_CONVENTION_V4
+    if (iNode->isRange()) {
+      Interface::get().getLogger() << F("✖ Range node \"") << iNode->getId()
+                                   << F("\" cannot be advertised in Homie v4 mode")
+                                   << endl;
+      Helpers::abort(F("✖ Homie v4 mode requires explicit non-range nodes"));
+    }
+#endif
     iNode->setup();
     for (Property* iProperty : iNode->getProperties()) {
       warnIfInvalidPropertyId(iNode->getId(), iProperty->getId());
-#if HOMIE_CONVENTION_V5
       const char* datatype = iProperty->getDatatype();
-      if (!isValidHomieV5Datatype(datatype)) {
+      const char* format = iProperty->getFormat();
+      const auto parsedDatatype = ConventionValidation::parseDatatype(datatype);
+      const auto advertisedDatatype = ConventionValidation::advertisedDatatype(datatype, format);
+      if (datatype && datatype[0] != '\0' && parsedDatatype == ConventionValidation::Datatype::Unknown) {
         Interface::get().getLogger() << F("! Property \"") << iProperty->getId()
                                      << F("\" on node \"") << iNode->getId()
-                                     << F("\" has no valid Homie v5 datatype; $description will use string")
+                                     << F("\" has no valid Homie datatype; advertisement will use string")
                                      << endl;
-      } else if (homieV5DatatypeRequiresFormat(datatype)
-                 && (!iProperty->getFormat() || iProperty->getFormat()[0] == '\0')) {
+      } else if (parsedDatatype != ConventionValidation::Datatype::Unknown
+                 && advertisedDatatype == ConventionValidation::Datatype::String
+                 && parsedDatatype != ConventionValidation::Datatype::String) {
         Interface::get().getLogger() << F("! Property \"") << iProperty->getId()
                                      << F("\" on node \"") << iNode->getId()
-                                     << F("\" uses Homie v5 datatype ") << datatype
-                                     << F(" without the required format; $description will use string")
+                                     << F("\" has no valid format for its datatype; advertisement will use string")
+                                     << endl;
+      } else if (format && format[0] != '\0'
+                 && !ConventionValidation::shouldAdvertiseFormat(
+                      ConventionValidation::datatypeName(advertisedDatatype),
+                      format)) {
+        Interface::get().getLogger() << F("! Property \"") << iProperty->getId()
+                                     << F("\" on node \"") << iNode->getId()
+                                     << F("\" has a format that is not valid for the advertised datatype; format will be omitted")
                                      << endl;
       }
-#endif
     }
   }
 
@@ -1192,7 +1117,9 @@ bool BootNormal::_enqueuePendingMqttMessage(const char* topic, const char* paylo
   memcpy(slot.topic, topic, topicLength + 1);
   memcpy(slot.payload, payload, payloadLength);
   slot.payload[payloadLength] = '\0';
+#if HOMIE_STRICT_PROPERTY_VALIDATION
   slot.payloadLength = payloadLength;
+#endif
   slot.properties = properties;
   _pendingMqttMessageWriteIndex = (writeIndex + 1) % PENDING_MQTT_MESSAGE_QUEUE_SIZE;
   _pendingMqttMessageCount = _pendingMqttMessageCount + 1;
@@ -1232,6 +1159,9 @@ bool BootNormal::_enqueuePendingMqttMessage(const char* topic, const char* paylo
     PendingMqttMessage& slot = _pendingMqttMessages[writeIndex];
     slot.topic = std::move(topicCopy);
     slot.payload = std::move(payloadCopy);
+#if HOMIE_STRICT_PROPERTY_VALIDATION
+    slot.payloadLength = payloadLength;
+#endif
     slot.properties = properties;
     _pendingMqttMessageWriteIndex = (writeIndex + 1) % PENDING_MQTT_MESSAGE_QUEUE_SIZE;
     _pendingMqttMessageCount = _pendingMqttMessageCount + 1;
@@ -1269,7 +1199,7 @@ void BootNormal::_flushPendingMqttMessages() {
 #endif
 }
 
-void BootNormal::_handleQueuedMqttMessage(char* topic, char* payload, const AsyncMqttClientMessageProperties& properties) {
+void BootNormal::_handleQueuedMqttMessage(char* topic, char* payload, size_t payloadLength, const AsyncMqttClientMessageProperties& properties) {
   std::unique_ptr<char*[]> topicLevels;
   uint8_t topicLevelsCount = 0;
   if (!__splitTopic(topic, topicLevels, topicLevelsCount)) {
@@ -1277,8 +1207,6 @@ void BootNormal::_handleQueuedMqttMessage(char* topic, char* payload, const Asyn
     return;
   }
   if (topicLevelsCount == 0) return;
-
-  const size_t payloadLength = strlen(payload);
 
   if (__handleBroadcasts(topic, payload, properties, payloadLength, 0, payloadLength, topicLevels.get(), topicLevelsCount))
     return;
@@ -1306,6 +1234,7 @@ void BootNormal::_processPendingMqttMessages() {
     std::unique_ptr<char[]> topicCopy;
     std::unique_ptr<char[]> payloadBuffer;
 #endif
+    size_t payloadLength = 0;
     AsyncMqttClientMessageProperties properties{};
     bool hasMoreMessages = false;
 
@@ -1324,7 +1253,11 @@ void BootNormal::_processPendingMqttMessages() {
       _pendingMqttMessageCount = _pendingMqttMessageCount - 1;
 
 #if HOMIE_PENDING_MQTT_MESSAGE_PREALLOCATED
-      const size_t payloadLength = slot.payloadLength;
+#if HOMIE_STRICT_PROPERTY_VALIDATION
+      payloadLength = slot.payloadLength;
+#else
+      payloadLength = strlen(slot.payload);
+#endif
       memcpy(topicCopy.data(), slot.topic, sizeof(slot.topic));
       memcpy(payloadBuffer.data(), slot.payload, payloadLength + 1);
       hasQueuedMessage = true;
@@ -1332,7 +1265,11 @@ void BootNormal::_processPendingMqttMessages() {
       if (slot.topic && slot.payload) {
         topicCopy = std::move(slot.topic);
         payloadBuffer = std::move(slot.payload);
-        properties = slot.properties;
+#if HOMIE_STRICT_PROPERTY_VALIDATION
+        payloadLength = slot.payloadLength;
+#else
+        payloadLength = strlen(payloadBuffer.get());
+#endif
       }
 #endif
       properties = slot.properties;
@@ -1345,13 +1282,13 @@ void BootNormal::_processPendingMqttMessages() {
       continue;
     }
 
-    _handleQueuedMqttMessage(topicCopy.data(), payloadBuffer.data(), properties);
+    _handleQueuedMqttMessage(topicCopy.data(), payloadBuffer.data(), payloadLength, properties);
 #else
     if (!topicCopy || !payloadBuffer) {
       continue;
     }
 
-    _handleQueuedMqttMessage(topicCopy.get(), payloadBuffer.get(), properties);
+    _handleQueuedMqttMessage(topicCopy.get(), payloadBuffer.get(), payloadLength, properties);
 #endif
 
     if (!Interface::get().getMqttClient().connected()) {
@@ -1616,8 +1553,8 @@ size_t BootNormal::_estimateV5DescriptionLength() const {
         const char* propertyName = property->getName();
         const char* unit = property->getUnit() ? property->getUnit() : "";
         const char* propertyFormat = property->getFormat();
-        const char* datatype = resolveHomieV5Datatype(property->getDatatype(), propertyFormat);
-        const char* format = shouldAdvertiseHomieV5Format(datatype, propertyFormat)
+        const char* datatype = ConventionValidation::advertisedDatatypeName(property->getDatatype(), propertyFormat);
+        const char* format = ConventionValidation::shouldAdvertiseFormat(datatype, propertyFormat)
                            ? propertyFormat
                            : "";
         length += 112 + strlen(property->getId())
@@ -1665,8 +1602,8 @@ uint32_t BootNormal::_computeV5DescriptionVersion() const {
         const char* propertyName = property->getName();
         const char* unit = property->getUnit() ? property->getUnit() : "";
         const char* propertyFormat = property->getFormat();
-        const char* datatype = resolveHomieV5Datatype(property->getDatatype(), propertyFormat);
-        const char* format = shouldAdvertiseHomieV5Format(datatype, propertyFormat)
+        const char* datatype = ConventionValidation::advertisedDatatypeName(property->getDatatype(), propertyFormat);
+        const char* format = ConventionValidation::shouldAdvertiseFormat(datatype, propertyFormat)
                            ? propertyFormat
                            : "";
         fnv1aUpdateString(hash, property->getId());
@@ -1735,8 +1672,8 @@ uint16_t BootNormal::_publishV5Description() {
       for (Property* property : node->getProperties()) {
         const char* propertyName = property->getName();
         const char* propertyFormat = property->getFormat();
-        const char* datatype = resolveHomieV5Datatype(property->getDatatype(), propertyFormat);
-        const char* format = shouldAdvertiseHomieV5Format(datatype, propertyFormat)
+        const char* datatype = ConventionValidation::advertisedDatatypeName(property->getDatatype(), propertyFormat);
+        const char* format = ConventionValidation::shouldAdvertiseFormat(datatype, propertyFormat)
                            ? propertyFormat
                            : nullptr;
 
@@ -2155,13 +2092,8 @@ void BootNormal::_advertise() {
               break;
             case AdvertisementProgress::PropertyStep::PUB_DATATYPE:
             {
-              const char* datatype = iProperty->getDatatype();
-#if HOMIE_CONVENTION_V4
-              // Homie 4.0.0 requires $datatype. The conservative fallback is
-              // string because it is the least restrictive Homie payload type.
-              if (!datatype || datatype[0] == '\0') datatype = HOMIE_DEFAULT_PROPERTY_DATATYPE;
-#endif
-              if (datatype && (datatype[0] != '\0')) {
+              const char* datatype = ConventionValidation::advertisedDatatypeName(iProperty->getDatatype(), iProperty->getFormat());
+              if (ConventionValidation::shouldAdvertiseDatatype(iProperty->getDatatype())) {
                 strcpy_P(subtopic.get(), PSTR("/"));
                 strcat(subtopic.get(), node->getId());
                 strcat_P(subtopic.get(), PSTR("/"));
@@ -2190,7 +2122,8 @@ void BootNormal::_advertise() {
             case AdvertisementProgress::PropertyStep::PUB_FORMAT:
             {
               bool sent = false;
-              if (iProperty->getFormat() && (iProperty->getFormat()[0] != '\0')) {
+              const char* datatype = ConventionValidation::advertisedDatatypeName(iProperty->getDatatype(), iProperty->getFormat());
+              if (ConventionValidation::shouldAdvertiseFormat(datatype, iProperty->getFormat())) {
                 strcpy_P(subtopic.get(), PSTR("/"));
                 strcat(subtopic.get(), node->getId());
                 strcat_P(subtopic.get(), PSTR("/"));
@@ -2814,9 +2747,9 @@ bool HomieInternals::BootNormal::__handleNodeProperty(char * topic, char * paylo
   if (topicLevelsCount != 4 || strcmp_P(topicLevels[3], PSTR("set")) != 0) {
     return false;
   }
-#if HOMIE_CONVENTION_V5
+#if HOMIE_CONVENTION_V4 || HOMIE_CONVENTION_V5
   if (properties.retain) {
-    Interface::get().getLogger() << F("! Ignoring retained Homie v5 set command for ")
+    Interface::get().getLogger() << F("! Ignoring retained Homie set command for ")
                                  << topicLevels[1] << F("/") << topicLevels[2] << endl;
     return true;
   }
@@ -2911,6 +2844,14 @@ bool HomieInternals::BootNormal::__handleNodeProperty(char * topic, char * paylo
     Interface::get().getLogger() << F("Node ") << node << F(": ") << property << F(" property not settable") << endl;
     return true;
   }
+
+#if HOMIE_STRICT_PROPERTY_VALIDATION
+  if (!ConventionValidation::payloadMatches(propertyObject->getDatatype(), propertyObject->getFormat(), payload, total, true)) {
+    Interface::get().getLogger() << F("! Ignoring invalid Homie payload for ")
+                                 << homieNode->getId() << F("/") << property << endl;
+    return true;
+  }
+#endif
 
   #ifdef DEBUG
     Interface::get().getLogger() << F("Calling global input handler...") << endl;

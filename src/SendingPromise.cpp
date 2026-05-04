@@ -1,4 +1,8 @@
 #include "SendingPromise.hpp"
+
+#if HOMIE_STRICT_PROPERTY_VALIDATION
+#include "Homie/Utils/ConventionValidation.hpp"
+#endif
 #include "Homie/Utils/Helpers.hpp"
 
 using namespace HomieInternals;
@@ -18,8 +22,6 @@ SendingPromise::SendingPromise()
 : _node(nullptr)
 , _property(nullptr)
 , _qos(0)
-, _retained(false)
-, _setRetained(true)
 , _overwriteSetter(false)
 , _range { .isRange = false, .index = 0 } {
 }
@@ -28,8 +30,6 @@ SendingPromise& SendingPromise::reset() {
   _node = nullptr;
   _property = nullptr;
   _qos = 0;
-  _retained = false;
-  _setRetained = true;
   _overwriteSetter = false;
   _range = { .isRange = false, .index = 0 };
   return *this;
@@ -41,12 +41,7 @@ SendingPromise& SendingPromise::setQos(uint8_t qos) {
 }
 
 SendingPromise& SendingPromise::setRetained(bool retained) {
-  _retained = retained;
-  return *this;
-}
-
-SendingPromise& SendingPromise::setSetRetained(bool retained) {
-  _setRetained = retained;
+  (void)retained;
   return *this;
 }
 
@@ -78,6 +73,22 @@ uint16_t SendingPromise::send(const String& value) {
     return 0;
   }
 
+  Property* propertyObject = _node->getProperty(*_property);
+  if (!propertyObject) {
+    Interface::get().getLogger() << F("✖ setNodeProperty(): property is not advertised") << endl;
+    return 0;
+  }
+
+  const bool propertyRetained = propertyObject->isRetained();
+#if HOMIE_STRICT_PROPERTY_VALIDATION
+  const char* propertyDatatype = propertyObject->getDatatype();
+  const char* propertyFormat = propertyObject->getFormat();
+  if (!ConventionValidation::payloadMatches(propertyDatatype, propertyFormat, value.c_str(), value.length())) {
+    Interface::get().getLogger() << F("✖ setNodeProperty(): payload does not match advertised Homie datatype/format") << endl;
+    return 0;
+  }
+#endif
+
   char rangeSuffix[1 + 5 + 1] = {0};  // separator + max uint16_t + NUL
   if (_range.isRange) {
     char rangeStr[5 + 1];  // max 65535
@@ -88,7 +99,9 @@ uint16_t SendingPromise::send(const String& value) {
     rangeSuffix[0] = '_';
 #endif
     memcpy(rangeSuffix + 1, rangeStr, decimalDigits(_range.index) + 1);
-    _range.isRange = false;                  //FIXME: This is a workaround. Problem is that Range is loaded from the property into SendingPromise, but the SendingPromise is global. (one SendingPromise for the HomieClass instance
+    // SendingPromise is a shared builder. Clear the transient range after use
+    // so the next property publish cannot accidentally reuse it.
+    _range.isRange = false;
     _range.index = 0;
   }
 
@@ -101,11 +114,7 @@ uint16_t SendingPromise::send(const String& value) {
                            + strlen(rangeSuffix)
                            + 1
                            + _property->length();
-#if HOMIE_CONVENTION_V5
   const size_t requiredTopicLength = topicLength;
-#else
-  const size_t requiredTopicLength = _overwriteSetter ? topicLength + strlen_P(PSTR("/set")) : topicLength;
-#endif
 
   if (requiredTopicLength + 1 > MAX_MQTT_TOPIC_LENGTH) {
     Interface::get().getLogger() << F("✖ setNodeProperty(): MQTT topic too long") << endl;
@@ -120,30 +129,31 @@ uint16_t SendingPromise::send(const String& value) {
   strcat_P(topic, PSTR("/"));
   strcat(topic, _property->c_str());
 
+  uint8_t qos = _qos;
+  bool retained = propertyRetained;
+#if HOMIE_CONVENTION_V5
+  if (!retained) {
+    qos = 0;
+  }
+#endif
+
   uint16_t packetId;
 #if HOMIE_CONVENTION_V5
   if (value.length() == 0) {
     // Homie v5 represents an actual empty string value with one NUL byte,
     // because an MQTT zero-length retained payload deletes the retained topic.
     const char emptyStringPayload = '\0';
-    packetId = Interface::get().getMqttClient().publish(topic, _qos, _retained, &emptyStringPayload, 1);
+    packetId = Interface::get().getMqttClient().publish(topic, qos, retained, &emptyStringPayload, 1);
   } else {
-    packetId = Interface::get().getMqttClient().publish(topic, _qos, _retained, value.c_str());
+    packetId = Interface::get().getMqttClient().publish(topic, qos, retained, value.c_str());
   }
 #else
-  packetId = Interface::get().getMqttClient().publish(topic, _qos, _retained, value.c_str());
+  packetId = Interface::get().getMqttClient().publish(topic, qos, retained, value.c_str());
 #endif
 
-#if HOMIE_CONVENTION_V5
   if (_overwriteSetter) {
-    Interface::get().getLogger() << F("! overwriteSetter(true) is ignored in Homie v5 mode; devices must not publish command topics") << endl;
+    Interface::get().getLogger() << F("! overwriteSetter(true) is ignored; Homie devices must not publish command topics") << endl;
   }
-#else
-  if (_overwriteSetter) {
-    strcat_P(topic, PSTR("/set"));
-    Interface::get().getMqttClient().publish(topic, 2, _setRetained, value.c_str());
-  }
-#endif
 
   return packetId;
 }
@@ -156,28 +166,4 @@ SendingPromise& SendingPromise::setNode(const HomieNode& node) {
 SendingPromise& SendingPromise::setProperty(const String& property) {
   _property = &property;
   return *this;
-}
-
-const HomieNode* SendingPromise::getNode() const {
-  return _node;
-}
-
-const String* SendingPromise::getProperty() const {
-  return _property;
-}
-
-uint8_t SendingPromise::getQos() const {
-  return _qos;
-}
-
-HomieRange SendingPromise::getRange() const {
-  return _range;
-}
-
-bool SendingPromise::isRetained() const {
-  return _retained;
-}
-
-bool SendingPromise::doesOverwriteSetter() const {
-  return _overwriteSetter;
 }

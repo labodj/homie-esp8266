@@ -10,6 +10,13 @@
 #define HOMIE_CONFIG 1
 #endif
 
+// Keep the default runtime lightweight. The library always validates the Homie
+// structure it owns; exact property format and payload compliance can be
+// checked at runtime by opting into the heavier validation path.
+#ifndef HOMIE_STRICT_PROPERTY_VALIDATION
+#define HOMIE_STRICT_PROPERTY_VALIDATION 0
+#endif
+
 // MQTT convention advertisement is intentionally build-time selected. Keeping
 // Homie 3.0.1 as the default preserves the existing device discovery contract.
 // Newer convention modes are opt-in because they change how controllers

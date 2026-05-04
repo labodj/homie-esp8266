@@ -40,6 +40,7 @@ class PropertyInterface {
 class Property {
   friend HomieNode;
   friend BootNormal;
+  friend SendingPromise;
 
  public:
   explicit Property(const char* id) {
