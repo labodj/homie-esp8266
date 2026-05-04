@@ -18,9 +18,8 @@ before deploying upgraded devices.
 2. The signature of `handleInput` changed to:
    `handleInput(const HomieRange& range, const String& property, const String& value)`
    See the Ping example for the current callback shape.
-3. Review every advertised property id against the Homie 3.0.1 id rules. This
-   fork keeps legacy ids for compatibility but logs a warning when an id is not
-   convention-compliant.
-4. If you rely on `overwriteSetter(true)`, use `setSetRetained()` when the
-   mirrored `/set` topic needs a different retained flag from the main property
-   publish.
+3. Review every device, firmware, node and property id against the Homie 3.0.1
+   id rules. This fork now rejects non-compliant ids before boot continues,
+   because publishing invalid MQTT topics makes discovery unreliable.
+4. Remove `overwriteSetter(true)` usage. Current Homie publishing ignores device
+   attempts to mirror values onto controller command topics.

@@ -284,20 +284,30 @@ Set the advertised property metadata and optionally make the property settable.
 
 - **`handler`**: Optional. Input handler of the property
 
+Homie topic IDs are validated strictly before boot continues. Device IDs, node
+IDs and property IDs must use lowercase letters, digits and hyphens. In Homie
+3.0.1 and 4.0.0 modes, they must not start or end with a hyphen. Firmware names
+use the same character set because Homie 3.0.1 and the Homie v4 legacy firmware
+extension apply that rule to `$fw/name`.
+
 When `HOMIE_CONVENTION_VERSION=4` is enabled, Homie v4 discovery requires every
 advertised property to publish `$name` and `$datatype`. The runtime falls back
 to the property id and `string` respectively if older sketches omit those calls,
-but explicit `setName()` and `setDatatype()` calls remain the recommended API.
+and advertises invalid Homie v4 datatypes or missing required formats as
+`string`, but explicit `setName()`, `setDatatype()` and `setFormat()` calls
+remain the recommended API. Exact format correctness is the sketch's
+responsibility unless `HOMIE_STRICT_PROPERTY_VALIDATION=1` is enabled.
 
 When `HOMIE_CONVENTION_VERSION=5` is enabled, property metadata is written into
 the retained `$description` JSON document. A missing or invalid v5 datatype is
 advertised as `string` so the description remains spec-valid, but explicit
 `setDatatype()` calls are still recommended for useful controller discovery.
 
-`setRetained(false)` marks the advertised property as non-retained and makes
-`HomieNode::setProperty()` start from a non-retained publish default for that
-property. You can still override an individual send with
-`SendingPromise::setRetained()`.
+`setRetained(false)` marks the advertised property as non-retained. That
+advertised retention flag is also the effective runtime publish flag; property
+publishes no longer let `SendingPromise::setRetained()` contradict the
+property metadata. In Homie v5 mode, non-retained property publishes are always
+sent with QoS 0 to match the convention.
 
 ```c++
 SendingPromise& setProperty(const String& property);
@@ -312,18 +322,19 @@ This returns a reference to `SendingPromise`, on which you can call:
 
 ```c++
 SendingPromise& setQos(uint8_t qos);  // defaults to 1
-SendingPromise& setRetained(bool retained);  // defaults to the advertised property retention
-SendingPromise& setSetRetained(bool retained);  // defaults to true, controls only the echoed /set topic when overwriteSetter(true) is used
-SendingPromise& overwriteSetter(bool overwrite);  // defaults to false
+SendingPromise& setRetained(bool retained);  // kept for source compatibility; property metadata decides the retain flag
+SendingPromise& overwriteSetter(bool overwrite);  // kept for source compatibility; command-topic mirroring is ignored
 SendingPromise& setRange(const HomieRange& range);  // defaults to not a range
 SendingPromise& setRange(uint16_t rangeIndex);  // defaults to not a range
 uint16_t send(const String& value);  // finally send the property, return the packetId (or 0 if failure)
 ```
 
-Method names should be self-explanatory. `setSetRetained()` is a fork extension
-and only affects the mirrored `/set` topic published by `overwriteSetter(true)`.
-In Homie v5 mode `overwriteSetter(true)` is ignored because devices must not
-publish command topics.
+`send()` returns `0` if the property was not advertised. When
+`HOMIE_STRICT_PROPERTY_VALIDATION=1` is enabled, it also returns `0` for payloads
+that do not match the advertised Homie datatype and format. `overwriteSetter(true)`
+is kept so older sketches still compile, but Homie publishing ignores
+command-topic mirroring because devices must not publish controller command
+topics.
 
 ## HomieSetting
 

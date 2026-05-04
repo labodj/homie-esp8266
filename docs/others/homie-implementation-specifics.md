@@ -34,6 +34,12 @@ The legacy extensions cover the existing `$mac`, `$localip`, `$fw/name`,
 `$stats/freeheap` topics. Fork-specific OTA and diagnostics topics remain
 documented in this page.
 
+All convention modes abort boot for invalid MQTT roots, device IDs, firmware
+names, node IDs or property IDs. Homie v4 mode also rejects range nodes. Missing
+property names and datatypes still use safe discovery fallbacks, while invalid
+datatypes and `enum`/`color` properties without the required format are
+advertised as `string`.
+
 In Homie v5 mode the device base topic is `<domain>/5/<device-id>`, for example
 `homie/5/kitchen-light`. Device, node and property discovery is published as a
 retained `$description` JSON document. The existing runtime topics in this page
@@ -46,6 +52,12 @@ io.github.labodj.esp-runtime
 See [Homie v5 fork runtime extension](homie-v5-runtime-extension.md) for the
 extension contract. These topics are intentionally documented as an extension in
 v5 mode because they are not part of Homie v5 core discovery.
+
+Non-retained property publishes use QoS 0 in v5 mode. Retained `/set` commands
+are ignored in both v4 and v5 modes because command messages must be
+non-retained. By default, exact property format and payload correctness is the
+sketch's responsibility; enable `HOMIE_STRICT_PROPERTY_VALIDATION=1` to have the
+library reject invalid property publishes and `/set` command payloads.
 
 ## Reset
 

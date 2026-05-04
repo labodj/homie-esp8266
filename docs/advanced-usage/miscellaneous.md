@@ -139,11 +139,18 @@ Homie.getMqttClient().disconnect();
 ```c++
 #include <cppQueue.h>
 
-HomieNode myNode("q_test", "test");
+HomieNode myNode("q-test", "test");
+
+void setupHandler() {
+  myNode.advertise("alert")
+    .setName("Alert")
+    .setDatatype("string")
+    .setRetained(false);
+}
 
 // Queue postponed MQTT messages while Wi-Fi is not connected yet.
 typedef struct strRec {
-  char topic[10];
+  char property[10];
   char msg[90];
 } Rec;
 // RAM is limited. Keep a reasonable queue length.
@@ -166,9 +173,12 @@ To flush queued messages, add this to `loopHandler()`:
 while (!msg_q.isEmpty() && Homie.isConnected()) {
   Rec r;
   msg_q.pop(&r);
-  myNode.setProperty(r.topic).setRetained(false).send(r.msg);
+  myNode.setProperty(r.property).send(r.msg);
 }
 ```
+
+Each queued property must be advertised before it can be sent. Configure
+retention on `advertise()`, not on the queued send operation.
 
 It can be useful to use the queue consistently, not only when Wi-Fi is down. This
 keeps MQTT publishing predictable and reduces work in timing-sensitive paths.

@@ -60,9 +60,20 @@ property metadata at advertisement time:
 
 - Missing property `$name` falls back to the property id.
 - Missing property `$datatype` falls back to `string`.
+- Datatypes outside the Homie v4 set are advertised as `string`.
+- `enum` and `color` properties without the required `$format` are advertised
+  as `string`.
 
 Those fallbacks keep old sketches discoverable, but production v4 devices should
-still set explicit names and datatypes for every advertised property.
+still set explicit names, datatypes and formats for every advertised property
+that needs structured controller discovery.
+
+All convention modes abort boot if the MQTT root, device ID, firmware name, node
+ID or property ID is not Homie ID-compliant. Firmware names are payload metadata,
+but Homie 3.0.1 and the Homie v4 legacy firmware extension require `$fw/name` to
+use the same character set as a device ID. Range nodes are also rejected in v4
+mode because the library's historical range-node metadata is not part of the
+Homie v4 core convention.
 
 Set `HOMIE_CONVENTION_VERSION=5` to enable Homie `5.0` discovery:
 
@@ -88,19 +99,46 @@ contains:
 - property `datatype`, `settable`, `retained`, `unit` and `format` metadata
 - the fork runtime extension `io.github.labodj.esp-runtime`
 
-Homie v5 topic IDs are stricter than older deployments. Device, node and
-property IDs must use lowercase letters, digits and hyphens only. Invalid IDs
-abort boot in v5 mode instead of being kept as compatibility warnings, because
-publishing invalid IDs would violate the v5 topic rules.
+Homie topic IDs must use lowercase letters, digits and hyphens only. Invalid
+IDs abort boot because publishing them would violate the selected convention and
+make discovery unreliable.
 
 Range nodes use `node-<index>` in v5 mode because `_` is not a valid Homie v5
-topic ID character. Homie 3/4 modes keep the historical `node_<index>` range
-topic shape.
+topic ID character. Homie 3 mode keeps the historical `node_<index>` range topic
+shape.
+
+The property retention flag advertised with `setRetained()` is the effective
+runtime publish flag. When a property is advertised as non-retained, v5 property
+publishes use QoS 0 even if a sketch tries to override the publish promise with
+a higher QoS. This matches the Homie v5 retained-message rules for non-retained
+properties.
 
 The existing `$fw`, `$implementation`, `$stats`, OTA and configuration topics
 remain available in v5 mode as fork extension topics declared in
 `$description.extensions`; strict Homie v5 consumers can ignore them if they do
 not implement the extension.
+
+## HOMIE_STRICT_PROPERTY_VALIDATION
+
+Set `HOMIE_STRICT_PROPERTY_VALIDATION=1` to make the library validate property
+formats and payloads at runtime:
+
+```ini
+build_flags =
+  -D HOMIE_STRICT_PROPERTY_VALIDATION=1
+```
+
+The default is `0` to keep embedded firmware small and fast. With the default
+profile, the library validates the Homie structure it owns: MQTT roots, device
+IDs, node IDs, property IDs, convention metadata, retain flags, v5 QoS rules and
+the v5 empty-string encoding. The sketch remains responsible for making
+`setDatatype()`, `setFormat()` and published values agree with the selected
+Homie convention.
+
+When strict property validation is enabled, invalid formats are omitted or
+normalized where possible, outgoing property publishes are rejected if the
+payload does not match the advertised datatype and format, and incoming `/set`
+commands with invalid payloads are ignored before application handlers run.
 
 ## ASYNC_TCP_SSL_ENABLED
 

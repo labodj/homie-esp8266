@@ -23,8 +23,11 @@ Changes are additive where possible:
 - Homie `5.0` MQTT discovery is opt-in with `HOMIE_CONVENTION_VERSION=5` and
   uses the v5 `$description` model instead of changing the default runtime.
 - Queue-size overrides keep the upstream-sized default queues.
-- ID validation warnings do not reject legacy node, property, or device IDs.
-- `setSetRetained()` only extends `overwriteSetter(true)` behavior.
+- Homie topic IDs are now validated strictly because invalid IDs create
+  non-compliant MQTT topics in every convention mode.
+- `setRetained()` and `overwriteSetter()` remain available for source
+  compatibility, but Homie publishing follows the advertised property metadata
+  and never mirrors device values onto command topics.
 
 ## Platform and dependency maintenance
 
@@ -166,12 +169,13 @@ reader and migration code from the production image.
 ## Public API extensions
 
 `PropertyInterface::setRetained()` controls whether an advertised property is
-retained and whether `HomieNode::setProperty()` starts from a retained or
-non-retained publish default for that property.
+retained. That advertised property flag is also the effective MQTT retain flag
+used by property publishes.
 
-`SendingPromise::setSetRetained()` is fork-specific. It controls only the
-mirrored `/set` publish performed by `overwriteSetter(true)`. The main property
-publish remains controlled by `SendingPromise::setRetained()`.
+`SendingPromise::setRetained()` and `SendingPromise::overwriteSetter()` are kept
+for older sketches that already call them. `send()` ignores contradictory retain
+overrides and ignores `overwriteSetter(true)` because Homie command topics are
+reserved for controllers.
 
 ## Homie v4 compatibility
 
@@ -193,8 +197,14 @@ their consumers do not change behavior accidentally. In v4 mode the device:
 
 Homie v4 requires property `$name` and `$datatype`. Older sketches did not
 always set those fields, so v4 mode publishes safe fallbacks during discovery:
-the property id as `$name`, and `string` as `$datatype`. Explicit metadata in
-the sketch always wins and is still recommended for production firmware.
+the property id as `$name`, and `string` as `$datatype`. Invalid datatypes and
+`enum`/`color` properties without the required format are also advertised as
+`string`. Explicit metadata in the sketch always wins and is still recommended
+for production firmware.
+
+All convention modes abort boot for invalid MQTT roots, device IDs, firmware
+names, node IDs or property IDs. Homie v4 mode also rejects range nodes because
+the historical `$array` range metadata is not part of Homie v4 core discovery.
 
 ## Homie v5 compatibility
 
@@ -210,10 +220,12 @@ In v5 mode the device:
 - publishes under `<domain>/5/<device-id>`
 - publishes retained `$state` and `$description` topics
 - places device, node and property metadata in `$description`
-- requires strict v5 topic IDs for device, node and property identifiers
 - uses `node-<index>` for range nodes instead of the legacy `node_<index>`
 - ignores retained `/set` commands because Homie v5 command messages must be
   non-retained
+- publishes non-retained property values with QoS 0, as required by Homie v5
+- can validate property publishes and `/set` command payloads against the
+  advertised datatype and format when `HOMIE_STRICT_PROPERTY_VALIDATION=1`
 - adds `mqtt.effective_base_topic` to the advertised safe config so diagnostics
   show the real v5 runtime root while the saved `mqtt.base_topic` remains stable
 

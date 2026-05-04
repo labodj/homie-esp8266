@@ -178,8 +178,14 @@ again with `pio run --target uploadfs`. After the device has booted once with
 the migration firmware, OTA a normal LittleFS-only firmware without
 `HOMIE_MIGRATE_SPIFFS_TO_LITTLEFS`.
 
-Homie 3.0.1 remains the default advertised MQTT convention. To opt into Homie
-4.0.0 discovery metadata, build with:
+Homie 3.0.1 remains the default advertised MQTT convention. In every convention
+mode, device, node and property IDs, plus the firmware name, are checked before
+boot continues; invalid topic IDs would produce MQTT topics that controllers
+cannot reliably discover. Property payload correctness remains the sketch's
+responsibility by default; enable `HOMIE_STRICT_PROPERTY_VALIDATION=1` when you
+want the library to check payloads and formats at runtime.
+
+To opt into Homie 4.0.0 discovery metadata, build with:
 
 ```ini
 build_flags =
@@ -189,9 +195,13 @@ build_flags =
 The v4 mode publishes the mandatory `$extensions` topic and declares the
 official legacy firmware and stats extensions so the existing `$fw`, `$mac`,
 `$localip` and `$stats` topics remain documented by the Homie v4 ecosystem.
-Older sketches that omitted property names or datatypes still advertise in v4
-mode through conservative fallbacks, but production firmware should set
-`setName()` and `setDatatype()` explicitly for every advertised property.
+Device, node and property IDs must use lowercase letters, digits and hyphens.
+Range nodes are not advertised in Homie v4 mode because Homie v4 has no core
+range-node model. Older sketches that omitted property names or datatypes still
+advertise through conservative fallbacks; invalid datatypes and `enum`/`color`
+properties without the required format are advertised as `string`. Production
+firmware should still set `setName()`, `setDatatype()` and `setFormat()`
+explicitly where controller discovery depends on them.
 
 To opt into Homie 5.0 discovery metadata, build with:
 
@@ -204,7 +214,9 @@ Homie v5 mode publishes under `homie/5/<device-id>` by default and uses a
 retained `$description` JSON document for discovery. The historical OTA,
 configuration, firmware and statistics topics remain available as the declared
 fork extension `io.github.labodj.esp-runtime`. Device, node and property IDs
-must be valid Homie v5 IDs: lowercase letters, digits and hyphens.
+must be valid Homie v5 IDs: lowercase letters, digits and hyphens. Non-retained
+property publishes use QoS 0, and empty string property values are sent with the
+single-byte NUL representation required by Homie v5.
 
 ## Features
 
