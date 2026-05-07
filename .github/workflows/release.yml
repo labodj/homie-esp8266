@@ -128,12 +128,12 @@ jobs:
           cache: pip
           cache-dependency-path: |
             docs/requirements.txt
-            scripts/ota_updater/requirements.txt
+            scripts/ota_updater/requirements-dev.txt
       - name: Install release tools
         run: |
           python -m pip install --upgrade pip platformio \
             -r docs/requirements.txt \
-            -r scripts/ota_updater/requirements.txt
+            -r scripts/ota_updater/requirements-dev.txt
       - name: Validate tag and package metadata
         run: |
           python - <<'PY'
@@ -157,8 +157,7 @@ jobs:
       - name: Validate package and helpers
         run: |
           python -m json.tool library.json >/dev/null
-          python -m py_compile scripts/ota_updater/ota_updater.py
-          python scripts/ota_updater/test_ota_updater.py
+          make python-check
           mkdocs build --strict
           package_version="$(python -c 'import json, pathlib; print(json.loads(pathlib.Path("library.json").read_text(encoding="utf-8"))["version"])')"
           mkdir -p dist

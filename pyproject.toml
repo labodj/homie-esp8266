@@ -1,0 +1,49 @@
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+include = ["scripts/homie_ota.py", "scripts/ota_updater/*.py"]
+src = ["scripts"]
+extend-exclude = ["scripts/firmware_parser"]
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+  "COM812",
+  "D203",
+  "D213",
+  "EM101",
+  "EM102",
+  "ISC001",
+  "TC001",
+  "TC003",
+  "TRY003",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"scripts/ota_updater/test_ota_updater.py" = [
+  "D101",
+  "D102",
+  "D103",
+  "PLR2004",
+  "S101",
+  "S105",
+  "SLF001",
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.format]
+docstring-code-format = true
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_unreachable = true
+pretty = true
+show_error_codes = true
+files = [
+  "scripts/homie_ota.py",
+  "scripts/ota_updater/ota_updater.py",
+  "scripts/ota_updater/test_ota_updater.py",
+]

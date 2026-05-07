@@ -2,36 +2,56 @@
 
 """Unit tests for the Homie MQTT OTA updater state machine."""
 
+from __future__ import annotations
+
+import argparse
 import contextlib
+import hashlib
 import io
 import json
-import os
 import sys
-import tempfile
-import unittest
-from hashlib import md5
+from collections.abc import Iterator
+from dataclasses import dataclass
 from pathlib import Path
+from typing import TypedDict, cast
+
+import pytest
+from paho.mqtt import client as mqtt
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import ota_updater
 
 
+class _PublishRecord(TypedDict):
+    topic: str
+    payload: bytes | None
+    qos: int
+    retain: bool
+
+
+@dataclass(frozen=True)
 class _PublishInfo:
-    def __init__(self, rc=ota_updater.mqtt.MQTT_ERR_SUCCESS):
-        self.rc = rc
+    rc: int = mqtt.MQTT_ERR_SUCCESS
 
 
 class _FakeClient:
-    def __init__(self):
-        self.published = []
-        self.subscribed = []
-        self.username = None
-        self.password = None
-        self.tls_options = None
+    def __init__(self) -> None:
+        self.published: list[_PublishRecord] = []
+        self.subscribed: list[str] = []
+        self.username: str | None = None
+        self.password: str | None = None
+        self.tls_options: dict[str, str | None] | None = None
         self.tls_insecure = False
 
-    def publish(self, topic, payload=None, qos=0, retain=False):
+    def publish(
+        self,
+        topic: str,
+        payload: bytes | None = None,
+        qos: int = 0,
+        *,
+        retain: bool = False,
+    ) -> _PublishInfo:
         self.published.append(
             {
                 "topic": topic,
@@ -42,281 +62,297 @@ class _FakeClient:
         )
         return _PublishInfo()
 
-    def subscribe(self, topic):
+    def subscribe(self, topic: str) -> tuple[int, int]:
         self.subscribed.append(topic)
-        return ota_updater.mqtt.MQTT_ERR_SUCCESS, len(self.subscribed)
+        return mqtt.MQTT_ERR_SUCCESS, len(self.subscribed)
 
-    def username_pw_set(self, username, password=None):
+    def username_pw_set(self, username: str, password: str | None = None) -> None:
         self.username = username
         self.password = password
 
-    def tls_set(self, ca_certs=None, certfile=None, keyfile=None):
+    def tls_set(
+        self,
+        ca_certs: str | None = None,
+        certfile: str | None = None,
+        keyfile: str | None = None,
+    ) -> None:
         self.tls_options = {
             "ca_certs": ca_certs,
             "certfile": certfile,
             "keyfile": keyfile,
         }
 
-    def tls_insecure_set(self, value):
+    def tls_insecure_set(self, *, value: bool) -> None:
         self.tls_insecure = value
 
 
 @contextlib.contextmanager
-def _quiet_stdout():
+def _quiet_stdout() -> Iterator[None]:
     with contextlib.redirect_stdout(io.StringIO()):
         yield
 
 
 @contextlib.contextmanager
-def _quiet_stderr():
+def _quiet_stderr() -> Iterator[None]:
     with contextlib.redirect_stderr(io.StringIO()):
         yield
 
 
-def _make_updater(firmware=b"test firmware", homie_version=ota_updater.DEFAULT_HOMIE_VERSION):
+def _fake_client(client: _FakeClient) -> mqtt.Client:
+    return cast("mqtt.Client", client)
+
+
+def _make_updater(
+    firmware: bytes = b"test firmware",
+    homie_version: str = ota_updater.DEFAULT_HOMIE_VERSION,
+) -> ota_updater.OTAUpdater:
     return ota_updater.OTAUpdater(
-        broker_host="127.0.0.1",
-        broker_port=1883,
-        broker_username=None,
-        broker_password=None,
-        broker_ca_cert=None,
-        broker_tls_certfile=None,
-        broker_tls_keyfile=None,
-        broker_tls_insecure=False,
-        base_topic="homie",
-        device_id="device",
-        client_id=None,
+        settings=ota_updater.OTASettings(
+            broker_host="127.0.0.1",
+            broker_port=1883,
+            broker_username=None,
+            broker_password=None,
+            broker_ca_cert=None,
+            broker_tls_certfile=None,
+            broker_tls_keyfile=None,
+            broker_tls_insecure=False,
+            base_topic="homie",
+            device_id="device",
+            client_id=None,
+            timeout_seconds=10,
+            homie_version=homie_version,
+        ),
         firmware=firmware,
-        timeout_seconds=10,
-        homie_version=homie_version,
     )
 
 
-class OTAUpdaterTests(unittest.TestCase):
-    def test_base_topic_and_md5_helpers(self):
-        self.assertEqual(ota_updater.normalize_base_topic("homie"), "homie/")
-        self.assertEqual(ota_updater.normalize_base_topic("homie/"), "homie/")
-        self.assertEqual(ota_updater.normalize_base_topic("homie", "5"), "homie/5/")
-        self.assertEqual(ota_updater.normalize_base_topic("homie/5/", "5"), "homie/5/")
-        self.assertEqual(ota_updater.normalize_base_topic("5", "5"), "5/5/")
-        self.assertEqual(ota_updater.normalize_base_topic("lab", "4"), "lab/")
-        self.assertTrue(ota_updater.base_topic_ends_with_segment("homie/5/", "5"))
-        self.assertFalse(ota_updater.base_topic_ends_with_segment("5/", "5"))
-        self.assertFalse(ota_updater.base_topic_ends_with_segment("homie/15/", "5"))
-        self.assertTrue(ota_updater.is_valid_md5("0123456789abcdef0123456789ABCDEF"))
-        self.assertFalse(ota_updater.is_valid_md5("not-a-checksum"))
-        self.assertEqual(
-            ota_updater.md5_digest("0123456789abcdef0123456789ABCDEF"),
-            "0123456789abcdef0123456789abcdef",
-        )
-        with self.assertRaises(ota_updater.argparse.ArgumentTypeError):
-            ota_updater.positive_int("0")
-        with self.assertRaises(ota_updater.argparse.ArgumentTypeError):
-            ota_updater.md5_digest("not-a-checksum")
+def test_base_topic_and_md5_helpers() -> None:
+    assert ota_updater.normalize_base_topic("homie") == "homie/"
+    assert ota_updater.normalize_base_topic("homie/") == "homie/"
+    assert ota_updater.normalize_base_topic("homie", "5") == "homie/5/"
+    assert ota_updater.normalize_base_topic("homie/5/", "5") == "homie/5/"
+    assert ota_updater.normalize_base_topic("5", "5") == "5/5/"
+    assert ota_updater.normalize_base_topic("lab", "4") == "lab/"
+    assert ota_updater.base_topic_ends_with_segment("homie/5/", "5")
+    assert not ota_updater.base_topic_ends_with_segment("5/", "5")
+    assert not ota_updater.base_topic_ends_with_segment("homie/15/", "5")
+    assert ota_updater.is_valid_md5("0123456789abcdef0123456789ABCDEF")
+    assert not ota_updater.is_valid_md5("not-a-checksum")
+    assert (
+        ota_updater.md5_digest("0123456789abcdef0123456789ABCDEF")
+        == "0123456789abcdef0123456789abcdef"
+    )
+    with pytest.raises(argparse.ArgumentTypeError):
+        ota_updater.positive_int("0")
+    with pytest.raises(argparse.ArgumentTypeError):
+        ota_updater.md5_digest("not-a-checksum")
 
-    def test_configure_auth_accepts_username_without_password(self):
-        updater = _make_updater()
-        updater.broker_username = "user"
-        fake_client = _FakeClient()
 
-        updater._configure_auth_and_tls(fake_client)
+def test_configure_auth_accepts_username_without_password() -> None:
+    updater = _make_updater()
+    updater.broker_username = "user"
+    fake_client = _FakeClient()
 
-        self.assertEqual(fake_client.username, "user")
-        self.assertIsNone(fake_client.password)
+    updater._configure_auth_and_tls(_fake_client(fake_client))
 
-    def test_configure_tls_client_certificate_options(self):
-        updater = _make_updater()
-        updater.broker_ca_cert = "ca.pem"
-        updater.broker_tls_certfile = "client.pem"
-        updater.broker_tls_keyfile = "client.key"
-        updater.broker_tls_insecure = True
-        fake_client = _FakeClient()
+    assert fake_client.username == "user"
+    assert fake_client.password is None
 
-        updater._configure_auth_and_tls(fake_client)
 
-        self.assertEqual(
-            fake_client.tls_options,
+def test_configure_tls_client_certificate_options() -> None:
+    updater = _make_updater()
+    updater.broker_ca_cert = "ca.pem"
+    updater.broker_tls_certfile = "client.pem"
+    updater.broker_tls_keyfile = "client.key"
+    updater.broker_tls_insecure = True
+    fake_client = _FakeClient()
+
+    updater._configure_auth_and_tls(_fake_client(fake_client))
+
+    assert fake_client.tls_options == {
+        "ca_certs": "ca.pem",
+        "certfile": "client.pem",
+        "keyfile": "client.key",
+    }
+    assert fake_client.tls_insecure
+
+
+def test_publish_waits_for_ota_flag_and_checksum() -> None:
+    updater = _make_updater()
+    fake_client = _FakeClient()
+    updater._client = _fake_client(fake_client)
+
+    with _quiet_stdout():
+        updater._handle_ota_enabled("true")
+        assert fake_client.published == []
+
+        updater._handle_checksum("0" * 32)
+
+    assert updater._published
+    assert len(fake_client.published) == 1
+    publish = fake_client.published[0]
+    assert publish["topic"] == updater._firmware_topic
+    assert publish["payload"] == updater.firmware
+    assert publish["qos"] == 1
+    assert not publish["retain"]
+
+
+def test_progress_status_updates_upload_total() -> None:
+    updater = _make_updater()
+    updater._published = True
+
+    with _quiet_stdout():
+        updater._handle_status("206 12/24")
+
+    assert updater._upload_total == 24
+    assert not updater._done.is_set()
+
+
+def test_invalid_progress_payload_finishes_session_as_failure() -> None:
+    updater = _make_updater()
+    updater._published = True
+
+    with _quiet_stdout():
+        updater._handle_status("206 25/24")
+
+    assert updater._done.is_set()
+    assert not updater._success
+
+
+def test_terminal_failure_status_finishes_session() -> None:
+    updater = _make_updater()
+    updater._published = True
+
+    with _quiet_stdout():
+        updater._handle_status("500 FLASH_ERROR")
+
+    assert updater._done.is_set()
+    assert not updater._success
+
+
+def test_reboot_readiness_then_matching_checksum_succeeds() -> None:
+    updater = _make_updater()
+    updater._client = _fake_client(_FakeClient())
+    updater._published = True
+    updater._waiting_for_reboot = True
+
+    with _quiet_stdout():
+        updater._handle_device_ready(updater._state_topic, "ready")
+        updater._handle_checksum(updater.firmware_md5)
+
+    assert updater._ready_for_post_upload_checksum
+    assert updater._done.is_set()
+    assert updater._success
+
+
+def test_malformed_status_finishes_session_as_failure() -> None:
+    updater = _make_updater()
+    updater._published = True
+
+    with _quiet_stdout():
+        updater._handle_status("not-a-status")
+
+    assert updater._done.is_set()
+    assert not updater._success
+
+
+def test_malformed_ota_enabled_finishes_session_as_failure() -> None:
+    updater = _make_updater()
+
+    with _quiet_stdout():
+        updater._handle_ota_enabled("maybe")
+
+    assert updater._done.is_set()
+    assert not updater._success
+
+
+def test_read_firmware_rejects_empty_and_md5_mismatch(tmp_path: Path) -> None:
+    firmware_path = tmp_path / "firmware.bin"
+    firmware_path.write_bytes(b"firmware")
+    expected = hashlib.md5(b"firmware", usedforsecurity=False).hexdigest()
+
+    assert ota_updater.read_firmware(firmware_path, expected) == b"firmware"
+    with pytest.raises(RuntimeError):
+        ota_updater.read_firmware(firmware_path, "0" * 32)
+
+    empty_path = tmp_path / "empty.bin"
+    empty_path.write_bytes(b"")
+    with pytest.raises(RuntimeError):
+        ota_updater.read_firmware(empty_path, None)
+
+
+def test_parse_args_rejects_password_or_key_without_parent_option() -> None:
+    with _quiet_stderr(), pytest.raises(SystemExit):
+        ota_updater.parse_args(["--broker-password", "secret", "-i", "device", "fw.bin"])
+
+    with _quiet_stderr(), pytest.raises(SystemExit):
+        ota_updater.parse_args(["--broker-tls-keyfile", "key.pem", "-i", "device", "fw.bin"])
+
+
+def test_parse_args_normalizes_homie_v5_base_topic() -> None:
+    args = ota_updater.parse_args(["--homie-version", "5", "-t", "lab", "-i", "device", "fw.bin"])
+
+    assert args.base_topic == "lab/5/"
+
+
+def test_parse_args_loads_json_config_and_resolves_secret_env(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    config_path = tmp_path / "ota.json"
+    config_path.write_text(
+        json.dumps(
             {
-                "ca_certs": "ca.pem",
-                "certfile": "client.pem",
-                "keyfile": "client.key",
-            },
-        )
-        self.assertTrue(fake_client.tls_insecure)
+                "broker": {
+                    "host": "mqtt.lan",
+                    "port": 8883,
+                    "username": "homie",
+                    "password_env": "HOMIE_OTA_TEST_PASSWORD",
+                    "tls_cacert": "ca.pem",
+                    "tls_insecure": True,
+                },
+                "homie": {"base_topic": "lab/homie", "version": "5"},
+                "ota": {"timeout": 45, "client_id": "ota-client"},
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("HOMIE_OTA_TEST_PASSWORD", "secret")
 
-    def test_publish_waits_for_ota_flag_and_checksum(self):
-        updater = _make_updater()
-        fake_client = _FakeClient()
-        updater._client = fake_client
+    args = ota_updater.parse_args(["--config", str(config_path), "-i", "device", "fw.bin"])
 
-        with _quiet_stdout():
-            updater._handle_ota_enabled("true")
-            self.assertEqual(fake_client.published, [])
+    assert args.broker_host == "mqtt.lan"
+    assert args.broker_port == 8883
+    assert args.broker_username == "homie"
+    assert args.broker_password == "secret"
+    assert args.broker_tls_cacert == "ca.pem"
+    assert args.broker_tls_insecure
+    assert args.base_topic == "lab/homie/5/"
+    assert args.homie_version == "5"
+    assert args.timeout == 45
+    assert args.client_id == "ota-client"
 
-            updater._handle_checksum("0" * 32)
 
-        self.assertTrue(updater._published)
-        self.assertEqual(len(fake_client.published), 1)
-        publish = fake_client.published[0]
-        self.assertEqual(publish["topic"], updater._firmware_topic)
-        self.assertEqual(publish["payload"], updater.firmware)
-        self.assertEqual(publish["qos"], 1)
-        self.assertFalse(publish["retain"])
+def test_parse_args_allows_cli_to_override_config_secret_env(tmp_path: Path) -> None:
+    config_path = tmp_path / "ota.json"
+    config_path.write_text(
+        json.dumps({"broker": {"username_env": "UNSET_USER_ENV"}}),
+        encoding="utf-8",
+    )
+    args = ota_updater.parse_args(
+        [
+            "--config",
+            str(config_path),
+            "--broker-username",
+            "cli-user",
+            "-i",
+            "device",
+            "fw.bin",
+        ]
+    )
 
-    def test_progress_status_updates_upload_total(self):
-        updater = _make_updater()
-        updater._published = True
-
-        with _quiet_stdout():
-            updater._handle_status("206 12/24")
-
-        self.assertEqual(updater._upload_total, 24)
-        self.assertFalse(updater._done.is_set())
-
-    def test_invalid_progress_payload_finishes_session_as_failure(self):
-        updater = _make_updater()
-        updater._published = True
-
-        with _quiet_stdout():
-            updater._handle_status("206 25/24")
-
-        self.assertTrue(updater._done.is_set())
-        self.assertFalse(updater._success)
-
-    def test_terminal_failure_status_finishes_session(self):
-        updater = _make_updater()
-        updater._published = True
-
-        with _quiet_stdout():
-            updater._handle_status("500 FLASH_ERROR")
-
-        self.assertTrue(updater._done.is_set())
-        self.assertFalse(updater._success)
-
-    def test_reboot_readiness_then_matching_checksum_succeeds(self):
-        updater = _make_updater()
-        updater._client = _FakeClient()
-        updater._published = True
-        updater._waiting_for_reboot = True
-
-        with _quiet_stdout():
-            updater._handle_device_ready(updater._state_topic, "ready")
-            updater._handle_checksum(updater.firmware_md5)
-
-        self.assertTrue(updater._ready_for_post_upload_checksum)
-        self.assertTrue(updater._done.is_set())
-        self.assertTrue(updater._success)
-
-    def test_malformed_status_finishes_session_as_failure(self):
-        updater = _make_updater()
-        updater._published = True
-
-        with _quiet_stdout():
-            updater._handle_status("not-a-status")
-
-        self.assertTrue(updater._done.is_set())
-        self.assertFalse(updater._success)
-
-    def test_malformed_ota_enabled_finishes_session_as_failure(self):
-        updater = _make_updater()
-
-        with _quiet_stdout():
-            updater._handle_ota_enabled("maybe")
-
-        self.assertTrue(updater._done.is_set())
-        self.assertFalse(updater._success)
-
-    def test_read_firmware_rejects_empty_and_md5_mismatch(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            firmware_path = Path(tmpdir) / "firmware.bin"
-            firmware_path.write_bytes(b"firmware")
-            expected = md5(b"firmware").hexdigest()
-
-            self.assertEqual(ota_updater.read_firmware(firmware_path, expected), b"firmware")
-            with self.assertRaises(RuntimeError):
-                ota_updater.read_firmware(firmware_path, "0" * 32)
-
-            empty_path = Path(tmpdir) / "empty.bin"
-            empty_path.write_bytes(b"")
-            with self.assertRaises(RuntimeError):
-                ota_updater.read_firmware(empty_path, None)
-
-    def test_parse_args_rejects_password_or_key_without_parent_option(self):
-        with _quiet_stderr():
-            with self.assertRaises(SystemExit):
-                ota_updater.parse_args(["--broker-password", "secret", "-i", "device", "fw.bin"])
-            with self.assertRaises(SystemExit):
-                ota_updater.parse_args(["--broker-tls-keyfile", "key.pem", "-i", "device", "fw.bin"])
-
-    def test_parse_args_normalizes_homie_v5_base_topic(self):
-        args = ota_updater.parse_args(["--homie-version", "5", "-t", "lab", "-i", "device", "fw.bin"])
-
-        self.assertEqual(args.base_topic, "lab/5/")
-
-    def test_parse_args_loads_json_config_and_resolves_secret_env(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            config_path = Path(tmpdir) / "ota.json"
-            config_path.write_text(
-                json.dumps(
-                    {
-                        "broker": {
-                            "host": "mqtt.lan",
-                            "port": 8883,
-                            "username": "homie",
-                            "password_env": "HOMIE_OTA_TEST_PASSWORD",
-                            "tls_cacert": "ca.pem",
-                            "tls_insecure": True,
-                        },
-                        "homie": {"base_topic": "lab/homie", "version": "5"},
-                        "ota": {"timeout": 45, "client_id": "ota-client"},
-                    }
-                ),
-                encoding="utf-8",
-            )
-            old_password = os.environ.get("HOMIE_OTA_TEST_PASSWORD")
-            os.environ["HOMIE_OTA_TEST_PASSWORD"] = "secret"
-            try:
-                args = ota_updater.parse_args(
-                    ["--config", str(config_path), "-i", "device", "fw.bin"]
-                )
-            finally:
-                if old_password is None:
-                    os.environ.pop("HOMIE_OTA_TEST_PASSWORD", None)
-                else:
-                    os.environ["HOMIE_OTA_TEST_PASSWORD"] = old_password
-
-        self.assertEqual(args.broker_host, "mqtt.lan")
-        self.assertEqual(args.broker_port, 8883)
-        self.assertEqual(args.broker_username, "homie")
-        self.assertEqual(args.broker_password, "secret")
-        self.assertEqual(args.broker_tls_cacert, "ca.pem")
-        self.assertTrue(args.broker_tls_insecure)
-        self.assertEqual(args.base_topic, "lab/homie/5/")
-        self.assertEqual(args.homie_version, "5")
-        self.assertEqual(args.timeout, 45)
-        self.assertEqual(args.client_id, "ota-client")
-
-    def test_parse_args_allows_cli_to_override_config_secret_env(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            config_path = Path(tmpdir) / "ota.json"
-            config_path.write_text(
-                json.dumps({"broker": {"username_env": "UNSET_USER_ENV"}}),
-                encoding="utf-8",
-            )
-            args = ota_updater.parse_args(
-                [
-                    "--config",
-                    str(config_path),
-                    "--broker-username",
-                    "cli-user",
-                    "-i",
-                    "device",
-                    "fw.bin",
-                ]
-            )
-
-        self.assertEqual(args.broker_username, "cli-user")
+    assert args.broker_username == "cli-user"
 
 
 if __name__ == "__main__":
-    unittest.main()
+    raise SystemExit(pytest.main([__file__]))

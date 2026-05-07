@@ -3,13 +3,23 @@ Script: OTA updater
 
 This script will allow you to send an OTA update to your device.
 
-## Installation
+Installation
+------------
 
 ```bash
 python3 -m pip install -r requirements.txt
 ```
 
-## Usage
+Development checks
+------------------
+
+```bash
+python3 -m pip install -r requirements-dev.txt
+make python-check
+```
+
+Usage
+-----
 
 ```text
 usage: homie_ota.py [-h] [--config CONFIG] [-l BROKER_HOST] [-p BROKER_PORT]
@@ -83,19 +93,25 @@ Prefer `scripts/homie_ota.py` for new automation. It is the stable entry point
 exported by the PlatformIO package; `scripts/ota_updater/ota_updater.py` remains
 available for compatibility.
 
-* `BROKER_HOST` and `BROKER_PORT` defaults to 127.0.0.1 and 1883 respectively if not set.
+* `BROKER_HOST` and `BROKER_PORT` defaults to 127.0.0.1 and 1883 respectively
+  if not set.
 * `BROKER_USERNAME` and `BROKER_PASSWORD` are optional.
 * `--broker-username-env` and `--broker-password-env` read credentials from the
   named environment variable at runtime.
 * `BASE_TOPIC` is normalized with a trailing slash, defaults to `homie/` if not set.
-* `--homie-version 5` publishes to the required v5 root such as `homie/5/<device-id>/...`.
+* `--homie-version 5` publishes to the required v5 root such as
+  `homie/5/<device-id>/...`.
 * TLS is enabled automatically when any `--broker-tls-*` option is set.
 * `--timeout` defaults to `300` seconds.
-* `--expected-md5` is optional, but useful in scripted deployments where the firmware checksum is produced by a build step.
-* The script exits with code `0` on success or when the device is already up to date, and with a non-zero code on failure.
-* The helper is compatible with the maintained `homie-esp8266` OTA status codes, including `400 BAD_*` and `500 FLASH_ERROR`.
+* `--expected-md5` is optional, but useful in scripted deployments where the
+  firmware checksum is produced by a build step.
+* The script exits with code `0` on success or when the device is already up to
+  date, and with a non-zero code on failure.
+* The helper is compatible with the maintained `homie-esp8266` OTA status codes,
+  including `400 BAD_*` and `500 FLASH_ERROR`.
 
-### Example:
+Example
+-------
 
 ```bash
 python3 ota_updater.py -l localhost -u admin -d secure -t "homie/" -i "device-id" /path/to/firmware.bin
