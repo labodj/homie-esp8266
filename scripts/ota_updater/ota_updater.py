@@ -18,11 +18,18 @@ errors and MQTT reconnects.
 """
 
 import argparse
+import json
+import os
 import sys
 import threading
 from hashlib import md5
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
+
+try:
+    import tomllib
+except ImportError:  # pragma: no cover - Python < 3.11 can still use JSON config files.
+    tomllib = None
 
 import paho.mqtt.client as mqtt
 
@@ -35,6 +42,23 @@ DEFAULT_CLIENT_ID_PREFIX = "homie-ota-updater"
 DEFAULT_HOMIE_VERSION = "3"
 SUPPORTED_HOMIE_VERSIONS = ("3", "4", "5")
 PROGRESS_BAR_WIDTH = 30
+CONFIG_ALIASES = {
+    "broker_host": ("broker_host", ("broker", "host")),
+    "broker_port": ("broker_port", ("broker", "port")),
+    "broker_username": ("broker_username", ("broker", "username")),
+    "broker_username_env": ("broker_username_env", ("broker", "username_env")),
+    "broker_password": ("broker_password", ("broker", "password")),
+    "broker_password_env": ("broker_password_env", ("broker", "password_env")),
+    "broker_tls_cacert": ("broker_tls_cacert", ("broker", "tls_cacert")),
+    "broker_tls_certfile": ("broker_tls_certfile", ("broker", "tls_certfile")),
+    "broker_tls_keyfile": ("broker_tls_keyfile", ("broker", "tls_keyfile")),
+    "broker_tls_insecure": ("broker_tls_insecure", ("broker", "tls_insecure")),
+    "base_topic": ("base_topic", ("homie", "base_topic")),
+    "homie_version": ("homie_version", ("homie", "version")),
+    "client_id": ("client_id", ("ota", "client_id")),
+    "expected_md5": ("expected_md5", ("ota", "expected_md5")),
+    "timeout": ("timeout", ("ota", "timeout")),
+}
 
 
 def base_topic_ends_with_segment(value: str, segment: str) -> bool:
@@ -83,6 +107,100 @@ def positive_int(value: str) -> int:
     if parsed <= 0:
         raise argparse.ArgumentTypeError("value must be a positive integer")
     return parsed
+
+
+def load_config(path: Path) -> Dict[str, Any]:
+    """Load optional JSON or TOML defaults for the OTA command."""
+
+    try:
+        raw = path.read_bytes()
+    except OSError as exc:
+        raise RuntimeError(f"failed to read config file {path}: {exc}") from exc
+
+    try:
+        if path.suffix.lower() == ".json":
+            config = json.loads(raw.decode("utf-8"))
+        elif path.suffix.lower() == ".toml":
+            if tomllib is None:
+                raise RuntimeError("TOML config files require Python 3.11+")
+            config = tomllib.loads(raw.decode("utf-8"))
+        else:
+            raise RuntimeError("config file must use .json or .toml")
+    except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+        raise RuntimeError(f"failed to parse config file {path}: {exc}") from exc
+
+    if not isinstance(config, dict):
+        raise RuntimeError(f"config file {path} must contain a JSON/TOML object")
+    return config
+
+
+def config_defaults(config: Dict[str, Any]) -> Dict[str, Any]:
+    """Flatten supported config-file keys into argparse option names."""
+
+    defaults: Dict[str, Any] = {}
+    for name, aliases in CONFIG_ALIASES.items():
+        for alias in aliases:
+            found, value = _config_value(config, alias)
+            if found:
+                defaults[name] = value
+                break
+    return defaults
+
+
+def _config_value(config: Dict[str, Any], alias: Any) -> Tuple[bool, Any]:
+    if isinstance(alias, str):
+        return alias in config, config.get(alias)
+
+    current: Any = config
+    for key in alias:
+        if not isinstance(current, dict) or key not in current:
+            return False, None
+        current = current[key]
+    return True, current
+
+
+def _optional_text(value: Any, option_name: str) -> Optional[str]:
+    if value is None:
+        return None
+    if not isinstance(value, str):
+        raise argparse.ArgumentTypeError(f"{option_name} must be a string")
+    return value
+
+
+def _optional_positive_int(value: Any, option_name: str) -> Optional[int]:
+    if value is None:
+        return None
+    try:
+        return positive_int(str(value))
+    except (TypeError, ValueError, argparse.ArgumentTypeError) as exc:
+        raise argparse.ArgumentTypeError(f"{option_name} must be a positive integer") from exc
+
+
+def _optional_bool(value: Any, option_name: str) -> Optional[bool]:
+    if value is None:
+        return None
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        normalized = value.strip().lower()
+        if normalized in ("1", "true", "yes", "on"):
+            return True
+        if normalized in ("0", "false", "no", "off"):
+            return False
+    raise argparse.ArgumentTypeError(f"{option_name} must be a boolean")
+
+
+def _env_value(
+    env_name: Optional[str],
+    option_name: str,
+    parser: argparse.ArgumentParser,
+) -> Optional[str]:
+    if env_name is None:
+        return None
+    value = os.environ.get(env_name)
+    if value is None:
+        parser.error(f"{option_name} environment variable {env_name!r} is not set")
+    return value
 
 
 class OTAUpdater:
@@ -513,7 +631,7 @@ class OTAUpdater:
 
 
 def parse_args(argv: List[str]) -> argparse.Namespace:
-    """Parse CLI arguments."""
+    """Parse CLI arguments and optional JSON/TOML defaults."""
 
     parser = argparse.ArgumentParser(
         description=(
@@ -523,23 +641,23 @@ def parse_args(argv: List[str]) -> argparse.Namespace:
     )
 
     parser.add_argument(
-        "-l",
-        "--broker-host",
-        default=DEFAULT_BROKER_HOST,
-        help="host name or IP address of the MQTT broker",
+        "--config",
+        type=Path,
+        default=None,
+        help=(
+            "optional JSON or TOML defaults file. CLI arguments override values from "
+            "the file."
+        ),
     )
-    parser.add_argument(
-        "-p",
-        "--broker-port",
-        type=positive_int,
-        default=DEFAULT_BROKER_PORT,
-        help="port of the MQTT broker",
-    )
+    parser.add_argument("-l", "--broker-host", help="host name or IP address of the MQTT broker")
+    parser.add_argument("-p", "--broker-port", type=positive_int, help="port of the MQTT broker")
+    parser.add_argument("--broker-username-env", help="environment variable containing the broker username")
     parser.add_argument(
         "-u",
         "--broker-username",
         help="username used to authenticate with the MQTT broker",
     )
+    parser.add_argument("--broker-password-env", help="environment variable containing the broker password")
     parser.add_argument(
         "-d",
         "--broker-password",
@@ -548,7 +666,6 @@ def parse_args(argv: List[str]) -> argparse.Namespace:
     parser.add_argument(
         "-t",
         "--base-topic",
-        default=DEFAULT_BASE_TOPIC,
         help=(
             "base topic/domain of the Homie devices on the broker. "
             "With --homie-version 5, the updater appends the required /5/ segment "
@@ -559,21 +676,14 @@ def parse_args(argv: List[str]) -> argparse.Namespace:
         "--homie-version",
         "--convention-version",
         choices=SUPPORTED_HOMIE_VERSIONS,
-        default=DEFAULT_HOMIE_VERSION,
         help=(
             "Homie convention generation used by the target firmware. "
             "Use 5 for devices built with HOMIE_CONVENTION_VERSION=5."
         ),
     )
-    parser.add_argument(
-        "-i",
-        "--device-id",
-        required=True,
-        help="Homie device id",
-    )
+    parser.add_argument("-i", "--device-id", required=True, help="Homie device id")
     parser.add_argument(
         "--broker-tls-cacert",
-        default=None,
         help=(
             "CA certificate bundle used to validate TLS connections. "
             "If set, TLS is enabled on the broker connection."
@@ -581,17 +691,16 @@ def parse_args(argv: List[str]) -> argparse.Namespace:
     )
     parser.add_argument(
         "--broker-tls-certfile",
-        default=None,
         help="client certificate file used for mutual TLS authentication",
     )
     parser.add_argument(
         "--broker-tls-keyfile",
-        default=None,
         help="private key file used with --broker-tls-certfile",
     )
     parser.add_argument(
         "--broker-tls-insecure",
         action="store_true",
+        default=None,
         help=(
             "enable TLS but skip broker certificate verification. "
             "Use only for temporary tests with private brokers."
@@ -599,7 +708,6 @@ def parse_args(argv: List[str]) -> argparse.Namespace:
     )
     parser.add_argument(
         "--client-id",
-        default=None,
         help=(
             "MQTT client id used by the updater. "
             f"Defaults to {DEFAULT_CLIENT_ID_PREFIX}-<device-id>."
@@ -608,13 +716,11 @@ def parse_args(argv: List[str]) -> argparse.Namespace:
     parser.add_argument(
         "--expected-md5",
         type=md5_digest,
-        default=None,
         help="expected firmware MD5; aborts before publishing if the file does not match",
     )
     parser.add_argument(
         "--timeout",
         type=positive_int,
-        default=DEFAULT_TIMEOUT_SECONDS,
         help="maximum time in seconds to wait for the OTA workflow to complete",
     )
     parser.add_argument(
@@ -625,12 +731,105 @@ def parse_args(argv: List[str]) -> argparse.Namespace:
 
     parser._optionals.title = "arguments"
     args = parser.parse_args(argv)
+
+    defaults: Dict[str, Any] = {}
+    if args.config is not None:
+        try:
+            defaults = config_defaults(load_config(args.config))
+        except RuntimeError as exc:
+            parser.error(str(exc))
+
+    try:
+        _merge_config_defaults(args, defaults, parser)
+    except argparse.ArgumentTypeError as exc:
+        parser.error(str(exc))
+    return args
+
+
+def _merge_config_defaults(
+    args: argparse.Namespace,
+    defaults: Dict[str, Any],
+    parser: argparse.ArgumentParser,
+) -> None:
+    """Apply defaults from config files while keeping CLI arguments authoritative."""
+
+    args.broker_host = _optional_text(args.broker_host, "--broker-host") or _optional_text(
+        defaults.get("broker_host"), "broker.host"
+    ) or DEFAULT_BROKER_HOST
+    args.broker_port = args.broker_port or _optional_positive_int(
+        defaults.get("broker_port"), "broker.port"
+    ) or DEFAULT_BROKER_PORT
+    args.broker_username = _optional_text(args.broker_username, "--broker-username")
+    args.broker_username_env = _optional_text(
+        args.broker_username_env, "--broker-username-env"
+    )
+    if args.broker_username is None and args.broker_username_env is None:
+        args.broker_username = _optional_text(defaults.get("broker_username"), "broker.username")
+        args.broker_username_env = _optional_text(
+            defaults.get("broker_username_env"), "broker.username_env"
+        )
+
+    args.broker_password = _optional_text(args.broker_password, "--broker-password")
+    args.broker_password_env = _optional_text(
+        args.broker_password_env, "--broker-password-env"
+    )
+    if args.broker_password is None and args.broker_password_env is None:
+        args.broker_password = _optional_text(defaults.get("broker_password"), "broker.password")
+        args.broker_password_env = _optional_text(
+            defaults.get("broker_password_env"), "broker.password_env"
+        )
+
+    if args.broker_username is not None and args.broker_username_env is not None:
+        parser.error("set only one of --broker-username or --broker-username-env")
+    if args.broker_password is not None and args.broker_password_env is not None:
+        parser.error("set only one of --broker-password or --broker-password-env")
+
+    args.broker_username = args.broker_username or _env_value(
+        args.broker_username_env, "--broker-username-env", parser
+    )
+    args.broker_password = args.broker_password or _env_value(
+        args.broker_password_env, "--broker-password-env", parser
+    )
+
     if args.broker_password is not None and args.broker_username is None:
-        parser.error("--broker-password requires --broker-username")
+        parser.error("--broker-password requires --broker-username or --broker-username-env")
+
+    args.base_topic = _optional_text(args.base_topic, "--base-topic") or _optional_text(
+        defaults.get("base_topic"), "homie.base_topic"
+    ) or DEFAULT_BASE_TOPIC
+    args.homie_version = _optional_text(args.homie_version, "--homie-version") or _optional_text(
+        defaults.get("homie_version"), "homie.version"
+    ) or DEFAULT_HOMIE_VERSION
+    if args.homie_version not in SUPPORTED_HOMIE_VERSIONS:
+        parser.error(f"homie.version must be one of: {', '.join(SUPPORTED_HOMIE_VERSIONS)}")
+
+    args.broker_tls_cacert = _optional_text(
+        args.broker_tls_cacert, "--broker-tls-cacert"
+    ) or _optional_text(defaults.get("broker_tls_cacert"), "broker.tls_cacert")
+    args.broker_tls_certfile = _optional_text(
+        args.broker_tls_certfile, "--broker-tls-certfile"
+    ) or _optional_text(defaults.get("broker_tls_certfile"), "broker.tls_certfile")
+    args.broker_tls_keyfile = _optional_text(
+        args.broker_tls_keyfile, "--broker-tls-keyfile"
+    ) or _optional_text(defaults.get("broker_tls_keyfile"), "broker.tls_keyfile")
+    args.broker_tls_insecure = (
+        args.broker_tls_insecure
+        if args.broker_tls_insecure is not None
+        else _optional_bool(defaults.get("broker_tls_insecure"), "broker.tls_insecure")
+    ) or False
     if args.broker_tls_keyfile is not None and args.broker_tls_certfile is None:
         parser.error("--broker-tls-keyfile requires --broker-tls-certfile")
+
+    args.client_id = _optional_text(args.client_id, "--client-id") or _optional_text(
+        defaults.get("client_id"), "ota.client_id"
+    )
+    args.expected_md5 = args.expected_md5 or (
+        md5_digest(str(defaults["expected_md5"])) if defaults.get("expected_md5") else None
+    )
+    args.timeout = args.timeout or _optional_positive_int(
+        defaults.get("timeout"), "ota.timeout"
+    ) or DEFAULT_TIMEOUT_SECONDS
     args.base_topic = normalize_base_topic(args.base_topic, args.homie_version)
-    return args
 
 
 def read_firmware(path: Path, expected_md5: Optional[str]) -> bytes:

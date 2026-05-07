@@ -4,6 +4,8 @@
 
 import contextlib
 import io
+import json
+import os
 import sys
 import tempfile
 import unittest
@@ -250,6 +252,70 @@ class OTAUpdaterTests(unittest.TestCase):
         args = ota_updater.parse_args(["--homie-version", "5", "-t", "lab", "-i", "device", "fw.bin"])
 
         self.assertEqual(args.base_topic, "lab/5/")
+
+    def test_parse_args_loads_json_config_and_resolves_secret_env(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            config_path = Path(tmpdir) / "ota.json"
+            config_path.write_text(
+                json.dumps(
+                    {
+                        "broker": {
+                            "host": "mqtt.lan",
+                            "port": 8883,
+                            "username": "homie",
+                            "password_env": "HOMIE_OTA_TEST_PASSWORD",
+                            "tls_cacert": "ca.pem",
+                            "tls_insecure": True,
+                        },
+                        "homie": {"base_topic": "lab/homie", "version": "5"},
+                        "ota": {"timeout": 45, "client_id": "ota-client"},
+                    }
+                ),
+                encoding="utf-8",
+            )
+            old_password = os.environ.get("HOMIE_OTA_TEST_PASSWORD")
+            os.environ["HOMIE_OTA_TEST_PASSWORD"] = "secret"
+            try:
+                args = ota_updater.parse_args(
+                    ["--config", str(config_path), "-i", "device", "fw.bin"]
+                )
+            finally:
+                if old_password is None:
+                    os.environ.pop("HOMIE_OTA_TEST_PASSWORD", None)
+                else:
+                    os.environ["HOMIE_OTA_TEST_PASSWORD"] = old_password
+
+        self.assertEqual(args.broker_host, "mqtt.lan")
+        self.assertEqual(args.broker_port, 8883)
+        self.assertEqual(args.broker_username, "homie")
+        self.assertEqual(args.broker_password, "secret")
+        self.assertEqual(args.broker_tls_cacert, "ca.pem")
+        self.assertTrue(args.broker_tls_insecure)
+        self.assertEqual(args.base_topic, "lab/homie/5/")
+        self.assertEqual(args.homie_version, "5")
+        self.assertEqual(args.timeout, 45)
+        self.assertEqual(args.client_id, "ota-client")
+
+    def test_parse_args_allows_cli_to_override_config_secret_env(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            config_path = Path(tmpdir) / "ota.json"
+            config_path.write_text(
+                json.dumps({"broker": {"username_env": "UNSET_USER_ENV"}}),
+                encoding="utf-8",
+            )
+            args = ota_updater.parse_args(
+                [
+                    "--config",
+                    str(config_path),
+                    "--broker-username",
+                    "cli-user",
+                    "-i",
+                    "device",
+                    "fw.bin",
+                ]
+            )
+
+        self.assertEqual(args.broker_username, "cli-user")
 
 
 if __name__ == "__main__":

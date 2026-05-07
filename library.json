@@ -53,6 +53,17 @@
     "libCompatMode": "strict"
   },
   "export": {
-    "include": ["LICENSE", "README.md", "docs", "keywords.txt", "library.json", "library.properties", "src", "examples"]
+    "include": [
+      "LICENSE",
+      "README.md",
+      "docs",
+      "keywords.txt",
+      "library.json",
+      "library.properties",
+      "src",
+      "examples",
+      "scripts/homie_ota.py",
+      "scripts/ota_updater"
+    ]
   }
 }

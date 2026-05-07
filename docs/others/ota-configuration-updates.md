@@ -44,7 +44,7 @@ For devices built with `HOMIE_CONVENTION_VERSION=5`, run the helper with
 the default base topic is used:
 
 ```bash
-python scripts/ota_updater/ota_updater.py \
+python scripts/homie_ota.py \
   --homie-version 5 \
   -i kitchen-light \
   firmware.bin
@@ -52,6 +52,10 @@ python scripts/ota_updater/ota_updater.py \
 
 If you use a custom Homie v5 domain, pass the domain as `--base-topic`; the
 helper appends the required `/5/` segment unless it is already present.
+For repeated deployments, put broker and Homie defaults in a JSON or TOML file
+and pass `--config bridge-ota.json`. CLI arguments override the config file, and
+`broker.password_env` / `broker.username_env` keep credentials in environment
+variables instead of command history.
 
 See [Homie implementation specifics](homie-implementation-specifics.md) for more
 details on status codes.

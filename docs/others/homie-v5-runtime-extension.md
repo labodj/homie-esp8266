@@ -114,10 +114,10 @@ the firmware image.
 500 INTERNAL_ERROR
 ```
 
-The OTA updater script supports v5 topics with:
+The stable OTA updater entry point supports v5 topics with:
 
 ```bash
-python scripts/ota_updater/ota_updater.py --homie-version 5 -i <device-id> firmware.bin
+python scripts/homie_ota.py --homie-version 5 -i <device-id> firmware.bin
 ```
 
 ## Core v5 Boundaries
