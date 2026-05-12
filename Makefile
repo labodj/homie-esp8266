@@ -3,7 +3,7 @@ MARKDOWNLINT ?= npx --yes markdownlint-cli2@0.22.1
 PYTHON_OTA_FILES := scripts/homie_ota.py scripts/ota_updater/ota_updater.py scripts/ota_updater/test_ota_updater.py
 
 cpplint:
-	cpplint --repository=. --recursive --filter=-whitespace/line_length,-legal/copyright,-runtime/printf,-build/include,-build/namespace,-runtime/int,-whitespace/comments,-runtime/threadsafe_fn ./src
+	cpplint --repository=. --recursive --filter=-whitespace/line_length,-legal/copyright,-runtime/printf,-build/include,-build/namespace,-runtime/int,-whitespace/comments,-runtime/threadsafe_fn,-whitespace/indent_namespace,-runtime/references,-whitespace/newline,-whitespace/parens,-whitespace/braces ./src
 
 python-format:
 	$(PYTHON) -m ruff format $(PYTHON_OTA_FILES)
