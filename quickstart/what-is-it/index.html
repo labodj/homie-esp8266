@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Documentation for the maintained Homie 3.0.1 fork used by the LSH ecosystem.">
+        <meta name="description" content="Documentation for the maintained Homie fork used by the LSH ecosystem.">
       
       
         <meta name="author" content="Marvin ROGER, Jacopo Labardi">
@@ -76,6 +76,11 @@
     <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
+      
+        
+        <a href="#what-is-homie-for-esp8266" class="md-skip">
+          Skip to content
+        </a>
       
     </div>
     <div data-md-component="announce">
@@ -308,6 +313,8 @@
       
       <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
       
+      
+        
       
       
       <a href="./" class="md-nav__link md-nav__link--active">
@@ -708,7 +715,7 @@
   <span class="md-ellipsis">
     
   
-    Compiler-Flags
+    Compiler flags
   
 
     
@@ -876,7 +883,7 @@
   <span class="md-ellipsis">
     
   
-    UI Bundle
+    UI bundle
   
 
     
@@ -1069,6 +1076,62 @@
     
   
     Maintained fork differences
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../others/homie-v4-v5-compatibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Homie v4/v5 compatibility
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../others/homie-v5-runtime-extension/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Homie v5 fork runtime extension
   
 
     
@@ -1330,6 +1393,8 @@
   
   
   
+    
+  
   
 </nav>
                   </div>
@@ -1349,11 +1414,20 @@
   
 
 
-  <h1>What is it?</h1>
-
-<p>Homie for ESP8266 is an Arduino implementation of <a href="https://github.com/homieiot/convention">Homie</a>, a thin and simple MQTT convention for the IoT. More than that, it's also a full-featured framework to get started with your IoT project very quickly. Simply put, you don't have to manage yourself the connection/reconnection to Wi-Fi or MQTT. You don't even have to hard-code credentials in your sketch: this can be done using a simple JSON API. Everything is handled internally by Homie for ESP8266.</p>
-<p>This maintained fork keeps the original Homie 3.0.1 API while adding support and maintenance work for current ESP32 and ESP8266 Arduino environments.</p>
-<p>You guessed it, the purpose of Homie for ESP8266 is to simplify the development of connected objects.</p>
+<h1 id="what-is-homie-for-esp8266">What is Homie for ESP8266?<a class="headerlink" href="#what-is-homie-for-esp8266" title="Permanent link">&para;</a></h1>
+<p>Homie for ESP8266 is an Arduino implementation of
+<a href="https://github.com/homieiot/convention">Homie</a>, a thin and simple MQTT
+convention for the IoT. It also gives your sketch the framework code it needs to
+manage Wi-Fi, MQTT connection and reconnection, and device configuration. You do
+not have to hard-code credentials in your sketch: they can be provided through a
+small JSON API and handled internally by Homie for ESP8266.</p>
+<p>This maintained fork keeps the original Homie 3.0.1 API while adding support for
+current ESP32 and ESP8266 Arduino environments. Homie 3.0.1 remains the default
+advertised MQTT convention. Homie 4.0.0 and Homie 5.0 discovery metadata can be
+enabled explicitly with <code>HOMIE_CONVENTION_VERSION=4</code> or
+<code>HOMIE_CONVENTION_VERSION=5</code>.</p>
+<p>The purpose of Homie for ESP8266 is to simplify the development of connected
+objects.</p>
 
 
 

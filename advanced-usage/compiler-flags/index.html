@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Documentation for the maintained Homie 3.0.1 fork used by the LSH ecosystem.">
+        <meta name="description" content="Documentation for the maintained Homie fork used by the LSH ecosystem.">
       
       
         <meta name="author" content="Marvin ROGER, Jacopo Labardi">
@@ -29,7 +29,7 @@
     
     
       
-        <title>Compiler-Flags - Homie for ESP8266</title>
+        <title>Compiler flags - Homie for ESP8266</title>
       
     
     
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#esp8266-only-networking-flags" class="md-skip">
+        <a href="#compiler-flags" class="md-skip">
           Skip to content
         </a>
       
@@ -113,7 +113,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Compiler-Flags
+              Compiler flags
             
           </span>
         </div>
@@ -704,6 +704,8 @@
       <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
       
       
+        
+      
       
         <label class="md-nav__link md-nav__link--active" for="__toc">
           
@@ -712,7 +714,7 @@
   <span class="md-ellipsis">
     
   
-    Compiler-Flags
+    Compiler flags
   
 
     
@@ -730,7 +732,7 @@
   <span class="md-ellipsis">
     
   
-    Compiler-Flags
+    Compiler flags
   
 
     
@@ -746,12 +748,157 @@
   
   
   
+    
+  
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
       Table of contents
     </label>
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#homie_config" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HOMIE_CONFIG
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#homie_mdns" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HOMIE_MDNS
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#homie_convention_version" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HOMIE_CONVENTION_VERSION
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#homie_strict_property_validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HOMIE_STRICT_PROPERTY_VALIDATION
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#async_tcp_ssl_enabled" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ASYNC_TCP_SSL_ENABLED
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#homie_pending_mqtt_ack_queue_size" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HOMIE_PENDING_MQTT_ACK_QUEUE_SIZE
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#homie_pending_mqtt_acks_per_loop" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HOMIE_PENDING_MQTT_ACKS_PER_LOOP
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#homie_pending_mqtt_message_queue_size" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HOMIE_PENDING_MQTT_MESSAGE_QUEUE_SIZE
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#homie_pending_mqtt_messages_per_loop" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HOMIE_PENDING_MQTT_MESSAGES_PER_LOOP
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#homie_pending_mqtt_message_preallocated" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HOMIE_PENDING_MQTT_MESSAGE_PREALLOCATED
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#homie_ota_status_info_max_length" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HOMIE_OTA_STATUS_INFO_MAX_LENGTH
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#homie_use_littlefs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HOMIE_USE_LITTLEFS
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#homie_migrate_spiffs_to_littlefs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HOMIE_MIGRATE_SPIFFS_TO_LITTLEFS
+      
+    </span>
+  </a>
+  
+</li>
       
         <li class="md-nav__item">
   <a href="#esp8266-only-networking-flags" class="md-nav__link">
@@ -927,7 +1074,7 @@
   <span class="md-ellipsis">
     
   
-    UI Bundle
+    UI bundle
   
 
     
@@ -1120,6 +1267,62 @@
     
   
     Maintained fork differences
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../others/homie-v4-v5-compatibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Homie v4/v5 compatibility
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../others/homie-v5-runtime-extension/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Homie v5 fork runtime extension
   
 
     
@@ -1381,12 +1584,157 @@
   
   
   
+    
+  
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
       Table of contents
     </label>
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#homie_config" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HOMIE_CONFIG
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#homie_mdns" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HOMIE_MDNS
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#homie_convention_version" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HOMIE_CONVENTION_VERSION
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#homie_strict_property_validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HOMIE_STRICT_PROPERTY_VALIDATION
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#async_tcp_ssl_enabled" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ASYNC_TCP_SSL_ENABLED
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#homie_pending_mqtt_ack_queue_size" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HOMIE_PENDING_MQTT_ACK_QUEUE_SIZE
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#homie_pending_mqtt_acks_per_loop" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HOMIE_PENDING_MQTT_ACKS_PER_LOOP
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#homie_pending_mqtt_message_queue_size" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HOMIE_PENDING_MQTT_MESSAGE_QUEUE_SIZE
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#homie_pending_mqtt_messages_per_loop" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HOMIE_PENDING_MQTT_MESSAGES_PER_LOOP
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#homie_pending_mqtt_message_preallocated" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HOMIE_PENDING_MQTT_MESSAGE_PREALLOCATED
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#homie_ota_status_info_max_length" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HOMIE_OTA_STATUS_INFO_MAX_LENGTH
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#homie_use_littlefs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HOMIE_USE_LITTLEFS
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#homie_migrate_spiffs_to_littlefs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HOMIE_MIGRATE_SPIFFS_TO_LITTLEFS
+      
+    </span>
+  </a>
+  
+</li>
       
         <li class="md-nav__item">
   <a href="#esp8266-only-networking-flags" class="md-nav__link">
@@ -1419,76 +1767,226 @@
   
 
 
-  <h1>Compiler-Flags</h1>
-
-<p>Compiler flags can be used to add or remove certain functionality from homie-esp8266.</p>
-<p>Removing functionality can become useful if your firmware gets too large in size and is not upgradable any more over OTA. On the other hand these compiler flags allow to remove features from homie-esp8266, that you do not require or do not use.</p>
-<p>Adding functionality or features is useful to enable only partly implemented features or unstable or experimental features.</p>
-<p><strong>HOMIE_CONFIG</strong></p>
-<p>This compiler flag allows to disable the configuration mode completely. To configure your homie-esp8266, you need to upload the configuration to the configured filesystem before starting the device. The default filesystem is SPIFFS, unless <code>HOMIE_USE_LITTLEFS=1</code> is set. Without a proper configuration the device will just restart after writing the error message about the missing configuration to the logger. Add the following to your platformio.ini file:</p>
-<div class="highlight"><pre><span></span><code>build_flags = -D HOMIE_CONFIG=0
+<h1 id="compiler-flags">Compiler flags<a class="headerlink" href="#compiler-flags" title="Permanent link">&para;</a></h1>
+<p>Compiler flags let you add, remove or tune Homie features at build time.</p>
+<p>Use them when a firmware image is too large for OTA, when a deployment needs a
+specific storage backend, or when a device needs more room for MQTT bursts. The
+defaults are conservative: existing Homie 3.0.1 sketches should keep working
+unless you explicitly opt in to a different behavior.</p>
+<h2 id="homie_config">HOMIE_CONFIG<a class="headerlink" href="#homie_config" title="Permanent link">&para;</a></h2>
+<p>Set <code>HOMIE_CONFIG=0</code> to disable configuration mode completely.</p>
+<p>When configuration mode is disabled, upload <code>/homie/config.json</code> to the selected
+filesystem before the device starts. SPIFFS is the default filesystem; LittleFS
+is used only when <code>HOMIE_USE_LITTLEFS=1</code> is compiled in. Without a valid
+configuration file, the device logs the missing configuration error and
+restarts.</p>
+<div class="highlight"><pre><span></span><code><span class="na">build_flags</span><span class="w"> </span><span class="o">=</span>
+<span class="w">  </span><span class="na">-D HOMIE_CONFIG</span><span class="o">=</span><span class="s">0</span>
 </code></pre></div>
-<p>This reduces the firmware size by about 50000 bytes.</p>
-<p><strong>HOMIE_MDNS</strong></p>
-<p>This compiler flag allows to disable the publishing of the device identifier via mDNS protocol. Add the following to your platformio.ini file:</p>
-<div class="highlight"><pre><span></span><code>build_flags = -D HOMIE_MDNS=0
+<p>This reduces the firmware size by about 50 KB.</p>
+<h2 id="homie_mdns">HOMIE_MDNS<a class="headerlink" href="#homie_mdns" title="Permanent link">&para;</a></h2>
+<p>Set <code>HOMIE_MDNS=0</code> to disable publishing the device identifier through mDNS.</p>
+<div class="highlight"><pre><span></span><code><span class="na">build_flags</span><span class="w"> </span><span class="o">=</span>
+<span class="w">  </span><span class="na">-D HOMIE_MDNS</span><span class="o">=</span><span class="s">0</span>
 </code></pre></div>
-<p>This reduces the firmware size by about 6400 bytes.</p>
-<p><strong>ASYNC_TCP_SSL_ENABLED</strong></p>
-<p>This compiler flag allows to use SSL encryption for MQTT connections. All other network connections still can not be encrypted like HTTP or OTA.</p>
-<div class="highlight"><pre><span></span><code>build_flags =
-  -D ASYNC_TCP_SSL_ENABLED=1
-  -D PIO_FRAMEWORK_ARDUINO_LWIP2_HIGHER_BANDWIDTH
+<p>This reduces the firmware size by about 6.4 KB.</p>
+<h2 id="homie_convention_version">HOMIE_CONVENTION_VERSION<a class="headerlink" href="#homie_convention_version" title="Permanent link">&para;</a></h2>
+<p>This maintained fork advertises the Homie <code>3.0.1</code> MQTT convention by default to
+preserve existing deployments and consumers. Newer convention modes are
+build-time opt-ins because they change what controllers discover on MQTT.</p>
+<p>Set <code>HOMIE_CONVENTION_VERSION=4</code> to enable Homie <code>4.0.0</code> compatibility mode:</p>
+<div class="highlight"><pre><span></span><code><span class="na">build_flags</span><span class="w"> </span><span class="o">=</span>
+<span class="w">  </span><span class="na">-D HOMIE_CONVENTION_VERSION</span><span class="o">=</span><span class="s">4</span>
 </code></pre></div>
-<p>The additional flag <code>PIO_FRAMEWORK_ARDUINO_LWIP2_HIGHER_BANDWIDTH</code> is necessary for SSL encryption to work properly.</p>
-<p><strong>HOMIE_PENDING_MQTT_ACK_QUEUE_SIZE</strong></p>
-<p>This maintained fork exposes a build-time override for the internal queue that
-stores MQTT publish acknowledgement events before <code>BootNormal::loop()</code>
-dispatches them.</p>
+<p>In v4 mode the device publishes <code>$homie</code> as <code>4.0.0</code>, publishes the mandatory
+<code>$extensions</code> attribute, and advertises the official Homie legacy firmware and
+legacy stats extensions:</p>
+<ul>
+<li><code>org.homie.legacy-firmware:0.1.1:[4.x]</code></li>
+<li><code>org.homie.legacy-stats:0.1.1:[4.x]</code></li>
+</ul>
+<p>For compatibility with existing sketches, v4 mode fills missing required
+property metadata at advertisement time:</p>
+<ul>
+<li>Missing property <code>$name</code> falls back to the property id.</li>
+<li>Missing property <code>$datatype</code> falls back to <code>string</code>.</li>
+<li>Datatypes outside the Homie v4 set are advertised as <code>string</code>.</li>
+<li><code>enum</code> and <code>color</code> properties without the required <code>$format</code> are advertised
+  as <code>string</code>.</li>
+</ul>
+<p>Those fallbacks keep old sketches discoverable, but production v4 devices should
+still set explicit names, datatypes and formats for every advertised property
+that needs structured controller discovery.</p>
+<p>All convention modes abort boot if the MQTT root, device ID, firmware name, node
+ID or property ID is not Homie ID-compliant. Firmware names are payload metadata,
+but Homie 3.0.1 and the Homie v4 legacy firmware extension require <code>$fw/name</code> to
+use the same character set as a device ID. Range nodes are also rejected in v4
+mode because the library's historical range-node metadata is not part of the
+Homie v4 core convention.</p>
+<p>Set <code>HOMIE_CONVENTION_VERSION=5</code> to enable Homie <code>5.0</code> discovery:</p>
+<div class="highlight"><pre><span></span><code><span class="na">build_flags</span><span class="w"> </span><span class="o">=</span>
+<span class="w">  </span><span class="na">-D HOMIE_CONVENTION_VERSION</span><span class="o">=</span><span class="s">5</span>
+</code></pre></div>
+<p>In v5 mode the MQTT root is versioned as required by the specification. The
+default base topic <code>homie/</code> becomes <code>homie/5/&lt;device-id&gt;</code>. A custom base topic
+must be a single Homie domain segment such as <code>lab/</code>; the firmware then
+publishes under <code>lab/5/&lt;device-id&gt;</code>. Passing <code>homie/5/</code> is accepted and is not
+rewritten to <code>homie/5/5/</code>.</p>
+<p>The v5 mode publishes a retained <code>$description</code> JSON document instead of the
+Homie &frac34; per-topic discovery attributes for nodes and properties. The document
+contains:</p>
+<ul>
+<li><code>homie: "5.0"</code></li>
+<li>a deterministic numeric <code>version</code> that changes when advertised metadata
+  changes</li>
+<li><code>nodes</code> with node and property objects</li>
+<li>property <code>datatype</code>, <code>settable</code>, <code>retained</code>, <code>unit</code> and <code>format</code> metadata</li>
+<li>the fork runtime extension <code>io.github.labodj.esp-runtime</code></li>
+</ul>
+<p>Homie topic IDs must use lowercase letters, digits and hyphens only. Invalid
+IDs abort boot because publishing them would violate the selected convention and
+make discovery unreliable.</p>
+<p>Range nodes use <code>node-&lt;index&gt;</code> in v5 mode because <code>_</code> is not a valid Homie v5
+topic ID character. Homie 3 mode keeps the historical <code>node_&lt;index&gt;</code> range topic
+shape.</p>
+<p>The property retention flag advertised with <code>setRetained()</code> is the effective
+runtime publish flag. When a property is advertised as non-retained, v5 property
+publishes use QoS 0 even if a sketch tries to override the publish promise with
+a higher QoS. This matches the Homie v5 retained-message rules for non-retained
+properties.</p>
+<p>The existing <code>$fw</code>, <code>$implementation</code>, <code>$stats</code>, OTA and configuration topics
+remain available in v5 mode as fork extension topics declared in
+<code>$description.extensions</code>; strict Homie v5 consumers can ignore them if they do
+not implement the extension.</p>
+<h2 id="homie_strict_property_validation">HOMIE_STRICT_PROPERTY_VALIDATION<a class="headerlink" href="#homie_strict_property_validation" title="Permanent link">&para;</a></h2>
+<p>Set <code>HOMIE_STRICT_PROPERTY_VALIDATION=1</code> to make the library validate property
+formats and payloads at runtime:</p>
+<div class="highlight"><pre><span></span><code><span class="na">build_flags</span><span class="w"> </span><span class="o">=</span>
+<span class="w">  </span><span class="na">-D HOMIE_STRICT_PROPERTY_VALIDATION</span><span class="o">=</span><span class="s">1</span>
+</code></pre></div>
+<p>The default is <code>0</code> to keep embedded firmware small and fast. With the default
+profile, the library validates the Homie structure it owns: MQTT roots, device
+IDs, node IDs, property IDs, convention metadata, retain flags, v5 QoS rules and
+the v5 empty-string encoding. The sketch remains responsible for making
+<code>setDatatype()</code>, <code>setFormat()</code> and published values agree with the selected
+Homie convention.</p>
+<p>When strict property validation is enabled, invalid formats are omitted or
+normalized where possible, outgoing property publishes are rejected if the
+payload does not match the advertised datatype and format, and incoming <code>/set</code>
+commands with invalid payloads are ignored before application handlers run.</p>
+<h2 id="async_tcp_ssl_enabled">ASYNC_TCP_SSL_ENABLED<a class="headerlink" href="#async_tcp_ssl_enabled" title="Permanent link">&para;</a></h2>
+<p>Set <code>ASYNC_TCP_SSL_ENABLED=1</code> to use SSL encryption for MQTT connections. HTTP
+and OTA connections are still not encrypted by this flag.</p>
+<div class="highlight"><pre><span></span><code><span class="na">build_flags</span><span class="w"> </span><span class="o">=</span>
+<span class="w">  </span><span class="na">-D ASYNC_TCP_SSL_ENABLED</span><span class="o">=</span><span class="s">1</span>
+<span class="w">  </span><span class="na">-D PIO_FRAMEWORK_ARDUINO_LWIP2_HIGHER_BANDWIDTH</span>
+</code></pre></div>
+<p>The additional <code>PIO_FRAMEWORK_ARDUINO_LWIP2_HIGHER_BANDWIDTH</code> flag is necessary
+for SSL encryption to work properly on ESP8266.</p>
+<h2 id="homie_pending_mqtt_ack_queue_size">HOMIE_PENDING_MQTT_ACK_QUEUE_SIZE<a class="headerlink" href="#homie_pending_mqtt_ack_queue_size" title="Permanent link">&para;</a></h2>
+<p>This fork exposes a build-time override for the internal queue that stores MQTT
+publish acknowledgement events before <code>BootNormal::loop()</code> dispatches them.</p>
 <p>Use it when the device emits a large retained advertisement burst and logs
 <code>MQTT ACK queue full</code> during startup or reconnect:</p>
-<div class="highlight"><pre><span></span><code>build_flags =
-  -D HOMIE_PENDING_MQTT_ACK_QUEUE_SIZE=64
+<div class="highlight"><pre><span></span><code><span class="na">build_flags</span><span class="w"> </span><span class="o">=</span>
+<span class="w">  </span><span class="na">-D HOMIE_PENDING_MQTT_ACK_QUEUE_SIZE</span><span class="o">=</span><span class="s">64</span>
 </code></pre></div>
 <p>Default:</p>
-<div class="highlight"><pre><span></span><code>-D HOMIE_PENDING_MQTT_ACK_QUEUE_SIZE=16
+<div class="highlight"><pre><span></span><code><span class="na">build_flags</span><span class="w"> </span><span class="o">=</span>
+<span class="w">  </span><span class="na">-D HOMIE_PENDING_MQTT_ACK_QUEUE_SIZE</span><span class="o">=</span><span class="s">32</span>
+</code></pre></div>
+<h2 id="homie_pending_mqtt_acks_per_loop">HOMIE_PENDING_MQTT_ACKS_PER_LOOP<a class="headerlink" href="#homie_pending_mqtt_acks_per_loop" title="Permanent link">&para;</a></h2>
+<p>This flag controls how many queued MQTT publish acknowledgement events are
+dispatched from one <code>BootNormal::loop()</code> iteration. Raising it drains ACK bursts
+faster; lowering it gives more loop fairness to sketch code and other Homie
+work.</p>
+<div class="highlight"><pre><span></span><code><span class="na">build_flags</span><span class="w"> </span><span class="o">=</span>
+<span class="w">  </span><span class="na">-D HOMIE_PENDING_MQTT_ACKS_PER_LOOP</span><span class="o">=</span><span class="s">8</span>
+</code></pre></div>
+<p>Default:</p>
+<div class="highlight"><pre><span></span><code><span class="na">build_flags</span><span class="w"> </span><span class="o">=</span>
+<span class="w">  </span><span class="na">-D HOMIE_PENDING_MQTT_ACKS_PER_LOOP</span><span class="o">=</span><span class="s">8</span>
 </code></pre></div>
 <p>This is an advanced tuning option. Increase it only if the default queue size is
 not sufficient for your device and broker timing.</p>
-<p>Both drop counters are also exposed in Homie statistics as
-<code>$stats/mqttackdropped</code> and <code>$stats/mqttinbounddropped</code>, so production devices
-can be monitored without relying only on serial logs.</p>
-<p><strong>HOMIE_PENDING_MQTT_MESSAGE_QUEUE_SIZE</strong></p>
-<p>This maintained fork also exposes the size of the internal queue used to defer
-non-OTA MQTT input handling from async MQTT callbacks into <code>BootNormal::loop()</code>.</p>
+<p>Both drop counters are exposed in Homie statistics as <code>$stats/mqttackdropped</code>
+and <code>$stats/mqttinbounddropped</code>, so production devices can be monitored without
+relying only on serial logs.</p>
+<h2 id="homie_pending_mqtt_message_queue_size">HOMIE_PENDING_MQTT_MESSAGE_QUEUE_SIZE<a class="headerlink" href="#homie_pending_mqtt_message_queue_size" title="Permanent link">&para;</a></h2>
+<p>This fork also exposes the size of the internal queue used to defer non-OTA MQTT
+input handling from async MQTT callbacks into <code>BootNormal::loop()</code>.</p>
 <p>Use it only when the device logs <code>MQTT inbound queue full</code> under expected broker
 traffic:</p>
-<div class="highlight"><pre><span></span><code>build_flags =
-  -D HOMIE_PENDING_MQTT_MESSAGE_QUEUE_SIZE=32
+<div class="highlight"><pre><span></span><code><span class="na">build_flags</span><span class="w"> </span><span class="o">=</span>
+<span class="w">  </span><span class="na">-D HOMIE_PENDING_MQTT_MESSAGE_QUEUE_SIZE</span><span class="o">=</span><span class="s">32</span>
 </code></pre></div>
 <p>Default:</p>
-<div class="highlight"><pre><span></span><code>-D HOMIE_PENDING_MQTT_MESSAGE_QUEUE_SIZE=16
+<div class="highlight"><pre><span></span><code><span class="na">build_flags</span><span class="w"> </span><span class="o">=</span>
+<span class="w">  </span><span class="na">-D HOMIE_PENDING_MQTT_MESSAGE_QUEUE_SIZE</span><span class="o">=</span><span class="s">16</span>
 </code></pre></div>
-<p><strong>HOMIE_USE_LITTLEFS</strong></p>
-<p>This maintained fork keeps SPIFFS as the default storage backend to preserve
-existing deployments. Set this flag to use LittleFS for configuration files,
-next-boot mode state, and the optional configuration UI bundle:</p>
-<div class="highlight"><pre><span></span><code>board_build.filesystem = littlefs
-build_flags =
-  -D HOMIE_USE_LITTLEFS=1
+<h2 id="homie_pending_mqtt_messages_per_loop">HOMIE_PENDING_MQTT_MESSAGES_PER_LOOP<a class="headerlink" href="#homie_pending_mqtt_messages_per_loop" title="Permanent link">&para;</a></h2>
+<p>This flag controls how many queued non-OTA MQTT input messages are processed
+from one <code>BootNormal::loop()</code> iteration. Raising it drains inbound bursts
+faster; lowering it makes long command bursts yield back to the rest of the
+firmware sooner.</p>
+<div class="highlight"><pre><span></span><code><span class="na">build_flags</span><span class="w"> </span><span class="o">=</span>
+<span class="w">  </span><span class="na">-D HOMIE_PENDING_MQTT_MESSAGES_PER_LOOP</span><span class="o">=</span><span class="s">4</span>
 </code></pre></div>
-<p><strong>HOMIE_MIGRATE_SPIFFS_TO_LITTLEFS</strong></p>
+<p>Default:</p>
+<div class="highlight"><pre><span></span><code><span class="na">build_flags</span><span class="w"> </span><span class="o">=</span>
+<span class="w">  </span><span class="na">-D HOMIE_PENDING_MQTT_MESSAGES_PER_LOOP</span><span class="o">=</span><span class="s">4</span>
+</code></pre></div>
+<h2 id="homie_pending_mqtt_message_preallocated">HOMIE_PENDING_MQTT_MESSAGE_PREALLOCATED<a class="headerlink" href="#homie_pending_mqtt_message_preallocated" title="Permanent link">&para;</a></h2>
+<p>Set this flag to <code>1</code> to make the deferred inbound MQTT queue use fixed-size
+topic and payload storage instead of allocating one topic and one payload buffer
+per queued message from the async MQTT callback path:</p>
+<div class="highlight"><pre><span></span><code><span class="na">build_flags</span><span class="w"> </span><span class="o">=</span>
+<span class="w">  </span><span class="na">-D HOMIE_PENDING_MQTT_MESSAGE_PREALLOCATED</span><span class="o">=</span><span class="s">1</span>
+</code></pre></div>
+<p>Default:</p>
+<div class="highlight"><pre><span></span><code><span class="na">build_flags</span><span class="w"> </span><span class="o">=</span>
+<span class="w">  </span><span class="na">-D HOMIE_PENDING_MQTT_MESSAGE_PREALLOCATED</span><span class="o">=</span><span class="s">0</span>
+</code></pre></div>
+<p>When enabled, the fixed buffers are controlled by these limits:</p>
+<div class="highlight"><pre><span></span><code><span class="na">build_flags</span><span class="w"> </span><span class="o">=</span>
+<span class="w">  </span><span class="na">-D HOMIE_PENDING_MQTT_MESSAGE_MAX_TOPIC_LENGTH</span><span class="o">=</span><span class="s">192</span>
+<span class="w">  </span><span class="na">-D HOMIE_PENDING_MQTT_MESSAGE_MAX_PAYLOAD_LENGTH</span><span class="o">=</span><span class="s">512</span>
+<span class="w">  </span><span class="na">-D HOMIE_PENDING_MQTT_MESSAGE_MAX_TOPIC_LEVELS</span><span class="o">=</span><span class="s">12</span>
+</code></pre></div>
+<p>Messages exceeding those limits are rejected and counted in
+<code>$stats/mqttinbounddropped</code>. Keep the feature disabled on memory-constrained
+ESP8266 builds unless the reserved RAM budget is acceptable.</p>
+<h2 id="homie_ota_status_info_max_length">HOMIE_OTA_STATUS_INFO_MAX_LENGTH<a class="headerlink" href="#homie_ota_status_info_max_length" title="Permanent link">&para;</a></h2>
+<p>This flag controls the fixed-size buffer used to queue short OTA status text
+from the OTA path into the main loop before publishing the status event.
+Increase it only if custom OTA status strings are being truncated.</p>
+<div class="highlight"><pre><span></span><code><span class="na">build_flags</span><span class="w"> </span><span class="o">=</span>
+<span class="w">  </span><span class="na">-D HOMIE_OTA_STATUS_INFO_MAX_LENGTH</span><span class="o">=</span><span class="s">48</span>
+</code></pre></div>
+<p>Default:</p>
+<div class="highlight"><pre><span></span><code><span class="na">build_flags</span><span class="w"> </span><span class="o">=</span>
+<span class="w">  </span><span class="na">-D HOMIE_OTA_STATUS_INFO_MAX_LENGTH</span><span class="o">=</span><span class="s">48</span>
+</code></pre></div>
+<h2 id="homie_use_littlefs">HOMIE_USE_LITTLEFS<a class="headerlink" href="#homie_use_littlefs" title="Permanent link">&para;</a></h2>
+<p>This fork keeps SPIFFS as the default storage backend to preserve existing
+deployments. Set this flag to use LittleFS for configuration files, next-boot
+mode state, and the optional configuration UI bundle:</p>
+<div class="highlight"><pre><span></span><code><span class="na">board_build.filesystem</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">littlefs</span>
+<span class="na">build_flags</span><span class="w"> </span><span class="o">=</span>
+<span class="w">  </span><span class="na">-D HOMIE_USE_LITTLEFS</span><span class="o">=</span><span class="s">1</span>
+</code></pre></div>
+<h2 id="homie_migrate_spiffs_to_littlefs">HOMIE_MIGRATE_SPIFFS_TO_LITTLEFS<a class="headerlink" href="#homie_migrate_spiffs_to_littlefs" title="Permanent link">&para;</a></h2>
 <p>Build a temporary OTA migration firmware with this flag when already provisioned
 devices need to move from SPIFFS to LittleFS:</p>
-<div class="highlight"><pre><span></span><code>board_build.filesystem = littlefs
-build_flags =
-  -D HOMIE_USE_LITTLEFS=1
-  -D HOMIE_MIGRATE_SPIFFS_TO_LITTLEFS=1
+<div class="highlight"><pre><span></span><code><span class="na">board_build.filesystem</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">littlefs</span>
+<span class="na">build_flags</span><span class="w"> </span><span class="o">=</span>
+<span class="w">  </span><span class="na">-D HOMIE_USE_LITTLEFS</span><span class="o">=</span><span class="s">1</span>
+<span class="w">  </span><span class="na">-D HOMIE_MIGRATE_SPIFFS_TO_LITTLEFS</span><span class="o">=</span><span class="s">1</span>
 </code></pre></div>
 <p>The flag is disabled by default so normal LittleFS builds do not include SPIFFS
-or migration code. A migration build tries to copy data only when LittleFS cannot
-mount and a SPIFFS filesystem with <code>/homie/config.json</code> is still present. The
-migration copies:</p>
+or migration code. A migration build tries to copy data only when LittleFS
+cannot mount and a SPIFFS filesystem with <code>/homie/config.json</code> is still present.
+The migration copies:</p>
 <ul>
 <li><code>/homie/config.json</code></li>
 <li><code>/homie/NEXTMODE</code>, when present</li>
@@ -1496,8 +1994,8 @@ migration copies:</p>
 <p>The UI bundle at <code>/homie/ui_bundle.gz</code> is not migrated because it can be too
 large to hold in RAM while LittleFS formats the shared flash area. Upload the UI
 bundle again with PlatformIO <code>uploadfs</code> after switching to LittleFS.</p>
-<p>After the device has booted once and migrated successfully, replace the migration
-firmware with a normal LittleFS-only OTA build that keeps only
+<p>After the device has booted once and migrated successfully, replace the
+migration firmware with a normal LittleFS-only OTA build that keeps only
 <code>HOMIE_USE_LITTLEFS=1</code>.</p>
 <h2 id="esp8266-only-networking-flags">ESP8266-only networking flags<a class="headerlink" href="#esp8266-only-networking-flags" title="Permanent link">&para;</a></h2>
 <p>Flags such as <code>PIO_FRAMEWORK_ARDUINO_LWIP2_LOW_MEMORY</code> and

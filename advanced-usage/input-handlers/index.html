@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Documentation for the maintained Homie 3.0.1 fork used by the LSH ecosystem.">
+        <meta name="description" content="Documentation for the maintained Homie fork used by the LSH ecosystem.">
       
       
         <meta name="author" content="Marvin ROGER, Jacopo Labardi">
@@ -76,6 +76,11 @@
     <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
+      
+        
+        <a href="#input-handlers" class="md-skip">
+          Skip to content
+        </a>
       
     </div>
     <div data-md-component="announce">
@@ -587,6 +592,8 @@
       <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
       
       
+        
+      
       
       <a href="./" class="md-nav__link md-nav__link--active">
         
@@ -708,7 +715,7 @@
   <span class="md-ellipsis">
     
   
-    Compiler-Flags
+    Compiler flags
   
 
     
@@ -876,7 +883,7 @@
   <span class="md-ellipsis">
     
   
-    UI Bundle
+    UI bundle
   
 
     
@@ -1069,6 +1076,62 @@
     
   
     Maintained fork differences
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../others/homie-v4-v5-compatibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Homie v4/v5 compatibility
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../others/homie-v5-runtime-extension/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Homie v5 fork runtime extension
   
 
     
@@ -1330,6 +1393,8 @@
   
   
   
+    
+  
   
 </nav>
                   </div>
@@ -1349,13 +1414,18 @@
   
 
 
-  <h1>Input handlers</h1>
-
+<h1 id="input-handlers">Input handlers<a class="headerlink" href="#input-handlers" title="Permanent link">&para;</a></h1>
 <p>There are four types of input handlers:</p>
 <ul>
-<li>Global input handler. This unique handler will handle every changed settable properties for all nodes</li>
+<li>Global input handler. This unique handler handles every changed settable
+  property for all nodes.</li>
 </ul>
-<div class="highlight"><pre><span></span><code><span class="kt">bool</span><span class="w"> </span><span class="nf">globalInputHandler</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">HomieNode</span><span class="o">&amp;</span><span class="w"> </span><span class="n">node</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">HomieRange</span><span class="o">&amp;</span><span class="w"> </span><span class="n">range</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">String</span><span class="o">&amp;</span><span class="w"> </span><span class="n">property</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">String</span><span class="o">&amp;</span><span class="w"> </span><span class="n">value</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<div class="highlight"><pre><span></span><code><span class="kt">bool</span><span class="w"> </span><span class="nf">globalInputHandler</span><span class="p">(</span>
+<span class="w">  </span><span class="k">const</span><span class="w"> </span><span class="n">HomieNode</span><span class="o">&amp;</span><span class="w"> </span><span class="n">node</span><span class="p">,</span>
+<span class="w">  </span><span class="k">const</span><span class="w"> </span><span class="n">HomieRange</span><span class="o">&amp;</span><span class="w"> </span><span class="n">range</span><span class="p">,</span>
+<span class="w">  </span><span class="k">const</span><span class="w"> </span><span class="n">String</span><span class="o">&amp;</span><span class="w"> </span><span class="n">property</span><span class="p">,</span>
+<span class="w">  </span><span class="k">const</span><span class="w"> </span><span class="n">String</span><span class="o">&amp;</span><span class="w"> </span><span class="n">value</span>
+<span class="p">)</span><span class="w"> </span><span class="p">{</span>
 
 <span class="p">}</span>
 
@@ -1365,9 +1435,14 @@
 <span class="p">}</span>
 </code></pre></div>
 <ul>
-<li>Node input handlers. This handler will handle every changed settable properties of a specific node</li>
+<li>Node input handlers. This handler handles every changed settable property of a
+  specific node.</li>
 </ul>
-<div class="highlight"><pre><span></span><code><span class="kt">bool</span><span class="w"> </span><span class="nf">nodeInputHandler</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">HomieRange</span><span class="o">&amp;</span><span class="w"> </span><span class="n">range</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">String</span><span class="o">&amp;</span><span class="w"> </span><span class="n">property</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">String</span><span class="o">&amp;</span><span class="w"> </span><span class="n">value</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<div class="highlight"><pre><span></span><code><span class="kt">bool</span><span class="w"> </span><span class="nf">nodeInputHandler</span><span class="p">(</span>
+<span class="w">  </span><span class="k">const</span><span class="w"> </span><span class="n">HomieRange</span><span class="o">&amp;</span><span class="w"> </span><span class="n">range</span><span class="p">,</span>
+<span class="w">  </span><span class="k">const</span><span class="w"> </span><span class="n">String</span><span class="o">&amp;</span><span class="w"> </span><span class="n">property</span><span class="p">,</span>
+<span class="w">  </span><span class="k">const</span><span class="w"> </span><span class="n">String</span><span class="o">&amp;</span><span class="w"> </span><span class="n">value</span>
+<span class="p">)</span><span class="w"> </span><span class="p">{</span>
 
 <span class="p">}</span>
 
@@ -1376,19 +1451,26 @@
 <ul>
 <li>Virtual callback from node input handler</li>
 </ul>
-<p>You can create your own class derived from HomieNode that implements the virtual method <code>bool HomieNode::handleInput(const HomieRange&amp; range, const String&amp; property, const String&amp; value)</code>. The default node input handler then automatically calls your callback.</p>
+<p>You can create your own class derived from HomieNode that implements the virtual
+method <code>bool HomieNode::handleInput(...)</code>. The default node input handler then
+automatically calls your callback.</p>
 <div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">RelaisNode</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="n">HomieNode</span><span class="w"> </span><span class="p">{</span>
 <span class="w"> </span><span class="k">public</span><span class="o">:</span>
-<span class="w">    </span><span class="n">RelaisNode</span><span class="p">()</span><span class="o">:</span><span class="w"> </span><span class="n">HomieNode</span><span class="p">(</span><span class="s">&quot;Relais&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;switch8&quot;</span><span class="p">);</span>
+<span class="w">  </span><span class="n">RelaisNode</span><span class="p">()</span><span class="o">:</span><span class="w"> </span><span class="n">HomieNode</span><span class="p">(</span><span class="s">&quot;Relais&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;switch8&quot;</span><span class="p">);</span>
 
 <span class="w"> </span><span class="k">protected</span><span class="o">:</span>
-<span class="w">  </span><span class="k">virtual</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="n">handleInput</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">HomieRange</span><span class="o">&amp;</span><span class="w"> </span><span class="n">range</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">String</span><span class="o">&amp;</span><span class="w"> </span><span class="n">property</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">String</span><span class="o">&amp;</span><span class="w"> </span><span class="n">value</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">virtual</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="n">handleInput</span><span class="p">(</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">HomieRange</span><span class="o">&amp;</span><span class="w"> </span><span class="n">range</span><span class="p">,</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">String</span><span class="o">&amp;</span><span class="w"> </span><span class="n">property</span><span class="p">,</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">String</span><span class="o">&amp;</span><span class="w"> </span><span class="n">value</span>
+<span class="w">  </span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
 
 <span class="w">  </span><span class="p">}</span>
 <span class="p">};</span>
 </code></pre></div>
 <ul>
-<li>Property input handlers. This handler will handle changes for a specific settable property of a specific node</li>
+<li>Property input handlers. This handler handles changes for a specific settable
+  property of a specific node.</li>
 </ul>
 <div class="highlight"><pre><span></span><code><span class="kt">bool</span><span class="w"> </span><span class="nf">propertyInputHandler</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">HomieRange</span><span class="o">&amp;</span><span class="w"> </span><span class="n">range</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">String</span><span class="o">&amp;</span><span class="w"> </span><span class="n">value</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
 
@@ -1397,15 +1479,28 @@
 <span class="n">HomieNode</span><span class="w"> </span><span class="n">node</span><span class="p">(</span><span class="s">&quot;id&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;type&quot;</span><span class="p">);</span>
 
 <span class="kt">void</span><span class="w"> </span><span class="nf">setup</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="n">node</span><span class="p">.</span><span class="n">advertise</span><span class="p">(</span><span class="s">&quot;property&quot;</span><span class="p">).</span><span class="n">settable</span><span class="p">(</span><span class="n">propertyInputHandler</span><span class="p">);</span><span class="w"> </span><span class="c1">// before Homie.setup()</span>
+<span class="w">  </span><span class="c1">// before Homie.setup()</span>
+<span class="w">  </span><span class="n">node</span><span class="p">.</span><span class="n">advertise</span><span class="p">(</span><span class="s">&quot;property&quot;</span><span class="p">).</span><span class="n">settable</span><span class="p">(</span><span class="n">propertyInputHandler</span><span class="p">);</span>
 <span class="w">  </span><span class="c1">// ...</span>
 <span class="p">}</span>
 </code></pre></div>
-<p>You can see that input handlers return a boolean. An input handler can decide whether or not it handled the message and want to propagate it down to other input handlers. If an input handler returns <code>true</code>, the propagation is stopped, if it returns <code>false</code>, the propagation continues. The order of propagation is global handler → node handler → property handler.</p>
-<p>For example, imagine you defined three input handlers: the global one, the node one, and the property one. If the global input handler returns <code>false</code>, the node input handler will be called. If the node input handler returns <code>true</code>, the propagation is stopped and the property input handler won't be called. You can think of it as middlewares.</p>
+<p>Input handlers return a boolean. An input handler can decide whether it handled
+the message or whether the message should continue to the next input handler. If
+an input handler returns <code>true</code>, propagation stops. If it returns <code>false</code>,
+propagation continues. The order is global handler, then node handler, then
+property handler.</p>
+<p>For example, imagine you defined three input handlers: the global one, the node
+one, and the property one. If the global input handler returns <code>false</code>, the node
+input handler is called. If the node input handler returns <code>true</code>, propagation
+stops and the property input handler is not called. You can think of the
+handlers as middleware.</p>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
-<p>Homie uses <a href="https://github.com/me-no-dev/ESPAsyncTCP">ESPAsyncTCP</a> for network communication that make uses of asynchronous callback from the ESP8266 framework for incoming network packets. Thus the input handler runs in a different task than the <code>loopHandler()</code>. So keep in mind that the network task may interrupt your loop at any time.</p>
+<p>Homie uses <a href="https://github.com/me-no-dev/ESPAsyncTCP">ESPAsyncTCP</a> for
+network communication, which uses asynchronous callbacks from the ESP8266
+framework for incoming network packets. The input handler therefore runs in a
+different task than the <code>loopHandler()</code>, so the network task may interrupt
+your loop at any time.</p>
 </div>
 
 

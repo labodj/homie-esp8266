@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Documentation for the maintained Homie 3.0.1 fork used by the LSH ecosystem.">
+        <meta name="description" content="Documentation for the maintained Homie fork used by the LSH ecosystem.">
       
       
         <meta name="author" content="Marvin ROGER, Jacopo Labardi">
@@ -76,7 +76,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#jpmenshomie-ota" class="md-skip">
+        <a href="#community-projects" class="md-skip">
           Skip to content
         </a>
       
@@ -701,7 +701,7 @@
   <span class="md-ellipsis">
     
   
-    Compiler-Flags
+    Compiler flags
   
 
     
@@ -869,7 +869,7 @@
   <span class="md-ellipsis">
     
   
-    UI Bundle
+    UI bundle
   
 
     
@@ -1064,6 +1064,62 @@
     
   
     Maintained fork differences
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../homie-v4-v5-compatibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Homie v4/v5 compatibility
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../homie-v5-runtime-extension/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Homie v5 fork runtime extension
   
 
     
@@ -1289,6 +1345,24 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Community projects
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
@@ -1305,6 +1379,47 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#jpmenshomie-ota" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        jpmens/homie-ota
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#stufisherhomie-control" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        stufisher/homie-control
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -1338,6 +1453,36 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#jpmenshomie-ota" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        jpmens/homie-ota
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#stufisherhomie-control" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        stufisher/homie-control
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -1356,19 +1501,28 @@
   
 
 
-<p>This page lists the projects made by the community to work with Homie.</p>
+<h1 id="community-projects">Community projects<a class="headerlink" href="#community-projects" title="Permanent link">&para;</a></h1>
+<p>This page lists community projects that work with Homie.</p>
 <p><a href="https://homieiot.github.io/"><img alt="works with MQTT Homie" src="https://homieiot.github.io/img/works-with-homie.svg" /></a></p>
-<h1 id="jpmenshomie-ota"><a href="https://github.com/jpmens/homie-ota">jpmens/homie-ota</a><a class="headerlink" href="#jpmenshomie-ota" title="Permanent link">&para;</a></h1>
-<p>homie-ota is written in Python. It provides an OTA server for Homie devices as well as a simple inventory which can be useful to keep track of Homie devices. homie-ota also enables you to trigger an OTA update (over MQTT, using the Homie convention) from within its inventory. New firmware can be uploaded to homie-ota which detects firmware name (fwname) and version (fwversion) from the uploaded binary blob, thanks to an idea and code contributed by Marvin.</p>
-<h1 id="stufisherhomie-control"><a href="https://github.com/stufisher/homie-control">stufisher/homie-control</a><a class="headerlink" href="#stufisherhomie-control" title="Permanent link">&para;</a></h1>
-<p>homie-control provides a web UI to manage Homie devices as well as a series of virtual python devices to allow extended functionality.</p>
-<p>Its lets you do useful things like:</p>
+<h2 id="jpmenshomie-ota"><a href="https://github.com/jpmens/homie-ota">jpmens/homie-ota</a><a class="headerlink" href="#jpmenshomie-ota" title="Permanent link">&para;</a></h2>
+<p>homie-ota is written in Python. It provides an OTA server for Homie devices and
+an inventory for keeping track of them.
+homie-ota also enables you to trigger an OTA update (over MQTT, using the Homie
+convention) from within its inventory. New firmware can be uploaded to homie-ota
+which detects firmware name (fwname) and version (fwversion) from the uploaded
+binary blob, thanks to an idea and code contributed by Marvin.</p>
+<h2 id="stufisherhomie-control"><a href="https://github.com/stufisher/homie-control">stufisher/homie-control</a><a class="headerlink" href="#stufisherhomie-control" title="Permanent link">&para;</a></h2>
+<p>homie-control provides a web UI to manage Homie devices as well as a series of
+virtual Python devices for extended functionality.</p>
+<p>It lets you:</p>
 <ul>
 <li>Historically log device properties</li>
-<li>Schedule changes in event properties (i.e. water your garden once a day)</li>
-<li>Execute profiles of property values (i.e. turn a series of lights on and off simultaneously)</li>
+<li>Schedule changes in event properties, such as watering your garden once a day</li>
+<li>Execute profiles of property values, such as turning a series of lights on and
+  off simultaneously</li>
 <li>Trigger property changes based on:</li>
-<li>When a network device is dis/connected (i.e. your phone joins your wifi, turn the lights on)</li>
+<li>When a network device is connected or disconnected, such as turning the
+    lights on when your phone joins your Wi-Fi</li>
 <li>Sunset / rise</li>
 <li>When another property changes</li>
 </ul>

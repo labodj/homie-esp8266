@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Documentation for the maintained Homie 3.0.1 fork used by the LSH ecosystem.">
+        <meta name="description" content="Documentation for the maintained Homie fork used by the LSH ecosystem.">
       
       
         <meta name="author" content="Marvin ROGER, Jacopo Labardi">
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#ssl-support" class="md-skip">
+        <a href="#limitations-and-known-issues" class="md-skip">
           Skip to content
         </a>
       
@@ -703,7 +703,7 @@
   <span class="md-ellipsis">
     
   
-    Compiler-Flags
+    Compiler flags
   
 
     
@@ -871,7 +871,7 @@
   <span class="md-ellipsis">
     
   
-    UI Bundle
+    UI bundle
   
 
     
@@ -1086,6 +1086,62 @@
   
   
     <li class="md-nav__item">
+      <a href="../homie-v4-v5-compatibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Homie v4/v5 compatibility
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../homie-v5-runtime-extension/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Homie v5 fork runtime extension
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../ota-configuration-updates/" class="md-nav__link">
         
   
@@ -1151,6 +1207,24 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Limitations and known issues
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
@@ -1167,6 +1241,58 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#ssl-support" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SSL support
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adc-readings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADC readings
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#wi-fi-connection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Wi-Fi connection
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -1340,6 +1466,47 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#ssl-support" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SSL support
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adc-readings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADC readings
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#wi-fi-connection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Wi-Fi connection
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -1358,12 +1525,20 @@
   
 
 
-<h1 id="ssl-support">SSL support<a class="headerlink" href="#ssl-support" title="Permanent link">&para;</a></h1>
-<p>In Homie for ESP8266 v1.x, SSL was possible but it was not reliable. Due to the asynchronous nature of the v2.x, SSL is not completely available anymore. Only MQTT connections can be encrypted with SSL.</p>
-<h1 id="adc-readings">ADC readings<a class="headerlink" href="#adc-readings" title="Permanent link">&para;</a></h1>
-<p><a href="https://github.com/esp8266/Arduino/issues/1634">This is a known esp8266/Arduino issue</a> that polling <code>analogRead()</code> too frequently forces the Wi-Fi to disconnect. As a workaround, don't poll the ADC more than one time every 3ms.</p>
-<h1 id="wi-fi-connection">Wi-Fi connection<a class="headerlink" href="#wi-fi-connection" title="Permanent link">&para;</a></h1>
-<p>If you encouter any issues with the Wi-Fi, try changing the flash size build parameter, or try to erase the flash. See <a href="https://github.com/homieiot/homie-esp8266/issues/158">#158</a> for more information.</p>
+<h1 id="limitations-and-known-issues">Limitations and known issues<a class="headerlink" href="#limitations-and-known-issues" title="Permanent link">&para;</a></h1>
+<h2 id="ssl-support">SSL support<a class="headerlink" href="#ssl-support" title="Permanent link">&para;</a></h2>
+<p>In Homie for ESP8266 v1.x, SSL was possible but it was not reliable. Due to the
+asynchronous nature of the v2.x, SSL is not completely available anymore. Only
+MQTT connections can be encrypted with SSL.</p>
+<h2 id="adc-readings">ADC readings<a class="headerlink" href="#adc-readings" title="Permanent link">&para;</a></h2>
+<p><a href="https://github.com/esp8266/Arduino/issues/1634">A known ESP8266 Arduino issue</a>
+can make Wi-Fi disconnect when <code>analogRead()</code> is polled too frequently. As a
+workaround, poll the ADC no more than once every 3 ms.</p>
+<h2 id="wi-fi-connection">Wi-Fi connection<a class="headerlink" href="#wi-fi-connection" title="Permanent link">&para;</a></h2>
+<p>If you encounter any issues with the Wi-Fi, try changing the flash size build
+parameter, or try to erase the flash. See
+<a href="https://github.com/homieiot/homie-esp8266/issues/158">#158</a> for more
+information.</p>
 
 
 

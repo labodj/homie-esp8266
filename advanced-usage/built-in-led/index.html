@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Documentation for the maintained Homie 3.0.1 fork used by the LSH ecosystem.">
+        <meta name="description" content="Documentation for the maintained Homie fork used by the LSH ecosystem.">
       
       
         <meta name="author" content="Marvin ROGER, Jacopo Labardi">
@@ -76,6 +76,11 @@
     <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
+      
+        
+        <a href="#built-in-led" class="md-skip">
+          Skip to content
+        </a>
       
     </div>
     <div data-md-component="announce">
@@ -447,6 +452,8 @@
       <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
       
       
+        
+      
       
       <a href="./" class="md-nav__link md-nav__link--active">
         
@@ -708,7 +715,7 @@
   <span class="md-ellipsis">
     
   
-    Compiler-Flags
+    Compiler flags
   
 
     
@@ -876,7 +883,7 @@
   <span class="md-ellipsis">
     
   
-    UI Bundle
+    UI bundle
   
 
     
@@ -1069,6 +1076,62 @@
     
   
     Maintained fork differences
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../others/homie-v4-v5-compatibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Homie v4/v5 compatibility
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../others/homie-v5-runtime-extension/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Homie v5 fork runtime extension
   
 
     
@@ -1330,6 +1393,8 @@
   
   
   
+    
+  
   
 </nav>
                   </div>
@@ -1349,18 +1414,22 @@
   
 
 
-  <h1>Built-in LED</h1>
-
-<p>By default, Homie for ESP8266 will blink the built-in LED to indicate its status. Note it does not indicate activity, only the status of the device (in <code>configuration</code> mode, connecting to Wi-Fi or connecting to MQTT), see <a href="../../quickstart/getting-started/">Getting started</a> for more information.</p>
-<p>However, on some boards like the ESP-01, the built-in LED is actually the TX port, so it is fine if Serial is not enabled, but if you enable Serial, this is a problem. You can easily disable the built-in LED blinking.</p>
+<h1 id="built-in-led">Built-in LED<a class="headerlink" href="#built-in-led" title="Permanent link">&para;</a></h1>
+<p>By default, Homie for ESP8266 will blink the built-in LED to indicate its
+status. Note it does not indicate activity, only the status of the device (in
+<code>configuration</code> mode, connecting to Wi-Fi or connecting to MQTT), see
+<a href="../../quickstart/getting-started/">Getting started</a> for more information.</p>
+<p>However, on some boards like the ESP-01, the built-in LED is tied to the TX
+port. That is fine when serial logging is disabled, but it becomes noisy when
+serial logging is enabled. You can disable the built-in LED feedback:</p>
 <div class="highlight"><pre><span></span><code><span class="kt">void</span><span class="w"> </span><span class="nf">setup</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="n">Homie</span><span class="p">.</span><span class="n">disableLedFeedback</span><span class="p">();</span><span class="w"> </span><span class="c1">// before Homie.setup()</span>
 <span class="w">  </span><span class="c1">// ...</span>
 <span class="p">}</span>
 </code></pre></div>
-<p>You may, instead of completely disable the LED control, set a new LED to control:</p>
+<p>Instead of disabling LED feedback completely, you can move it to another pin:</p>
 <div class="highlight"><pre><span></span><code><span class="kt">void</span><span class="w"> </span><span class="nf">setup</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="n">Homie</span><span class="p">.</span><span class="n">setLedPin</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span><span class="w"> </span><span class="n">HIGH</span><span class="p">);</span><span class="w"> </span><span class="c1">// before Homie.setup() -- 2nd param is the state of the pin when the LED is o</span>
+<span class="w">  </span><span class="n">Homie</span><span class="p">.</span><span class="n">setLedPin</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span><span class="w"> </span><span class="n">HIGH</span><span class="p">);</span><span class="w"> </span><span class="c1">// before Homie.setup(); 2nd param is LED-off state</span>
 <span class="w">  </span><span class="c1">// ...</span>
 <span class="p">}</span>
 </code></pre></div>

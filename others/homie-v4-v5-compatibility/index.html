@@ -12,13 +12,13 @@
         <meta name="author" content="Marvin ROGER, Jacopo Labardi">
       
       
-        <link rel="canonical" href="https://labodj.github.io/homie-esp8266/configuration/json-configuration-file/">
+        <link rel="canonical" href="https://labodj.github.io/homie-esp8266/others/homie-v4-v5-compatibility/">
       
       
-        <link rel="prev" href="../../advanced-usage/ui-bundle/">
+        <link rel="prev" href="../fork-differences/">
       
       
-        <link rel="next" href="../http-json-api/">
+        <link rel="next" href="../homie-v5-runtime-extension/">
       
       
         
@@ -29,7 +29,7 @@
     
     
       
-        <title>JSON configuration file - Homie for ESP8266</title>
+        <title>Homie v4/v5 compatibility - Homie for ESP8266</title>
       
     
     
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#json-configuration-file" class="md-skip">
+        <a href="#homie-v4v5-compatibility" class="md-skip">
           Skip to content
         </a>
       
@@ -113,7 +113,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              JSON configuration file
+              Homie v4/v5 compatibility
             
           </span>
         </div>
@@ -896,20 +896,18 @@
       
   
   
-    
   
   
-  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
         
           
           <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
@@ -930,7 +928,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_4">
             <span class="md-nav__icon md-icon"></span>
             
@@ -945,19 +943,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../configuration/json-configuration-file/" class="md-nav__link">
         
   
   
@@ -973,7 +962,6 @@
   
 
       </a>
-      
     </li>
   
 
@@ -986,7 +974,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../http-json-api/" class="md-nav__link">
+      <a href="../../configuration/http-json-api/" class="md-nav__link">
         
   
   
@@ -1018,18 +1006,20 @@
       
   
   
+    
   
   
+  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
         
           
           <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
@@ -1050,7 +1040,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_5">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1068,7 +1058,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../others/fork-differences/" class="md-nav__link">
+      <a href="../fork-differences/" class="md-nav__link">
         
   
   
@@ -1093,10 +1083,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../others/homie-v4-v5-compatibility/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Homie v4/v5 compatibility
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -1112,6 +1129,48 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#homie-v4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Homie v4
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#homie-v5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Homie v5
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1124,7 +1183,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../others/homie-v5-runtime-extension/" class="md-nav__link">
+      <a href="../homie-v5-runtime-extension/" class="md-nav__link">
         
   
   
@@ -1152,7 +1211,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../others/ota-configuration-updates/" class="md-nav__link">
+      <a href="../ota-configuration-updates/" class="md-nav__link">
         
   
   
@@ -1180,7 +1239,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../others/homie-implementation-specifics/" class="md-nav__link">
+      <a href="../homie-implementation-specifics/" class="md-nav__link">
         
   
   
@@ -1208,7 +1267,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../others/limitations-and-known-issues/" class="md-nav__link">
+      <a href="../limitations-and-known-issues/" class="md-nav__link">
         
   
   
@@ -1236,7 +1295,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../others/troubleshooting/" class="md-nav__link">
+      <a href="../troubleshooting/" class="md-nav__link">
         
   
   
@@ -1264,7 +1323,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../others/cpp-api-reference/" class="md-nav__link">
+      <a href="../cpp-api-reference/" class="md-nav__link">
         
   
   
@@ -1292,7 +1351,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../others/upgrade-guide-from-v1-to-v2/" class="md-nav__link">
+      <a href="../upgrade-guide-from-v1-to-v2/" class="md-nav__link">
         
   
   
@@ -1320,7 +1379,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../others/upgrade-guide-from-v2-to-v3/" class="md-nav__link">
+      <a href="../upgrade-guide-from-v2-to-v3/" class="md-nav__link">
         
   
   
@@ -1348,7 +1407,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../others/community-projects/" class="md-nav__link">
+      <a href="../community-projects/" class="md-nav__link">
         
   
   
@@ -1396,6 +1455,36 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#homie-v4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Homie v4
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#homie-v5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Homie v5
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -1414,85 +1503,110 @@
   
 
 
-<h1 id="json-configuration-file">JSON configuration file<a class="headerlink" href="#json-configuration-file" title="Permanent link">&para;</a></h1>
-<p>To configure your device, you have two choices: manually flashing the
-configuration file to the configured filesystem at <code>/homie/config.json</code> (SPIFFS
-by default, or LittleFS when <code>HOMIE_USE_LITTLEFS=1</code>), so you can bypass the
-<code>configuration</code> mode, or send it through the <a href="../http-json-api/">HTTP JSON API</a>.
-When switching an already provisioned device to LittleFS, use a temporary build
-with <code>HOMIE_MIGRATE_SPIFFS_TO_LITTLEFS=1</code> to migrate this file from SPIFFS on
-first boot.</p>
-<p>Use this JSON shape when provisioning the device:</p>
-<div class="highlight"><pre><span></span><code><span class="p">{</span>
-<span class="w">  </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;The kitchen light&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;device_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;kitchen-light&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;device_stats_interval&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">60</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;wifi&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nt">&quot;ssid&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Network_1&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;password&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;I&#39;m a Wi-Fi password!&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;bssid&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;DE:AD:BE:EF:BA:BE&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;channel&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;ip&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;192.168.1.5&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;mask&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;255.255.255.0&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;gw&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;192.168.1.1&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;dns1&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;8.8.8.8&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;dns2&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;8.8.4.4&quot;</span>
-<span class="w">  </span><span class="p">},</span>
-<span class="w">  </span><span class="nt">&quot;mqtt&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nt">&quot;host&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;192.168.1.10&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;port&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1883</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;base_topic&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;devices/&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;auth&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;username&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;user&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;password&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;pass&quot;</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;ssl&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;ssl_fingerprint&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;a27992d3420c89f293d351378ba5f5675f74fe3c&quot;</span>
-<span class="w">  </span><span class="p">},</span>
-<span class="w">  </span><span class="nt">&quot;ota&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nt">&quot;enabled&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span>
-<span class="w">  </span><span class="p">},</span>
-<span class="w">  </span><span class="nt">&quot;settings&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nt">&quot;percentage&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">55</span>
-<span class="w">  </span><span class="p">}</span>
-<span class="p">}</span>
+<h1 id="homie-v4v5-compatibility">Homie v4/v5 compatibility<a class="headerlink" href="#homie-v4v5-compatibility" title="Permanent link">&para;</a></h1>
+<p>This maintained fork advertises the Homie <code>3.0.1</code> convention by default and can
+advertise Homie <code>4.0.0</code> or Homie <code>5.0</code> when explicitly built for it. The fork
+version in <code>library.json</code>, <code>library.properties</code> and <code>HOMIE_ESP8266_VERSION</code> is
+the package version of this maintained codebase; it does not change the
+advertised Homie convention version.</p>
+<h2 id="homie-v4">Homie v4<a class="headerlink" href="#homie-v4" title="Permanent link">&para;</a></h2>
+<p>Homie <code>4.0.0</code> compatibility is available as an explicit build-time mode. It is
+not the default because changing the advertised convention version changes the
+MQTT discovery contract seen by controllers.</p>
+<p>Enable it with:</p>
+<div class="highlight"><pre><span></span><code><span class="na">build_flags</span><span class="w"> </span><span class="o">=</span>
+<span class="w">  </span><span class="na">-D HOMIE_CONVENTION_VERSION</span><span class="o">=</span><span class="s">4</span>
 </code></pre></div>
-<p>The above JSON contains every field that can be customized.</p>
-<p>Here are the rules:</p>
+<p>The current code already publishes most of the same structural information that
+Homie v4 expects:</p>
 <ul>
-<li><code>name</code>, <code>wifi.ssid</code>, <code>wifi.password</code>, <code>mqtt.host</code> and <code>ota.enabled</code> are
-  mandatory</li>
-<li><code>wifi.password</code> can be <code>null</code> if connecting to an open network</li>
-<li>If <code>mqtt.auth</code> is <code>true</code>, <code>mqtt.username</code> and <code>mqtt.password</code> must be provided</li>
-<li><code>bssid</code>, <code>channel</code>, <code>ip</code>, <code>mask</code>, <code>gw</code>, <code>dns1</code>, <code>dns2</code> are optional and only
-  needed when targeting a specific AP or configuring a static IP address.
-  These fields have a few rules:</li>
-<li><code>bssid</code> and <code>channel</code> must be defined together and these settings are
-    independent of static IP settings</li>
-<li>to define static IP, <code>ip</code> (IP address), <code>mask</code> (netmask) and <code>gw</code> (gateway)
-    settings must be defined at the same time</li>
-<li>to define the secondary DNS server <code>dns2</code>, define <code>dns1</code> as well. Setting
-    DNS without <code>ip</code>, <code>mask</code> and <code>gw</code> does not affect the configuration; the DNS
-    server is provided by DHCP. DNS servers are optional.</li>
-<li><code>ssl_fingerprint</code> can optionally be defined if <code>ssl</code> is enabled. The public
-  key of the MQTT server is then verified against the fingerprint.</li>
-<li>Homie's limit for MQTT broker username and password is 32 characters. To
-  increase this limit, change <code>MAX_MQTT_CREDS_LENGTH</code> in <code>Limits.hpp</code></li>
+<li>device attributes such as <code>$homie</code>, <code>$name</code>, <code>$state</code>, <code>$nodes</code> and
+  <code>$implementation</code></li>
+<li>node attributes such as <code>$name</code>, <code>$type</code> and <code>$properties</code></li>
+<li>property attributes such as <code>$name</code>, <code>$datatype</code>, <code>$format</code>, <code>$settable</code>,
+  <code>$retained</code> and <code>$unit</code></li>
+<li><code>/set</code> command topics for settable properties</li>
 </ul>
-<p>Default values if not provided:</p>
+<p>When v4 mode is enabled the library:</p>
 <ul>
-<li><code>device_id</code>: the hardware device ID (eg. <code>1a2b3c4d5e6f</code>)</li>
-<li><code>device_stats_interval</code>: 60 seconds</li>
-<li><code>mqtt.port</code>: <code>1883</code></li>
-<li><code>mqtt.base_topic</code>: <code>homie/</code></li>
-<li><code>mqtt.auth</code>: <code>false</code></li>
+<li>advertises <code>$homie</code> as <code>4.0.0</code></li>
+<li>publishes the mandatory <code>$extensions</code> attribute</li>
+<li>declares the official legacy firmware extension:
+  <code>org.homie.legacy-firmware:0.1.1:[4.x]</code></li>
+<li>declares the official legacy stats extension:
+  <code>org.homie.legacy-stats:0.1.1:[4.x]</code></li>
+<li>keeps the existing <code>$fw</code>, <code>$mac</code>, <code>$localip</code> and <code>$stats</code> topics so existing
+  Homie 3.0.1 consumers and OTA tooling remain usable</li>
+<li>publishes required property <code>$name</code> and <code>$datatype</code> metadata even for older
+  sketches that omitted them</li>
+<li>rejects retained <code>/set</code> commands, because Homie controllers must send command
+  messages as non-retained publishes</li>
 </ul>
-<p>The <code>mqtt.host</code> field can be either an IP address or a hostname.</p>
-<div class="admonition tip">
-<p class="admonition-title">OTA</p>
-<p>Homie-esp8266 supports over-the-air updates if you enable OTA in
-configuration (<code>ota.enabled: true</code>). For more details, see
-<a href="../../others/ota-configuration-updates/">OTA updates</a>.</p>
-</div>
+<p>The property metadata compatibility fallback is deliberately conservative:</p>
+<ul>
+<li>missing property <code>$name</code> uses the property id</li>
+<li>missing property <code>$datatype</code> uses <code>string</code></li>
+<li>invalid Homie v4 datatypes are advertised as <code>string</code></li>
+<li><code>enum</code> and <code>color</code> properties without the required <code>$format</code> are advertised
+  as <code>string</code></li>
+</ul>
+<p>Production v4 sketches should still set explicit names, datatypes and formats.
+The fallback exists only so enabling v4 mode does not make older sketches
+disappear from strict v4 discovery consumers.</p>
+<p>Homie topic IDs allow lowercase letters, digits and hyphens. The library treats
+invalid MQTT roots, device IDs, firmware names, node IDs and property IDs as boot
+errors in every convention mode. Firmware names are validated because Homie 3.0.1
+and the Homie v4 legacy firmware extension apply the device-ID character rules
+to <code>$fw/name</code>. Range nodes are also rejected in v4 mode because Homie v4 has no
+core range-node metadata and the historical <code>$array</code> model is a Homie 3
+compatibility feature.</p>
+<p>Because Homie v4 still uses retained MQTT attributes and per-topic discovery,
+the implementation does not rewrite the library architecture.</p>
+<h2 id="homie-v5">Homie v5<a class="headerlink" href="#homie-v5" title="Permanent link">&para;</a></h2>
+<p>Homie <code>5.0</code> compatibility is also available as an explicit build-time mode:</p>
+<div class="highlight"><pre><span></span><code><span class="na">build_flags</span><span class="w"> </span><span class="o">=</span>
+<span class="w">  </span><span class="na">-D HOMIE_CONVENTION_VERSION</span><span class="o">=</span><span class="s">5</span>
+</code></pre></div>
+<p>The default remains Homie <code>3.0.1</code> because v5 changes the discovery contract and
+the root topic shape. In v5 mode this fork follows the Homie v5 core model:</p>
+<ul>
+<li>the root topic is <code>&lt;domain&gt;/5/</code>, so the default device base becomes
+  <code>homie/5/&lt;device-id&gt;</code></li>
+<li>the device publishes retained <code>$state</code> values under the v5 base topic</li>
+<li>the device publishes a retained <code>$description</code> JSON document with
+  <code>homie: "5.0"</code>, a numeric description <code>version</code>, <code>nodes</code>, node metadata and
+  property metadata</li>
+<li>property commands use <code>homie/5/&lt;device-id&gt;/&lt;node-id&gt;/&lt;property-id&gt;/set</code></li>
+<li>retained <code>/set</code> commands are ignored in v5 mode because controllers must send
+  command messages as non-retained publishes</li>
+<li>non-retained property publishes use QoS 0, as required by the v5
+  retained-message rules</li>
+<li>string property publishes with an empty value use the Homie v5 one-byte NUL
+  representation instead of an MQTT zero-length retained payload</li>
+<li>broadcast subscriptions move to the v5 root and accept nested broadcast levels</li>
+</ul>
+<p>Homie v5 topic IDs allow lowercase letters, digits and hyphens. Range nodes
+therefore change their concrete MQTT topic IDs from the legacy <code>node_&lt;index&gt;</code>
+shape to <code>node-&lt;index&gt;</code>.</p>
+<p>The existing OTA, configuration, firmware and runtime statistics topics are not
+part of Homie v5 core. This fork keeps them as an explicitly declared extension:</p>
+<div class="highlight"><pre><span></span><code>io.github.labodj.esp-runtime
+</code></pre></div>
+<p>See <a href="../homie-v5-runtime-extension/">Homie v5 fork runtime extension</a> for the
+extension topic contract.</p>
+<p>Production v5 sketches should set explicit property datatypes. If an older
+sketch omits a datatype, uses a datatype that is not valid in Homie v5, or uses
+<code>enum</code>/<code>color</code> without the format required by v5, the <code>$description</code> generator
+advertises that property as <code>string</code> so the published description remains
+spec-valid. Exact format and payload correctness remains the sketch's
+responsibility by default. Enable <code>HOMIE_STRICT_PROPERTY_VALIDATION=1</code> when the
+library should also reject invalid property formats and payloads at runtime.</p>
+<p>References:</p>
+<ul>
+<li><a href="https://github.com/homieiot/convention/blob/v3.0.1/convention.md">Homie convention v3.0.1</a></li>
+<li><a href="https://github.com/homieiot/convention/blob/v4.0.0/convention.md">Homie convention v4.0.0</a></li>
+<li><a href="https://github.com/homieiot/convention/blob/v5.0.0/convention.md">Homie convention v5.0.0</a></li>
+</ul>
 
 
 

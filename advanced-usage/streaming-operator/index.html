@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Documentation for the maintained Homie 3.0.1 fork used by the LSH ecosystem.">
+        <meta name="description" content="Documentation for the maintained Homie fork used by the LSH ecosystem.">
       
       
         <meta name="author" content="Marvin ROGER, Jacopo Labardi">
@@ -76,6 +76,11 @@
     <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
+      
+        
+        <a href="#streaming-operator" class="md-skip">
+          Skip to content
+        </a>
       
     </div>
     <div data-md-component="announce">
@@ -559,6 +564,8 @@
       <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
       
       
+        
+      
       
       <a href="./" class="md-nav__link md-nav__link--active">
         
@@ -708,7 +715,7 @@
   <span class="md-ellipsis">
     
   
-    Compiler-Flags
+    Compiler flags
   
 
     
@@ -876,7 +883,7 @@
   <span class="md-ellipsis">
     
   
-    UI Bundle
+    UI bundle
   
 
     
@@ -1069,6 +1076,62 @@
     
   
     Maintained fork differences
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../others/homie-v4-v5-compatibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Homie v4/v5 compatibility
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../others/homie-v5-runtime-extension/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Homie v5 fork runtime extension
   
 
     
@@ -1330,6 +1393,8 @@
   
   
   
+    
+  
   
 </nav>
                   </div>
@@ -1349,16 +1414,16 @@
   
 
 
-  <h1>Streaming operator</h1>
-
-<p>Homie for ESP8266 includes a nice streaming operator to interact with <code>Print</code> objects.</p>
+<h1 id="streaming-operator">Streaming operator<a class="headerlink" href="#streaming-operator" title="Permanent link">&para;</a></h1>
+<p>Homie for ESP8266 includes a streaming operator for <code>Print</code> objects.</p>
 <p>Imagine the following code:</p>
 <div class="highlight"><pre><span></span><code><span class="kt">int</span><span class="w"> </span><span class="n">temperature</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">32</span><span class="p">;</span>
 <span class="n">Homie</span><span class="p">.</span><span class="n">getLogger</span><span class="p">().</span><span class="n">print</span><span class="p">(</span><span class="s">&quot;The current temperature is &quot;</span><span class="p">);</span>
 <span class="n">Homie</span><span class="p">.</span><span class="n">getLogger</span><span class="p">().</span><span class="n">print</span><span class="p">(</span><span class="n">temperature</span><span class="p">);</span>
 <span class="n">Homie</span><span class="p">.</span><span class="n">getLogger</span><span class="p">().</span><span class="n">println</span><span class="p">(</span><span class="s">&quot; °C.&quot;</span><span class="p">);</span>
 </code></pre></div>
-<p>With the streaming operator, the following code will do exactly the same thing, without performance penalties:</p>
+<p>With the streaming operator, the following code will do exactly the same thing,
+without performance penalties:</p>
 <div class="highlight"><pre><span></span><code><span class="kt">int</span><span class="w"> </span><span class="n">temperature</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">32</span><span class="p">;</span>
 <span class="n">Homie</span><span class="p">.</span><span class="n">getLogger</span><span class="p">()</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;The current temperature is &quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">temperature</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot; °C.&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">endl</span><span class="p">;</span>
 </code></pre></div>

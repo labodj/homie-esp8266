@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Documentation for the maintained Homie 3.0.1 fork used by the LSH ecosystem.">
+        <meta name="description" content="Documentation for the maintained Homie fork used by the LSH ecosystem.">
       
       
         <meta name="author" content="Marvin ROGER, Jacopo Labardi">
@@ -76,6 +76,11 @@
     <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
+      
+        
+        <a href="#events" class="md-skip">
+          Skip to content
+        </a>
       
     </div>
     <div data-md-component="announce">
@@ -503,6 +508,8 @@
       <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
       
       
+        
+      
       
       <a href="./" class="md-nav__link md-nav__link--active">
         
@@ -708,7 +715,7 @@
   <span class="md-ellipsis">
     
   
-    Compiler-Flags
+    Compiler flags
   
 
     
@@ -876,7 +883,7 @@
   <span class="md-ellipsis">
     
   
-    UI Bundle
+    UI bundle
   
 
     
@@ -1069,6 +1076,62 @@
     
   
     Maintained fork differences
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../others/homie-v4-v5-compatibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Homie v4/v5 compatibility
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../others/homie-v5-runtime-extension/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Homie v5 fork runtime extension
   
 
     
@@ -1330,6 +1393,8 @@
   
   
   
+    
+  
   
 </nav>
                   </div>
@@ -1349,49 +1414,50 @@
   
 
 
-  <h1>Events</h1>
-
-<p>You may want to hook to Homie events. Maybe you will want to control an RGB LED if the Wi-Fi connection is lost, or execute some code prior to a device reset, for example to clear some EEPROM you're using:</p>
+<h1 id="events">Events<a class="headerlink" href="#events" title="Permanent link">&para;</a></h1>
+<p>Homie events let your sketch react to lifecycle changes such as Wi-Fi loss, OTA
+progress or an upcoming reset. For example, you can update an RGB status LED or
+clear EEPROM before the device resets:</p>
 <div class="highlight"><pre><span></span><code><span class="kt">void</span><span class="w"> </span><span class="nf">onHomieEvent</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">HomieEvent</span><span class="o">&amp;</span><span class="w"> </span><span class="n">event</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="k">switch</span><span class="p">(</span><span class="n">event</span><span class="p">.</span><span class="n">type</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="k">case</span><span class="w"> </span><span class="no">HomieEventType</span><span class="o">::</span><span class="no">STANDALONE_MODE</span><span class="p">:</span>
-<span class="w">      </span><span class="c1">// Do whatever you want when standalone mode is started</span>
+<span class="w">      </span><span class="c1">// Run code when standalone mode starts</span>
 <span class="w">      </span><span class="k">break</span><span class="p">;</span>
 <span class="w">    </span><span class="k">case</span><span class="w"> </span><span class="no">HomieEventType</span><span class="o">::</span><span class="no">CONFIGURATION_MODE</span><span class="p">:</span>
-<span class="w">      </span><span class="c1">// Do whatever you want when configuration mode is started</span>
+<span class="w">      </span><span class="c1">// Run code when configuration mode starts</span>
 <span class="w">      </span><span class="k">break</span><span class="p">;</span>
 <span class="w">    </span><span class="k">case</span><span class="w"> </span><span class="no">HomieEventType</span><span class="o">::</span><span class="no">NORMAL_MODE</span><span class="p">:</span>
-<span class="w">      </span><span class="c1">// Do whatever you want when normal mode is started</span>
+<span class="w">      </span><span class="c1">// Run code when normal mode starts</span>
 <span class="w">      </span><span class="k">break</span><span class="p">;</span>
 <span class="w">    </span><span class="k">case</span><span class="w"> </span><span class="no">HomieEventType</span><span class="o">::</span><span class="no">OTA_STARTED</span><span class="p">:</span>
-<span class="w">      </span><span class="c1">// Do whatever you want when OTA is started</span>
+<span class="w">      </span><span class="c1">// Run code when OTA starts</span>
 <span class="w">      </span><span class="k">break</span><span class="p">;</span>
 <span class="w">    </span><span class="k">case</span><span class="w"> </span><span class="no">HomieEventType</span><span class="o">::</span><span class="no">OTA_PROGRESS</span><span class="p">:</span>
-<span class="w">      </span><span class="c1">// Do whatever you want when OTA is in progress</span>
+<span class="w">      </span><span class="c1">// Track OTA progress</span>
 
 <span class="w">      </span><span class="c1">// You can use event.sizeDone and event.sizeTotal</span>
 <span class="w">      </span><span class="k">break</span><span class="p">;</span>
 <span class="w">    </span><span class="k">case</span><span class="w"> </span><span class="no">HomieEventType</span><span class="o">::</span><span class="no">OTA_FAILED</span><span class="p">:</span>
-<span class="w">      </span><span class="c1">// Do whatever you want when OTA is failed</span>
+<span class="w">      </span><span class="c1">// Handle a failed OTA update</span>
 <span class="w">      </span><span class="k">break</span><span class="p">;</span>
 <span class="w">    </span><span class="k">case</span><span class="w"> </span><span class="no">HomieEventType</span><span class="o">::</span><span class="no">OTA_SUCCESSFUL</span><span class="p">:</span>
-<span class="w">      </span><span class="c1">// Do whatever you want when OTA is successful</span>
+<span class="w">      </span><span class="c1">// Handle a successful OTA update</span>
 <span class="w">      </span><span class="k">break</span><span class="p">;</span>
 <span class="w">    </span><span class="k">case</span><span class="w"> </span><span class="no">HomieEventType</span><span class="o">::</span><span class="no">ABOUT_TO_RESET</span><span class="p">:</span>
-<span class="w">      </span><span class="c1">// Do whatever you want when the device is about to reset</span>
+<span class="w">      </span><span class="c1">// Run cleanup before the device resets</span>
 <span class="w">      </span><span class="k">break</span><span class="p">;</span>
 <span class="w">    </span><span class="k">case</span><span class="w"> </span><span class="no">HomieEventType</span><span class="o">::</span><span class="no">WIFI_CONNECTED</span><span class="p">:</span>
-<span class="w">      </span><span class="c1">// Do whatever you want when Wi-Fi is connected in normal mode</span>
+<span class="w">      </span><span class="c1">// Run code after Wi-Fi connects in normal mode</span>
 
 <span class="w">      </span><span class="c1">// You can use event.ip, event.gateway, event.mask</span>
 <span class="w">      </span><span class="k">break</span><span class="p">;</span>
 <span class="w">    </span><span class="k">case</span><span class="w"> </span><span class="no">HomieEventType</span><span class="o">::</span><span class="no">WIFI_DISCONNECTED</span><span class="p">:</span>
-<span class="w">      </span><span class="c1">// Do whatever you want when Wi-Fi is disconnected in normal mode</span>
+<span class="w">      </span><span class="c1">// Run code after Wi-Fi disconnects in normal mode</span>
 
 <span class="w">      </span><span class="c1">// You can use event.wifiReason</span>
 <span class="w">      </span><span class="cm">/*</span>
-<span class="cm">        Wi-Fi Reason (souce: https://github.com/espressif/arduino-esp32/blob/master/libraries/WiFi/examples/WiFiClientEvents/WiFiClientEvents.ino)</span>
-<span class="cm">        0  SYSTEM_EVENT_WIFI_READY               &lt; ESP32 WiFi ready</span>
+<span class="cm">        Wi-Fi Reason (source: https://github.com/espressif/arduino-esp32/blob/master/libraries/WiFi/examples/WiFiClientEvents/WiFiClientEvents.ino)</span>
+<span class="cm">        0  SYSTEM_EVENT_WIFI_READY               &lt; ESP32 Wi-Fi ready</span>
 <span class="cm">        1  SYSTEM_EVENT_SCAN_DONE                &lt; ESP32 finish scanning AP</span>
 <span class="cm">        2  SYSTEM_EVENT_STA_START                &lt; ESP32 station start</span>
 <span class="cm">        3  SYSTEM_EVENT_STA_STOP                 &lt; ESP32 station stop</span>
@@ -1420,10 +1486,10 @@
 <span class="cm">      */</span>
 <span class="w">      </span><span class="k">break</span><span class="p">;</span>
 <span class="w">    </span><span class="k">case</span><span class="w"> </span><span class="no">HomieEventType</span><span class="o">::</span><span class="no">MQTT_READY</span><span class="p">:</span>
-<span class="w">      </span><span class="c1">// Do whatever you want when MQTT is connected in normal mode</span>
+<span class="w">      </span><span class="c1">// Run code after MQTT connects in normal mode</span>
 <span class="w">      </span><span class="k">break</span><span class="p">;</span>
 <span class="w">    </span><span class="k">case</span><span class="w"> </span><span class="no">HomieEventType</span><span class="o">::</span><span class="no">MQTT_DISCONNECTED</span><span class="p">:</span>
-<span class="w">      </span><span class="c1">// Do whatever you want when MQTT is disconnected in normal mode</span>
+<span class="w">      </span><span class="c1">// Run code after MQTT disconnects in normal mode</span>
 
 <span class="w">      </span><span class="c1">// You can use event.mqttReason</span>
 <span class="w">      </span><span class="cm">/*</span>
@@ -1439,15 +1505,15 @@
 <span class="cm">      */</span>
 <span class="w">      </span><span class="k">break</span><span class="p">;</span>
 <span class="w">    </span><span class="k">case</span><span class="w"> </span><span class="no">HomieEventType</span><span class="o">::</span><span class="no">MQTT_PACKET_ACKNOWLEDGED</span><span class="p">:</span>
-<span class="w">      </span><span class="c1">// Do whatever you want when an MQTT packet with QoS &gt; 0 is acknowledged by the broker</span>
+<span class="w">      </span><span class="c1">// Track MQTT packets with QoS &gt; 0 acknowledged by the broker</span>
 
 <span class="w">      </span><span class="c1">// You can use event.packetId</span>
 <span class="w">      </span><span class="k">break</span><span class="p">;</span>
 <span class="w">    </span><span class="k">case</span><span class="w"> </span><span class="no">HomieEventType</span><span class="o">::</span><span class="no">READY_TO_SLEEP</span><span class="p">:</span>
-<span class="w">      </span><span class="c1">// After you&#39;ve called `prepareToSleep()`, the event is triggered when MQTT is disconnected</span>
+<span class="w">      </span><span class="c1">// Triggered after prepareToSleep() disconnects MQTT</span>
 <span class="w">      </span><span class="k">break</span><span class="p">;</span>
 <span class="w">    </span><span class="k">case</span><span class="w"> </span><span class="no">HomieEventType</span><span class="o">::</span><span class="no">SENDING_STATISTICS</span><span class="p">:</span>
-<span class="w">      </span><span class="c1">// Do whatever you want when statistics are sent in normal mode</span>
+<span class="w">      </span><span class="c1">// Run code before statistics are sent in normal mode</span>
 <span class="w">      </span><span class="k">break</span><span class="p">;</span>
 <span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>

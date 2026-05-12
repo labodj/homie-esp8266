@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Documentation for the maintained Homie 3.0.1 fork used by the LSH ecosystem.">
+        <meta name="description" content="Documentation for the maintained Homie fork used by the LSH ecosystem.">
       
       
         <meta name="author" content="Marvin ROGER, Jacopo Labardi">
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#typical-use-case" class="md-skip">
+        <a href="#custom-settings" class="md-skip">
           Skip to content
         </a>
       
@@ -651,6 +651,24 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Custom settings
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
@@ -667,6 +685,47 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#updating-custom-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Updating custom settings
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -715,7 +774,7 @@
   <span class="md-ellipsis">
     
   
-    Compiler-Flags
+    Compiler flags
   
 
     
@@ -883,7 +942,7 @@
   <span class="md-ellipsis">
     
   
-    UI Bundle
+    UI bundle
   
 
     
@@ -1076,6 +1135,62 @@
     
   
     Maintained fork differences
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../others/homie-v4-v5-compatibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Homie v4/v5 compatibility
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../others/homie-v5-runtime-extension/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Homie v5 fork runtime extension
   
 
     
@@ -1340,6 +1455,36 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#updating-custom-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Updating custom settings
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -1358,9 +1503,14 @@
   
 
 
-<h1 id="typical-use-case">Typical use case<a class="headerlink" href="#typical-use-case" title="Permanent link">&para;</a></h1>
-<p>Homie for ESP8266 lets you implement custom settings that can be set from the JSON configuration file and the Configuration API. Below is an example of how to use this feature:</p>
-<div class="highlight"><pre><span></span><code><span class="n">HomieSetting</span><span class="o">&lt;</span><span class="kt">long</span><span class="o">&gt;</span><span class="w"> </span><span class="n">percentageSetting</span><span class="p">(</span><span class="s">&quot;percentage&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;A simple percentage&quot;</span><span class="p">);</span><span class="w">  </span><span class="c1">// id, description</span>
+<h1 id="custom-settings">Custom settings<a class="headerlink" href="#custom-settings" title="Permanent link">&para;</a></h1>
+<p>Homie for ESP8266 lets you implement custom settings that can be set from the
+JSON configuration file and the Configuration API. Below is an example of how to
+use this feature:</p>
+<div class="highlight"><pre><span></span><code><span class="n">HomieSetting</span><span class="o">&lt;</span><span class="kt">long</span><span class="o">&gt;</span><span class="w"> </span><span class="n">percentageSetting</span><span class="p">(</span>
+<span class="w">  </span><span class="s">&quot;percentage&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="s">&quot;A simple percentage&quot;</span>
+<span class="p">);</span><span class="w">  </span><span class="c1">// id, description</span>
 
 <span class="kt">void</span><span class="w"> </span><span class="nf">setup</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="n">percentageSetting</span><span class="p">.</span><span class="n">setDefaultValue</span><span class="p">(</span><span class="mi">50</span><span class="p">).</span><span class="n">setValidator</span><span class="p">([]</span><span class="w"> </span><span class="p">(</span><span class="kt">long</span><span class="w"> </span><span class="n">candidate</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
@@ -1372,9 +1522,10 @@
 </code></pre></div>
 <div class="admonition tip">
 <p class="admonition-title">setDefaultValue() before Homie.setup()</p>
+<p>As shown in the example above, the <strong>default value</strong> has to be set
+<strong>before</strong> <code>Homie.setup()</code> is called. Otherwise you get an error on startup
+if there is also no value configured in the JSON configuration file.</p>
 </div>
-<p>As shown in the example above, the <strong>default value</strong> has to be set <strong>before</strong> <code>Homie.setup()</code> is called.
-   Otherwise you get an error on startup if there is also no value configured in JSON configuration file.</p>
 <p>An <code>HomieSetting</code> instance can be of the following types:</p>
 <table>
 <thead>
@@ -1402,24 +1553,40 @@
 </tr>
 </tbody>
 </table>
-<p>By default, a setting is mandatory (you have to set it in the configuration file). If you give it a default value with <code>setDefaultValue()</code>, the setting becomes optional. You can validate a setting by giving a validator function to <code>setValidator()</code>. To get the setting from your code, use <code>get()</code>. To get whether the value returned is the optional one or the one provided, use <code>wasProvided()</code>.</p>
-<p>For this example, if you want to provide the <code>percentage</code> setting, you will have to put in your configuration file:</p>
+<p>By default, a setting is mandatory, so it must be present in the configuration
+file. If you give it a default value with <code>setDefaultValue()</code>, the setting
+becomes optional. You can validate a setting by passing a validator function to
+<code>setValidator()</code>. To get the setting from your code, use <code>get()</code>. To check
+whether the returned value is the default or the configured value, use
+<code>wasProvided()</code>.</p>
+<p>For this example, if you want to provide the <code>percentage</code> setting, put this in
+your configuration file:</p>
 <div class="highlight"><pre><span></span><code><span class="p">{</span>
 <span class="w">  </span><span class="nt">&quot;settings&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="nt">&quot;percentage&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">75</span>
 <span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
 </code></pre></div>
-<h1 id="updating-custom-settings">Updating custom settings<a class="headerlink" href="#updating-custom-settings" title="Permanent link">&para;</a></h1>
-<p>In order to change custom settings send via MQTT the JSON Object to: <code>homie/&lt;device&gt;/$implementation/config/set</code>. The JSON object might include all settings you need to update at once. As well, partial/incremental update is supported.
-JSON object should be flat string. From the example above it becomes:
-<code>{"settings":{"percentage":75}}</code></p>
-<p>!!! tip Updated custom settings are saved to the configured filesystem automatically. SPIFFS is used by default; LittleFS is opt-in with <code>HOMIE_USE_LITTLEFS=1</code>.</p>
-<p>Once you updated the custom settings Homie will save it to the Flash and reboot itself.
-   The reboot causes the updated and stored setting be read into RAM and be used in actual code.</p>
-<p>!!! tip If function of your Homie device is sensitive to reboots, then consider other method of custom settings.</p>
-<p>Sometimes, the device is designed for non-interrupted service. So the reset by setting update is not acceptable and can affect the device function/behavior.</p>
-<h1 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h1>
+<h2 id="updating-custom-settings">Updating custom settings<a class="headerlink" href="#updating-custom-settings" title="Permanent link">&para;</a></h2>
+<p>To change custom settings over MQTT, publish the JSON object to
+<code>homie/&lt;device&gt;/$implementation/config/set</code>. The object can include every
+setting you need to update, or only the fields that changed.</p>
+<p>From the example above, the compact payload is:</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span><span class="w"> </span><span class="nt">&quot;settings&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;percentage&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">75</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span>
+</code></pre></div>
+<div class="admonition tip">
+<p class="admonition-title">Updated custom settings are saved automatically</p>
+<p>Homie saves updated custom settings to the configured filesystem, then
+reboots. SPIFFS is used by default; LittleFS is opt-in with
+<code>HOMIE_USE_LITTLEFS=1</code>. On the next boot, the stored value is read into RAM
+and used by the sketch.</p>
+</div>
+<div class="admonition tip">
+<p class="admonition-title">If reboots are disruptive, choose another settings flow</p>
+<p>Sometimes the device is designed for uninterrupted service. In that case, a
+reboot after a settings update may not be acceptable for the device behavior.</p>
+</div>
+<h2 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h2>
 <p>See the following example for a concrete use case:</p>
 <p><a href="https://github.com/labodj/homie-esp8266/blob/develop/examples/CustomSettings/CustomSettings.ino"><img alt="GitHub logo" src="../../assets/github.png" /> CustomSettings.ino</a></p>
 

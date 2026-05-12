@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Documentation for the maintained Homie 3.0.1 fork used by the LSH ecosystem.">
+        <meta name="description" content="Documentation for the maintained Homie fork used by the LSH ecosystem.">
       
       
         <meta name="author" content="Marvin ROGER, Jacopo Labardi">
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#version" class="md-skip">
+        <a href="#homie-implementation-specifics" class="md-skip">
           Skip to content
         </a>
       
@@ -703,7 +703,7 @@
   <span class="md-ellipsis">
     
   
-    Compiler-Flags
+    Compiler flags
   
 
     
@@ -871,7 +871,7 @@
   <span class="md-ellipsis">
     
   
-    UI Bundle
+    UI bundle
   
 
     
@@ -1086,6 +1086,62 @@
   
   
     <li class="md-nav__item">
+      <a href="../homie-v4-v5-compatibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Homie v4/v5 compatibility
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../homie-v5-runtime-extension/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Homie v5 fork runtime extension
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../ota-configuration-updates/" class="md-nav__link">
         
   
@@ -1123,6 +1179,24 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Homie implementation specifics
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
@@ -1139,6 +1213,102 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#version" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Version
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#homie-convention-advertisement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Homie convention advertisement
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reset" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reset
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ota" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OTA
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#filesystem" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Filesystem
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#statistics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Statistics
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -1340,6 +1510,91 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#version" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Version
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#homie-convention-advertisement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Homie convention advertisement
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reset" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reset
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ota" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OTA
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#filesystem" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Filesystem
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#statistics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Statistics
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -1358,76 +1613,108 @@
   
 
 
+<h1 id="homie-implementation-specifics">Homie implementation specifics<a class="headerlink" href="#homie-implementation-specifics" title="Permanent link">&para;</a></h1>
 <p>The Homie <code>$implementation</code> identifier is platform-dependent on this fork:</p>
 <ul>
 <li><code>esp32</code> on ESP32 builds</li>
 <li><code>esp8266</code> on ESP8266 builds</li>
 </ul>
-<h1 id="version">Version<a class="headerlink" href="#version" title="Permanent link">&para;</a></h1>
+<h2 id="version">Version<a class="headerlink" href="#version" title="Permanent link">&para;</a></h2>
 <ul>
 <li><code>$implementation/version</code>: maintained fork version</li>
+<li><code>$implementation/reset/reason</code>: reset reason reported by the platform on the
+  current boot, for example <code>poweron</code>, <code>software</code>, <code>brownout</code>, <code>task_watchdog</code>
+  or the platform-provided ESP8266 reset string</li>
+<li><code>$implementation/wifi/last_disconnect_reason</code>: Wi-Fi disconnect reason
+  observed during the current boot, or <code>none</code>. ESP32 builds publish the platform
+  reason name when available, for example <code>NO_AP_FOUND</code>.</li>
+<li><code>$implementation/mqtt/last_disconnect_reason</code>: MQTT disconnect reason observed
+  during the current boot, or <code>none</code></li>
 </ul>
-<h1 id="reset">Reset<a class="headerlink" href="#reset" title="Permanent link">&para;</a></h1>
+<h2 id="homie-convention-advertisement">Homie convention advertisement<a class="headerlink" href="#homie-convention-advertisement" title="Permanent link">&para;</a></h2>
+<p>The maintained fork advertises Homie <code>3.0.1</code> by default. Build with
+<code>HOMIE_CONVENTION_VERSION=4</code> to advertise Homie <code>4.0.0</code>, or with
+<code>HOMIE_CONVENTION_VERSION=5</code> to publish Homie <code>5.0</code> discovery metadata.</p>
+<p>In Homie v4 mode the device publishes:</p>
 <ul>
-<li><code>$implementation/reset</code>: You can publish a <code>true</code> to this topic to reset the device</li>
+<li><code>$homie</code>: <code>4.0.0</code></li>
+<li><code>$extensions</code>:
+  <code>org.homie.legacy-firmware:0.1.1:[4.x],org.homie.legacy-stats:0.1.1:[4.x]</code></li>
 </ul>
-<h1 id="configuration">Configuration<a class="headerlink" href="#configuration" title="Permanent link">&para;</a></h1>
+<p>The legacy extensions cover the existing <code>$mac</code>, <code>$localip</code>, <code>$fw/name</code>,
+<code>$fw/version</code>, <code>$stats/interval</code>, <code>$stats/uptime</code>, <code>$stats/signal</code> and
+<code>$stats/freeheap</code> topics. Fork-specific OTA and diagnostics topics remain
+documented in this page.</p>
+<p>All convention modes abort boot for invalid MQTT roots, device IDs, firmware
+names, node IDs or property IDs. Homie v4 mode also rejects range nodes. Missing
+property names and datatypes still use safe discovery fallbacks, while invalid
+datatypes and <code>enum</code>/<code>color</code> properties without the required format are
+advertised as <code>string</code>.</p>
+<p>In Homie v5 mode the device base topic is <code>&lt;domain&gt;/5/&lt;device-id&gt;</code>, for example
+<code>homie/5/kitchen-light</code>. Device, node and property discovery is published as a
+retained <code>$description</code> JSON document. The existing runtime topics in this page
+remain available as the declared fork extension:</p>
+<div class="highlight"><pre><span></span><code>io.github.labodj.esp-runtime
+</code></pre></div>
+<p>See <a href="../homie-v5-runtime-extension/">Homie v5 fork runtime extension</a> for the
+extension contract. These topics are intentionally documented as an extension in
+v5 mode because they are not part of Homie v5 core discovery.</p>
+<p>Non-retained property publishes use QoS 0 in v5 mode. Retained <code>/set</code> commands
+are ignored in both v4 and v5 modes because command messages must be
+non-retained. By default, exact property format and payload correctness is the
+sketch's responsibility; enable <code>HOMIE_STRICT_PROPERTY_VALIDATION=1</code> to have the
+library reject invalid property publishes and <code>/set</code> command payloads.</p>
+<h2 id="reset">Reset<a class="headerlink" href="#reset" title="Permanent link">&para;</a></h2>
 <ul>
-<li><code>$implementation/config</code>: The <code>config.json</code> is published there, with <code>wifi.password</code>, <code>mqtt.username</code> and <code>mqtt.password</code> fields stripped</li>
-<li><code>$implementation/config/set</code>: You can update the <code>config.json</code> by sending incremental JSON on this topic</li>
+<li><code>$implementation/reset</code>: You can publish <code>true</code> to this topic to reset the
+  device</li>
 </ul>
-<h1 id="ota">OTA<a class="headerlink" href="#ota" title="Permanent link">&para;</a></h1>
+<h2 id="configuration">Configuration<a class="headerlink" href="#configuration" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>$implementation/config</code>: the <code>config.json</code> is published there, with
+  <code>wifi.password</code>, <code>mqtt.username</code> and <code>mqtt.password</code> fields stripped</li>
+<li><code>$implementation/config/set</code>: you can update the <code>config.json</code> by sending
+  incremental JSON on this topic</li>
+</ul>
+<p>In Homie v5 mode the advertised <code>$implementation/config</code> also includes
+<code>mqtt.effective_base_topic</code>. This field is generated at publish time and shows
+the actual MQTT root used by the runtime, for example <code>homie/5/</code> when the saved
+<code>mqtt.base_topic</code> is <code>homie/</code>. It is diagnostic only: it is not written to
+<code>/homie/config.json</code>, and <code>/config/set</code> removes it if a management tool echoes
+the advertised config back to the device.</p>
+<h2 id="ota">OTA<a class="headerlink" href="#ota" title="Permanent link">&para;</a></h2>
 <ul>
 <li><code>$implementation/ota/enabled</code>: <code>true</code> if OTA is enabled, <code>false</code> otherwise</li>
-<li><code>$implementation/ota/firmware/&lt;md5 checksum&gt;</code>: Send the firmware payload to this topic, where the last topic level is the hexadecimal MD5 checksum of the firmware image</li>
-<li><code>$implementation/ota/status</code>: HTTP-like status code indicating the status of the OTA. Might be:</li>
+<li><code>$implementation/ota/firmware/&lt;md5 checksum&gt;</code>: send the firmware payload to
+  this topic, where the last topic level is the hexadecimal MD5 checksum of the
+  firmware image</li>
+<li>
+<p><code>$implementation/ota/status</code>: HTTP-like status code indicating the status of
+  the OTA. Common values are:</p>
+</li>
+<li>
+<p><code>200</code>: OTA successfully flashed.</p>
+</li>
+<li><code>202</code>: OTA request or checksum accepted.</li>
+<li><code>206 465/349680</code>: OTA in progress. The data after the status code corresponds
+  to <code>&lt;bytes written&gt;/&lt;bytes total&gt;</code>.</li>
+<li><code>304</code>: The current firmware is already up-to-date.</li>
+<li><code>400 BAD_FIRMWARE</code>: the OTA request is invalid. The identifier might be
+  <code>BAD_FIRMWARE</code>, <code>BAD_CHECKSUM</code>, <code>NOT_ENOUGH_SPACE</code> or <code>NOT_REQUESTED</code>.</li>
+<li><code>403</code>: OTA is not enabled.</li>
+<li><code>500 FLASH_ERROR</code>: the device flash/update path failed. The identifier might
+  be <code>FLASH_ERROR</code>.</li>
 </ul>
-<table>
-<thead>
-<tr>
-<th>Code</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>200</code></td>
-<td>OTA successfully flashed</td>
-</tr>
-<tr>
-<td><code>202</code></td>
-<td>OTA request / checksum accepted</td>
-</tr>
-<tr>
-<td><code>206 465/349680</code></td>
-<td>OTA in progress. The data after the status code corresponds to <code>&lt;bytes written&gt;/&lt;bytes total&gt;</code></td>
-</tr>
-<tr>
-<td><code>304</code></td>
-<td>The current firmware is already up-to-date</td>
-</tr>
-<tr>
-<td><code>400 BAD_FIRMWARE</code></td>
-<td>OTA error from your side. The identifier might be <code>BAD_FIRMWARE</code>, <code>BAD_CHECKSUM</code>, <code>NOT_ENOUGH_SPACE</code>, <code>NOT_REQUESTED</code></td>
-</tr>
-<tr>
-<td><code>403</code></td>
-<td>OTA not enabled</td>
-</tr>
-<tr>
-<td><code>500 FLASH_ERROR</code></td>
-<td>OTA error in the device flash/update path. The identifier might be <code>FLASH_ERROR</code></td>
-</tr>
-</tbody>
-</table>
 <p>On this fork, the OTA handler is hardened for MQTT QoS 1 delivery:</p>
 <ul>
 <li>duplicate retransmissions of already-flashed payloads are ignored safely</li>
 <li>overlapping retransmitted chunks are trimmed before flashing</li>
-<li>out-of-sequence chunks fail explicitly instead of silently corrupting the update</li>
-<li>if MQTT disconnects during OTA, the update is aborted cleanly and must be retried</li>
+<li>out-of-sequence chunks fail explicitly instead of silently corrupting the
+  update</li>
+<li>if MQTT disconnects during OTA, the update is aborted cleanly and must be
+  retried</li>
 </ul>
-<h1 id="filesystem">Filesystem<a class="headerlink" href="#filesystem" title="Permanent link">&para;</a></h1>
+<h2 id="filesystem">Filesystem<a class="headerlink" href="#filesystem" title="Permanent link">&para;</a></h2>
 <p>SPIFFS remains the default storage backend for compatibility with existing
 devices. LittleFS is selected only when <code>HOMIE_USE_LITTLEFS=1</code> is compiled into
 the firmware. A temporary migration build can add
@@ -1436,7 +1723,7 @@ the firmware. A temporary migration build can add
 <p>The UI bundle is not migrated because SPIFFS and LittleFS share the same flash
 area and the bundle can be too large to hold in RAM while the destination
 filesystem is formatted.</p>
-<h1 id="statistics">Statistics<a class="headerlink" href="#statistics" title="Permanent link">&para;</a></h1>
+<h2 id="statistics">Statistics<a class="headerlink" href="#statistics" title="Permanent link">&para;</a></h2>
 <p>The fork publishes the standard Homie statistics plus these additional retained
 topics:</p>
 <ul>
@@ -1445,6 +1732,10 @@ topics:</p>
 <li><code>$stats/uptimemqtt</code>: seconds since MQTT connectivity was established</li>
 <li><code>$stats/mqttackdropped</code>: cumulative MQTT publish acknowledgement queue drops</li>
 <li><code>$stats/mqttinbounddropped</code>: cumulative deferred inbound MQTT queue drops</li>
+<li><code>$stats/mqttackmaxdepth</code>: maximum MQTT publish acknowledgement queue depth
+  since boot</li>
+<li><code>$stats/mqttinboundmaxdepth</code>: maximum deferred inbound MQTT queue depth since
+  boot</li>
 </ul>
 
 

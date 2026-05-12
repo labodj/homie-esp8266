@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Documentation for the maintained Homie 3.0.1 fork used by the LSH ecosystem.">
+        <meta name="description" content="Documentation for the maintained Homie fork used by the LSH ecosystem.">
       
       
         <meta name="author" content="Marvin ROGER, Jacopo Labardi">
@@ -76,6 +76,11 @@
     <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
+      
+        
+        <a href="#resetting" class="md-skip">
+          Skip to content
+        </a>
       
     </div>
     <div data-md-component="announce">
@@ -671,6 +676,8 @@
       <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
       
       
+        
+      
       
       <a href="./" class="md-nav__link md-nav__link--active">
         
@@ -708,7 +715,7 @@
   <span class="md-ellipsis">
     
   
-    Compiler-Flags
+    Compiler flags
   
 
     
@@ -876,7 +883,7 @@
   <span class="md-ellipsis">
     
   
-    UI Bundle
+    UI bundle
   
 
     
@@ -1069,6 +1076,62 @@
     
   
     Maintained fork differences
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../others/homie-v4-v5-compatibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Homie v4/v5 compatibility
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../others/homie-v5-runtime-extension/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Homie v5 fork runtime extension
   
 
     
@@ -1330,6 +1393,8 @@
   
   
   
+    
+  
   
 </nav>
                   </div>
@@ -1349,30 +1414,37 @@
   
 
 
-  <h1>Resetting</h1>
-
-<p>Resetting the device means erasing the stored configuration and rebooting from <code>normal</code> mode to <code>configuration</code> mode. By default, you can do it by holding the configured reset trigger for 5 seconds. On many dev boards this is the <code>FLASH</code> or <code>BOOT</code> button.</p>
+<h1 id="resetting">Resetting<a class="headerlink" href="#resetting" title="Permanent link">&para;</a></h1>
+<p>Resetting the device means erasing the stored configuration and rebooting from
+<code>normal</code> mode to <code>configuration</code> mode. By default, you can do it by holding the
+configured reset trigger for 5 seconds. On many dev boards this is the <code>FLASH</code>
+or <code>BOOT</code> button.</p>
 <p>This behavior is configurable:</p>
 <div class="highlight"><pre><span></span><code><span class="kt">void</span><span class="w"> </span><span class="nf">setup</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="n">Homie</span><span class="p">.</span><span class="n">setResetTrigger</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="n">LOW</span><span class="p">,</span><span class="w"> </span><span class="mi">2000</span><span class="p">);</span><span class="w"> </span><span class="c1">// before Homie.setup()</span>
 <span class="w">  </span><span class="c1">// ...</span>
 <span class="p">}</span>
 </code></pre></div>
-<p>The device will now reset if pin <code>1</code> is <code>LOW</code> for <code>2000</code>ms. You can also disable completely this reset trigger:</p>
+<p>The device now resets if pin <code>1</code> is <code>LOW</code> for <code>2000</code> ms. You can also disable
+this reset trigger completely:</p>
 <div class="highlight"><pre><span></span><code><span class="kt">void</span><span class="w"> </span><span class="nf">setup</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="n">Homie</span><span class="p">.</span><span class="n">disableResetTrigger</span><span class="p">();</span><span class="w"> </span><span class="c1">// before Homie.setup()</span>
 <span class="w">  </span><span class="c1">// ...</span>
 <span class="p">}</span>
 </code></pre></div>
-<p>In addition, you can also trigger a device reset from your sketch:</p>
+<p>You can also trigger a device reset from your sketch:</p>
 <div class="highlight"><pre><span></span><code><span class="kt">void</span><span class="w"> </span><span class="nf">loop</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="n">Homie</span><span class="p">.</span><span class="n">reset</span><span class="p">();</span>
 <span class="p">}</span>
 </code></pre></div>
-<p>This will reset the device as soon as it is idle. Indeed, sometimes, you might want to disable temporarily the ability to reset the device. For example, if your device is doing some background work like moving shutters, you will want to disable the ability to reset until the shutters are not moving anymore.</p>
+<p>This resets the device as soon as it is idle. If the device is running critical
+work, such as moving shutters, temporarily mark it as not idle until that work is
+finished.</p>
 <div class="highlight"><pre><span></span><code><span class="n">Homie</span><span class="p">.</span><span class="n">setIdle</span><span class="p">(</span><span class="nb">false</span><span class="p">);</span>
 </code></pre></div>
-<p>Note that if a reset is asked while the device is not idle, the device will be flagged. In other words, when you will call <code>Homie.setIdle(true);</code> back, the device will immediately reset.</p>
+<p>If a reset is requested while the device is not idle, Homie records the pending
+reset. When you call <code>Homie.setIdle(true);</code> again, the device resets
+immediately.</p>
 
 
 

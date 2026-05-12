@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Documentation for the maintained Homie 3.0.1 fork used by the LSH ecosystem.">
+        <meta name="description" content="Documentation for the maintained Homie fork used by the LSH ecosystem.">
       
       
         <meta name="author" content="Marvin ROGER, Jacopo Labardi">
@@ -76,6 +76,11 @@
     <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
+      
+        
+        <a href="#deep-sleep" class="md-skip">
+          Skip to content
+        </a>
       
     </div>
     <div data-md-component="announce">
@@ -700,7 +705,7 @@
   <span class="md-ellipsis">
     
   
-    Compiler-Flags
+    Compiler flags
   
 
     
@@ -811,6 +816,8 @@
       <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
       
       
+        
+      
       
       <a href="./" class="md-nav__link md-nav__link--active">
         
@@ -876,7 +883,7 @@
   <span class="md-ellipsis">
     
   
-    UI Bundle
+    UI bundle
   
 
     
@@ -1069,6 +1076,62 @@
     
   
     Maintained fork differences
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../others/homie-v4-v5-compatibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Homie v4/v5 compatibility
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../others/homie-v5-runtime-extension/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Homie v5 fork runtime extension
   
 
     
@@ -1330,6 +1393,8 @@
   
   
   
+    
+  
   
 </nav>
                   </div>
@@ -1349,9 +1414,15 @@
   
 
 
-  <h1>Deep sleep</h1>
-
-<p>Before deep sleeping, you will want to ensure that all messages are sent, including property values of your <code>HomieNode</code> and the <code>$online →  false</code>. To do that, you can call <code>Homie.prepareToSleep()</code>. But the event <code>MQTT_READY</code> is emitted before your <code>HomieNode</code>s <code>loop()</code> method is called. Therefore you need to postpone the call to <code>Homie.prepareToSleep()</code> until the <code>loop()</code> method of all <code>HomieNode</code>s is called and their properties are submitted over MQTT. For that the additional Timer is necessary. Then <code>Homie.prepareToSleep()</code> will disconnect everything cleanly, so that you can call <code>Homie.doDeepSleep()</code>.</p>
+<h1 id="deep-sleep">Deep sleep<a class="headerlink" href="#deep-sleep" title="Permanent link">&para;</a></h1>
+<p>Before deep sleep, make sure all messages have been sent, including your
+<code>HomieNode</code> property values and the <code>$online → false</code> update. Call
+<code>Homie.prepareToSleep()</code> for that shutdown sequence.</p>
+<p>The <code>MQTT_READY</code> event is emitted before the <code>loop()</code> method of each
+<code>HomieNode</code> is called, so postpone <code>Homie.prepareToSleep()</code> until node
+properties have been submitted over MQTT. The timer in this example provides
+that short delay. Once <code>Homie.prepareToSleep()</code> disconnects cleanly, the
+<code>READY_TO_SLEEP</code> event lets you call <code>Homie.doDeepSleep()</code>.</p>
 <div class="highlight"><pre><span></span><code><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;Homie.h&gt;</span>
 <span class="cp">#include</span><span class="w"> </span><span class="cpf">&quot;Timer.h&quot;</span>
 
@@ -1364,7 +1435,7 @@
 <span class="kt">void</span><span class="w"> </span><span class="nf">onHomieEvent</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">HomieEvent</span><span class="o">&amp;</span><span class="w"> </span><span class="n">event</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="k">switch</span><span class="p">(</span><span class="n">event</span><span class="p">.</span><span class="n">type</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="k">case</span><span class="w"> </span><span class="no">HomieEventType</span><span class="o">::</span><span class="no">MQTT_READY</span><span class="p">:</span>
-<span class="w">      </span><span class="n">Homie</span><span class="p">.</span><span class="n">getLogger</span><span class="p">()</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;MQTT connected, preparing for deep sleep after 100ms...&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">endl</span><span class="p">;</span>
+<span class="w">      </span><span class="n">Homie</span><span class="p">.</span><span class="n">getLogger</span><span class="p">()</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="s">&quot;MQTT connected, preparing for deep sleep after 100 ms...&quot;</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">endl</span><span class="p">;</span>
 <span class="w">      </span><span class="n">t</span><span class="p">.</span><span class="n">after</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span><span class="w"> </span><span class="n">prepareSleep</span><span class="p">);</span>
 <span class="w">      </span><span class="k">break</span><span class="p">;</span>
 <span class="w">    </span><span class="k">case</span><span class="w"> </span><span class="no">HomieEventType</span><span class="o">::</span><span class="no">READY_TO_SLEEP</span><span class="p">:</span>

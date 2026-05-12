@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Documentation for the maintained Homie 3.0.1 fork used by the LSH ecosystem.">
+        <meta name="description" content="Documentation for the maintained Homie fork used by the LSH ecosystem.">
       
       
         <meta name="author" content="Marvin ROGER, Jacopo Labardi">
@@ -715,7 +715,7 @@
   <span class="md-ellipsis">
     
   
-    Compiler-Flags
+    Compiler flags
   
 
     
@@ -883,7 +883,7 @@
   <span class="md-ellipsis">
     
   
-    UI Bundle
+    UI bundle
   
 
     
@@ -1076,6 +1076,62 @@
     
   
     Maintained fork differences
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../others/homie-v4-v5-compatibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Homie v4/v5 compatibility
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../others/homie-v5-runtime-extension/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Homie v5 fork runtime extension
   
 
     
@@ -1359,18 +1415,19 @@
 
 
 <h1 id="platformio-pioarduino">PlatformIO / PioArduino<a class="headerlink" href="#platformio-pioarduino" title="Permanent link">&para;</a></h1>
-<p>This fork is maintained primarily through PlatformIO git dependencies. For ESP32
-projects that track current Arduino cores, use the PioArduino platform package:</p>
+<p>The maintained installation path for this fork is the <code>labodj/homie-v5</code>
+PlatformIO Registry package. For ESP32 projects that track current Arduino
+cores, use the PioArduino platform package:</p>
 <div class="highlight"><pre><span></span><code><span class="k">[env:esp32dev]</span>
 <span class="na">platform</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">https://github.com/pioarduino/platform-espressif32/releases/download/stable/platform-espressif32.zip</span>
 <span class="na">board</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">esp32dev</span>
 <span class="na">framework</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">arduino</span>
 <span class="na">lib_compat_mode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">strict</span>
 <span class="na">lib_deps</span><span class="w"> </span><span class="o">=</span>
-<span class="w">  </span><span class="na">https</span><span class="o">:</span><span class="s">//github.com/labodj/homie-esp8266.git</span><span class="c1">#develop</span>
+<span class="w">  </span><span class="na">labodj/homie-v5 @ ^3.6.1</span>
 </code></pre></div>
-<p>For reproducible firmware builds, pin the Homie dependency to a commit SHA
-instead of <code>develop</code>.</p>
+<p>For unreleased changes, use the git URL dependency and pin it to a commit SHA
+instead of tracking the branch.</p>
 <p>ESP8266 projects should keep the ESP8266 PlatformIO platform:</p>
 <div class="highlight"><pre><span></span><code><span class="k">[env:nodemcuv2]</span>
 <span class="na">platform</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">espressif8266</span>
@@ -1380,15 +1437,18 @@ instead of <code>develop</code>.</p>
 <span class="na">build_flags</span><span class="w"> </span><span class="o">=</span>
 <span class="w">  </span><span class="na">-D PIO_FRAMEWORK_ARDUINO_LWIP2_LOW_MEMORY</span>
 <span class="na">lib_deps</span><span class="w"> </span><span class="o">=</span>
-<span class="w">  </span><span class="na">https</span><span class="o">:</span><span class="s">//github.com/labodj/homie-esp8266.git</span><span class="c1">#develop</span>
+<span class="w">  </span><span class="na">labodj/homie-v5 @ ^3.6.1</span>
 </code></pre></div>
 <p><code>lib_compat_mode = strict</code> is recommended because the async networking
 dependencies are platform-specific. Without strict compatibility, PlatformIO may
 try to compile ESP32 or RP2040 async TCP dependencies for ESP8266 builds, or the
 other way around.</p>
-<p>The library package pins its internal AsyncMqttClient dependency to a commit hash
-instead of a moving tag so dependency resolution stays repeatable across CI and
-developer machines.</p>
+<p>The library package pins its internal AsyncMqttClient dependency to a commit
+hash instead of a moving tag so dependency resolution stays repeatable across CI
+and developer machines.</p>
+<p>The pinned dependency points to a small metadata-only fork of <code>AsyncMqttClient</code>.
+It only updates the async TCP dependency metadata to the maintained <code>esp32async</code>
+packages required by modern ESP8266 / ESP32 Arduino toolchains.</p>
 <p>SPIFFS remains the default storage backend for compatibility with existing
 devices. To build and upload LittleFS images, configure both PlatformIO and
 Homie:</p>

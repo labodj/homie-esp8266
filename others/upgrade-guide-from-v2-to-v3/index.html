@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Documentation for the maintained Homie 3.0.1 fork used by the LSH ecosystem.">
+        <meta name="description" content="Documentation for the maintained Homie fork used by the LSH ecosystem.">
       
       
         <meta name="author" content="Marvin ROGER, Jacopo Labardi">
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#new-convention" class="md-skip">
+        <a href="#upgrade-guide-from-v2-to-v3" class="md-skip">
           Skip to content
         </a>
       
@@ -703,7 +703,7 @@
   <span class="md-ellipsis">
     
   
-    Compiler-Flags
+    Compiler flags
   
 
     
@@ -871,7 +871,7 @@
   <span class="md-ellipsis">
     
   
-    UI Bundle
+    UI bundle
   
 
     
@@ -1086,6 +1086,62 @@
   
   
     <li class="md-nav__item">
+      <a href="../homie-v4-v5-compatibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Homie v4/v5 compatibility
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../homie-v5-runtime-extension/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Homie v5 fork runtime extension
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../ota-configuration-updates/" class="md-nav__link">
         
   
@@ -1260,6 +1316,8 @@
       <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
       
       
+        
+      
       
         <label class="md-nav__link md-nav__link--active" for="__toc">
           
@@ -1301,6 +1359,8 @@
 <nav class="md-nav md-nav--secondary" aria-label="Table of contents">
   
   
+  
+    
   
   
     <label class="md-nav__title" for="__toc">
@@ -1392,6 +1452,8 @@
   
   
   
+    
+  
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
@@ -1441,23 +1503,27 @@
   
 
 
-  <h1>Upgrade guide from v2 to v3</h1>
-
-<p>This is an upgrade guide to upgrade your Homie devices from v2 to v3.</p>
+<h1 id="upgrade-guide-from-v2-to-v3">Upgrade guide from v2 to v3<a class="headerlink" href="#upgrade-guide-from-v2-to-v3" title="Permanent link">&para;</a></h1>
+<p>Use this guide when upgrading Homie devices from v2 to v3.</p>
 <h2 id="new-convention">New convention<a class="headerlink" href="#new-convention" title="Permanent link">&para;</a></h2>
-<p>The Homie convention has been revised to v3 to be more extensible and introspectable. Be sure to <a href="https://github.com/homieiot/convention/tree/v3.0.1">check it out</a>.</p>
+<p>The Homie convention was revised in v3 to be more extensible and
+introspectable. Review the
+<a href="https://github.com/homieiot/convention/tree/v3.0.1">Homie v3 convention</a>
+before deploying upgraded devices.</p>
 <h2 id="api-changes-in-the-sketch">API changes in the sketch<a class="headerlink" href="#api-changes-in-the-sketch" title="Permanent link">&para;</a></h2>
 <ol>
-<li>Constructor of <code>HomieNode</code> needs third mandatory param <code>const char* type</code>:
-   E.g. <code>HomieNode lightNode("light", "Light");</code> -&gt; <code>HomieNode lightNode("light", "Light", "switch");</code>.</li>
-<li>Signature of handleInput has changed to: <code>handleInput(const HomieRange&amp; range, const String&amp; property, const String&amp; value)</code>
+<li>The <code>HomieNode</code> constructor needs the third mandatory parameter
+   <code>const char* type</code>. For example,
+   <code>HomieNode lightNode("light", "Light");</code> becomes
+   <code>HomieNode lightNode("light", "Light", "switch");</code>.</li>
+<li>The signature of <code>handleInput</code> changed to:
+   <code>handleInput(const HomieRange&amp; range, const String&amp; property, const String&amp; value)</code>
    See the Ping example for the current callback shape.</li>
-<li>Review every advertised property id against the Homie 3.0.1 id rules. This
-   fork keeps legacy ids for compatibility but logs a warning when an id is not
-   convention-compliant.</li>
-<li>If you rely on <code>overwriteSetter(true)</code>, use <code>setSetRetained()</code> when the
-   mirrored <code>/set</code> topic needs a different retained flag from the main property
-   publish.</li>
+<li>Review every device, firmware, node and property id against the Homie 3.0.1
+   id rules. This fork now rejects non-compliant ids before boot continues,
+   because publishing invalid MQTT topics makes discovery unreliable.</li>
+<li>Remove <code>overwriteSetter(true)</code> usage. Current Homie publishing ignores device
+   attempts to mirror values onto controller command topics.</li>
 </ol>
 
 

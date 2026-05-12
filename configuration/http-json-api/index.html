@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Documentation for the maintained Homie 3.0.1 fork used by the LSH ecosystem.">
+        <meta name="description" content="Documentation for the maintained Homie fork used by the LSH ecosystem.">
       
       
         <meta name="author" content="Marvin ROGER, Jacopo Labardi">
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#error-handling" class="md-skip">
+        <a href="#http-json-api" class="md-skip">
           Skip to content
         </a>
       
@@ -703,7 +703,7 @@
   <span class="md-ellipsis">
     
   
-    Compiler-Flags
+    Compiler flags
   
 
     
@@ -871,7 +871,7 @@
   <span class="md-ellipsis">
     
   
-    UI Bundle
+    UI bundle
   
 
     
@@ -985,6 +985,24 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    HTTP JSON API
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
@@ -1001,6 +1019,157 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#error-handling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Error handling
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#endpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Endpoints
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#response" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Response
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#response_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Response
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#response_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Response
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#request-body" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Request body
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#response_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Response
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#request-body_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Request body
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#response_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Response
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#response_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Response
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#request-body_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Request body
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#response_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Response
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -1076,6 +1245,62 @@
     
   
     Maintained fork differences
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../others/homie-v4-v5-compatibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Homie v4/v5 compatibility
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../others/homie-v5-runtime-extension/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Homie v5 fork runtime extension
   
 
     
@@ -1340,6 +1565,146 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#error-handling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Error handling
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#endpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Endpoints
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#response" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Response
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#response_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Response
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#response_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Response
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#request-body" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Request body
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#response_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Response
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#request-body_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Request body
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#response_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Response
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#response_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Response
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#request-body_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Request body
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#response_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Response
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -1358,269 +1723,249 @@
   
 
 
-<p>When in <code>configuration</code> mode, the device exposes a HTTP JSON API to send the configuration to it. When you send a valid configuration to the <code>/config</code> endpoint, the configuration file is stored in the filesystem at <code>/homie/config.json</code>.</p>
-<p>If you don't want to mess with JSON, you have a Web UI / app available:</p>
+<h1 id="http-json-api">HTTP JSON API<a class="headerlink" href="#http-json-api" title="Permanent link">&para;</a></h1>
+<p>When in <code>configuration</code> mode, the device exposes an HTTP JSON API for
+configuration. When you send a valid configuration to the <code>/config</code>
+endpoint, the configuration file is stored in the filesystem at
+<code>/homie/config.json</code>.</p>
+<p>If you prefer not to edit JSON by hand, you can use the bundled Web UI:</p>
 <ul>
-<li>At <a href="https://labodj.github.io/homie-esp8266/configurators/v2/">https://labodj.github.io/homie-esp8266/configurators/v2/</a></li>
-<li>As an <a href="https://build.phonegap.com/apps/1906578/share">Android app</a></li>
+<li>At <a href="https://labodj.github.io/homie-esp8266/configurators/v2/">the maintained fork configurator</a></li>
 </ul>
-<p><strong>Quick instructions to use the Web UI / app</strong>:</p>
+<p><strong>Quick instructions to use the Web UI</strong>:</p>
 <ol>
-<li>Open the Web UI / app</li>
-<li>Disconnect from your current Wi-Fi AP, and connect to the <code>Homie-xxxxxxxxxxxx</code> AP spawned in <code>configuration</code> mode</li>
+<li>Open the Web UI</li>
+<li>Disconnect from your current Wi-Fi AP, and connect to the
+   <code>Homie-xxxxxxxxxxxx</code> AP spawned in <code>configuration</code> mode</li>
 <li>Follow the instructions</li>
 </ol>
-<p>You can see the sources of the Web UI <a href="https://github.com/homieiot/homie-esp8266-setup">here</a>.</p>
-<p>Alternatively, you can use this <code>curl</code> command to send the configuration to the device. You must connect to the device in <code>configuration</code> mode (i.e. the device is an Access Point). This method will not work if not in <code>configuration</code> mode:</p>
+<p>You can see the
+<a href="https://github.com/homieiot/homie-esp8266-setup">sources of the Web UI</a>.</p>
+<p>Alternatively, you can use this <code>curl</code> command to send the configuration to the
+device. You must connect to the device in <code>configuration</code> mode, while it is
+acting as an access point. This method will not work outside <code>configuration</code>
+mode:</p>
 <div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-X<span class="w"> </span>PUT<span class="w"> </span>http://192.168.123.1/config<span class="w"> </span>--header<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span>-d<span class="w"> </span>@config.json
 </code></pre></div>
 <p>This will send the <code>./config.json</code> file to the device.</p>
-<h1 id="error-handling">Error handling<a class="headerlink" href="#error-handling" title="Permanent link">&para;</a></h1>
-<p>When everything went fine, a <code>2xx</code> HTTP code is returned, such as <code>200 OK</code>, <code>202 Accepted</code>, <code>204 No Content</code> and so on.
-If anything goes wrong, a return code != 2xx will be returned, with a JSON <code>error</code> field indicating the error, such as <code>500 Internal Server error</code>, <code>400 Bad request</code> and so on.</p>
-<h1 id="endpoints">Endpoints<a class="headerlink" href="#endpoints" title="Permanent link">&para;</a></h1>
+<h2 id="error-handling">Error handling<a class="headerlink" href="#error-handling" title="Permanent link">&para;</a></h2>
+<p>When everything went fine, a <code>2xx</code> HTTP code is returned, such as <code>200 OK</code>,
+<code>202 Accepted</code>, <code>204 No Content</code> and so on. If anything goes wrong, a return
+code != 2xx will be returned, with a JSON <code>error</code> field indicating the error,
+such as <code>500 Internal Server error</code>, <code>400 Bad request</code> and so on.</p>
+<h2 id="endpoints">Endpoints<a class="headerlink" href="#endpoints" title="Permanent link">&para;</a></h2>
 <p><strong>API base address:</strong> <code>http://192.168.123.1</code></p>
 <details class="summary">
 <summary>GET <code>/heart</code></summary>
-</details>
 <p>This is useful to ensure we are connected to the device AP.</p>
-<div class="codehilite"><pre><span></span><code>## Response
-
-`204 No Content`
-</code></pre></div>
-
+<h2 id="response">Response<a class="headerlink" href="#response" title="Permanent link">&para;</a></h2>
+<p><code>204 No Content</code></p>
+</details>
 <hr />
 <details class="summary">
 <summary>GET <code>/device-info</code></summary>
-</details>
 <p>Get some information on the device.</p>
-<div class="codehilite"><pre><span></span><code><span class="gu">##</span> Response
-
-<span class="sb">`200 OK (application/json)`</span>
-
-```json
-{
-  &quot;hardware_device_id&quot;: &quot;52a8fa5d&quot;,
+<h2 id="response_1">Response<a class="headerlink" href="#response_1" title="Permanent link">&para;</a></h2>
+<p><code>200 OK (application/json)</code></p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;hardware_device_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;52a8fa5d&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;homie_esp8266_version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;3.6.1&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;firmware&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;awesome-device&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;1.0.0&quot;</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nt">&quot;nodes&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;light&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;light&quot;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">],</span>
+<span class="w">  </span><span class="nt">&quot;settings&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;timeout&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Timeout in seconds&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ulong&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;required&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;default&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">10</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">]</span>
+<span class="p">}</span>
 </code></pre></div>
-
-<p>"homie_esp8266_version": "3.2.0",
-      "firmware": {
-        "name": "awesome-device",
-        "version": "1.0.0"
-      },
-      "nodes": [
-        {
-          "id": "light",
-          "type": "light"
-        }
-      ],
-      "settings": [
-        {
-          "name": "timeout",
-          "description": "Timeout in seconds",
-          "type": "ulong",
-          "required": false,
-          "default": 10
-        }
-      ]
-    }
-    ```</p>
-<div class="codehilite"><pre><span></span><code><span class="n n-Quoted">`type`</span><span class="w"> </span><span class="n">can</span><span class="w"> </span><span class="n">be</span><span class="w"> </span><span class="k">one</span><span class="w"> </span><span class="k">of</span><span class="w"> </span><span class="n">the</span><span class="w"> </span><span class="k">following</span><span class="o">:</span>
-
-<span class="o">*</span><span class="w"> </span><span class="n n-Quoted">`bool`</span><span class="o">:</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="kt">boolean</span>
-<span class="o">*</span><span class="w"> </span><span class="n n-Quoted">`ulong`</span><span class="o">:</span><span class="w"> </span><span class="n">an</span><span class="w"> </span><span class="k">unsigned</span><span class="w"> </span><span class="kt">long</span>
-<span class="o">*</span><span class="w"> </span><span class="n n-Quoted">`long`</span><span class="o">:</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="kt">long</span>
-<span class="o">*</span><span class="w"> </span><span class="n n-Quoted">`double`</span><span class="o">:</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="kt">double</span>
-<span class="o">*</span><span class="w"> </span><span class="n n-Quoted">`string`</span><span class="o">:</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="k">string</span>
-
-<span class="o">!!!</span><span class="w"> </span><span class="n">note</span><span class="w"> </span><span class="s2">&quot;Note about settings&quot;</span>
-<span class="w">    </span><span class="k">If</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="k">set</span><span class="n">ting</span><span class="w"> </span><span class="k">is</span><span class="w"> </span><span class="k">not</span><span class="w"> </span><span class="n">required</span><span class="p">,</span><span class="w"> </span><span class="n">the</span><span class="w"> </span><span class="n n-Quoted">`default`</span><span class="w"> </span><span class="n">field</span><span class="w"> </span><span class="n">will</span><span class="w"> </span><span class="k">always</span><span class="w"> </span><span class="n">be</span><span class="w"> </span><span class="k">set</span><span class="p">.</span>
-</code></pre></div>
-
+<p><code>type</code> can be one of the following:</p>
+<ul>
+<li><code>bool</code>: a boolean</li>
+<li><code>ulong</code>: an unsigned long</li>
+<li><code>long</code>: a long</li>
+<li><code>double</code>: a double</li>
+<li><code>string</code>: a string</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note about settings</p>
+<p>If a setting is not required, the <code>default</code> field will always be set.</p>
+</div>
+</details>
 <hr />
 <details class="summary">
 <summary>GET <code>/networks</code></summary>
-</details>
 <p>Retrieve the Wi-Fi networks the device can see.</p>
-<div class="codehilite"><pre><span></span><code><span class="gu">##</span> Response
-
-!!! success &quot;In case of success&quot;
-    <span class="sb">`200 OK (application/json)`</span>
-
-    ```json
-    {
-      &quot;networks&quot;: [
-        { &quot;ssid&quot;: &quot;Network_2&quot;, &quot;rssi&quot;: -82, &quot;encryption&quot;: &quot;wep&quot; },
-        { &quot;ssid&quot;: &quot;Network_1&quot;, &quot;rssi&quot;: -57, &quot;encryption&quot;: &quot;wpa&quot; },
-        { &quot;ssid&quot;: &quot;Network_3&quot;, &quot;rssi&quot;: -65, &quot;encryption&quot;: &quot;wpa2&quot; },
-        { &quot;ssid&quot;: &quot;Network_5&quot;, &quot;rssi&quot;: -94, &quot;encryption&quot;: &quot;none&quot; },
-        { &quot;ssid&quot;: &quot;Network_4&quot;, &quot;rssi&quot;: -89, &quot;encryption&quot;: &quot;auto&quot; }
-      ]
-    }
-    ```
-
-!!! failure &quot;In case the initial Wi-Fi scan is not finished on the device&quot;
-    <span class="sb">`503 Service Unavailable (application/json)`</span>
-
-    ```json
-    {
-      &quot;error&quot;: &quot;Initial Wi-Fi scan not finished yet&quot;
-    }
-    ```
+<h2 id="response_2">Response<a class="headerlink" href="#response_2" title="Permanent link">&para;</a></h2>
+<div class="admonition success">
+<p class="admonition-title">In case of success</p>
+<p><code>200 OK (application/json)</code></p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;networks&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;ssid&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Network_2&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;rssi&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">-82</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;encryption&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;wep&quot;</span><span class="w"> </span><span class="p">},</span>
+<span class="w">    </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;ssid&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Network_1&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;rssi&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">-57</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;encryption&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;wpa&quot;</span><span class="w"> </span><span class="p">},</span>
+<span class="w">    </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;ssid&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Network_3&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;rssi&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">-65</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;encryption&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;wpa2&quot;</span><span class="w"> </span><span class="p">},</span>
+<span class="w">    </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;ssid&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Network_5&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;rssi&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">-94</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;encryption&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;none&quot;</span><span class="w"> </span><span class="p">},</span>
+<span class="w">    </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;ssid&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Network_4&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;rssi&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">-89</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;encryption&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;auto&quot;</span><span class="w"> </span><span class="p">},</span>
+<span class="w">    </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;ssid&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Network_6&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;rssi&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">-71</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;encryption&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;wpa3&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="w">  </span><span class="p">]</span>
+<span class="p">}</span>
 </code></pre></div>
-
+<p><code>encryption</code> can be <code>wep</code>, <code>wpa</code>, <code>wpa2</code>, <code>wpa3</code>, <code>none</code>,
+<code>auto</code>, <code>wapi</code>, <code>owe</code> or <code>dpp</code>, depending on the Wi-Fi mode reported
+by the platform.</p>
+</div>
+<div class="admonition failure">
+<p class="admonition-title">In case the initial Wi-Fi scan is not finished on the device</p>
+<p><code>503 Service Unavailable (application/json)</code></p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;error&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Initial Wi-Fi scan not finished yet&quot;</span>
+<span class="p">}</span>
+</code></pre></div>
+</div>
+</details>
 <hr />
 <details class="summary">
 <summary>PUT <code>/config</code></summary>
-</details>
 <p>Save the config to the device.</p>
-<div class="codehilite"><pre><span></span><code><span class="c1">## Request body</span>
-
-<span class="err">`</span><span class="p">(</span><span class="n">application</span><span class="o">/</span><span class="n">json</span><span class="p">)</span><span class="err">`</span>
-
-<span class="n">See</span><span class="w"> </span><span class="p">[</span><span class="n">JSON</span><span class="w"> </span><span class="n">configuration</span><span class="w"> </span><span class="n">file</span><span class="p">](</span><span class="n">json</span><span class="o">-</span><span class="n">configuration</span><span class="o">-</span><span class="n">file</span><span class="o">.</span><span class="n">md</span><span class="p">)</span><span class="o">.</span>
-
-<span class="c1">## Response</span>
-
-<span class="o">!!!</span><span class="w"> </span><span class="n">success</span><span class="w"> </span><span class="s2">&quot;In case of success&quot;</span>
-<span class="w">    </span><span class="err">`</span><span class="mi">200</span><span class="w"> </span><span class="n">OK</span><span class="w"> </span><span class="p">(</span><span class="n">application</span><span class="o">/</span><span class="n">json</span><span class="p">)</span><span class="err">`</span>
-
-<span class="w">    </span><span class="err">```</span><span class="n">json</span>
-<span class="w">    </span><span class="p">{</span>
-<span class="w">      </span><span class="s2">&quot;success&quot;</span><span class="p">:</span><span class="w"> </span><span class="bp">true</span>
-<span class="w">    </span><span class="p">}</span>
-<span class="w">    </span><span class="err">```</span>
-
-<span class="o">!!!</span><span class="w"> </span><span class="n">failure</span><span class="w"> </span><span class="s2">&quot;In case of error in the payload&quot;</span>
-<span class="w">    </span><span class="err">`</span><span class="mi">400</span><span class="w"> </span><span class="n">Bad</span><span class="w"> </span><span class="n">Request</span><span class="w"> </span><span class="p">(</span><span class="n">application</span><span class="o">/</span><span class="n">json</span><span class="p">)</span><span class="err">`</span>
-
-<span class="w">    </span><span class="err">```</span><span class="n">json</span>
-<span class="w">    </span><span class="p">{</span>
-<span class="w">      </span><span class="s2">&quot;success&quot;</span><span class="p">:</span><span class="w"> </span><span class="bp">false</span><span class="p">,</span>
-<span class="w">      </span><span class="s2">&quot;error&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Reason why the payload is invalid&quot;</span>
-<span class="w">    </span><span class="p">}</span>
-<span class="w">    </span><span class="err">```</span>
-
-<span class="o">!!!</span><span class="w"> </span><span class="n">failure</span><span class="w"> </span><span class="s2">&quot;In case the device already received a valid configuration and is waiting for reboot&quot;</span>
-<span class="w">    </span><span class="err">`</span><span class="mi">403</span><span class="w"> </span><span class="n">Forbidden</span><span class="w"> </span><span class="p">(</span><span class="n">application</span><span class="o">/</span><span class="n">json</span><span class="p">)</span><span class="err">`</span>
-
-<span class="w">    </span><span class="err">```</span><span class="n">json</span>
-<span class="w">    </span><span class="p">{</span>
-<span class="w">      </span><span class="s2">&quot;success&quot;</span><span class="p">:</span><span class="w"> </span><span class="bp">false</span><span class="p">,</span>
-<span class="w">      </span><span class="s2">&quot;error&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Device already configured&quot;</span>
-<span class="w">    </span><span class="p">}</span>
-<span class="w">    </span><span class="err">```</span>
+<h2 id="request-body">Request body<a class="headerlink" href="#request-body" title="Permanent link">&para;</a></h2>
+<p><code>(application/json)</code></p>
+<p>See <a href="../json-configuration-file/">JSON configuration file</a>.</p>
+<h2 id="response_3">Response<a class="headerlink" href="#response_3" title="Permanent link">&para;</a></h2>
+<div class="admonition success">
+<p class="admonition-title">In case of success</p>
+<p><code>200 OK (application/json)</code></p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;success&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span>
+<span class="p">}</span>
 </code></pre></div>
-
+</div>
+<div class="admonition failure">
+<p class="admonition-title">In case of error in the payload</p>
+<p><code>400 Bad Request (application/json)</code></p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;success&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;error&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Reason why the payload is invalid&quot;</span>
+<span class="p">}</span>
+</code></pre></div>
+</div>
+<div class="admonition failure">
+<p class="admonition-title">In case the device already received a valid configuration and is waiting for reboot</p>
+<p><code>403 Forbidden (application/json)</code></p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;success&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;error&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Device already configured&quot;</span>
+<span class="p">}</span>
+</code></pre></div>
+</div>
+</details>
 <hr />
 <details class="summary">
 <summary>PUT <code>/wifi/connect</code></summary>
-</details>
-<p>Initiates the connection of the device to the Wi-Fi network while in configuation mode. This request is not synchronous and the result (Wi-Fi connected or not) must be obtained by with <code>GET /wifi/status</code>.</p>
-<div class="codehilite"><pre><span></span><code><span class="c1">## Request body</span>
-
-<span class="err">`</span><span class="p">(</span><span class="n">application</span><span class="o">/</span><span class="n">json</span><span class="p">)</span><span class="err">`</span>
-
-<span class="err">```</span><span class="n">json</span>
-<span class="p">{</span>
-<span class="w">  </span><span class="s2">&quot;ssid&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;My_SSID&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="s2">&quot;password&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;my-passw0rd&quot;</span>
+<p>Initiates the connection of the device to the Wi-Fi network while in
+configuration mode. This request is not synchronous; obtain the result with
+<code>GET /wifi/status</code>.</p>
+<h2 id="request-body_1">Request body<a class="headerlink" href="#request-body_1" title="Permanent link">&para;</a></h2>
+<p><code>(application/json)</code></p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;ssid&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;My_SSID&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;password&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;my-passw0rd&quot;</span>
 <span class="p">}</span>
-<span class="err">```</span>
-
-<span class="c1">## Response</span>
-
-<span class="o">!!!</span><span class="w"> </span><span class="n">success</span><span class="w"> </span><span class="s2">&quot;In case of success&quot;</span>
-<span class="w">    </span><span class="err">`</span><span class="mi">202</span><span class="w"> </span><span class="n">Accepted</span><span class="w"> </span><span class="p">(</span><span class="n">application</span><span class="o">/</span><span class="n">json</span><span class="p">)</span><span class="err">`</span>
-
-<span class="w">    </span><span class="err">```</span><span class="n">json</span>
-<span class="w">    </span><span class="p">{</span>
-<span class="w">      </span><span class="s2">&quot;success&quot;</span><span class="p">:</span><span class="w"> </span><span class="bp">true</span>
-<span class="w">    </span><span class="p">}</span>
-<span class="w">    </span><span class="err">```</span>
-
-<span class="o">!!!</span><span class="w"> </span><span class="n">failure</span><span class="w"> </span><span class="s2">&quot;In case of error in the payload&quot;</span>
-<span class="w">    </span><span class="err">`</span><span class="mi">400</span><span class="w"> </span><span class="n">Bad</span><span class="w"> </span><span class="n">Request</span><span class="w"> </span><span class="p">(</span><span class="n">application</span><span class="o">/</span><span class="n">json</span><span class="p">)</span><span class="err">`</span>
-
-<span class="w">    </span><span class="err">```</span><span class="n">json</span>
-<span class="w">    </span><span class="p">{</span>
-<span class="w">      </span><span class="s2">&quot;success&quot;</span><span class="p">:</span><span class="w"> </span><span class="bp">false</span><span class="p">,</span>
-<span class="w">      </span><span class="s2">&quot;error&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Reason why the payload is invalid&quot;</span>
-<span class="w">    </span><span class="p">}</span>
-<span class="w">    </span><span class="err">```</span>
 </code></pre></div>
-
+<h2 id="response_4">Response<a class="headerlink" href="#response_4" title="Permanent link">&para;</a></h2>
+<div class="admonition success">
+<p class="admonition-title">In case of success</p>
+<p><code>202 Accepted (application/json)</code></p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;success&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span>
+<span class="p">}</span>
+</code></pre></div>
+</div>
+<div class="admonition failure">
+<p class="admonition-title">In case of error in the payload</p>
+<p><code>400 Bad Request (application/json)</code></p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;success&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;error&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Reason why the payload is invalid&quot;</span>
+<span class="p">}</span>
+</code></pre></div>
+</div>
+</details>
 <hr />
 <details class="summary">
 <summary>GET <code>/wifi/status</code></summary>
-</details>
 <p>Returns the current Wi-Fi connection status.</p>
-<div class="codehilite"><pre><span></span><code><span class="n">Helpful</span><span class="w"> </span><span class="k">when</span><span class="w"> </span><span class="n">monitoring</span><span class="w"> </span><span class="n">Wi</span><span class="o">-</span><span class="n">Fi</span><span class="w"> </span><span class="n">connectivity</span><span class="w"> </span><span class="k">after</span><span class="w"> </span><span class="n n-Quoted">`PUT /wifi/connect`</span><span class="p">.</span>
-
-<span class="c1">## Response</span>
-
-<span class="n n-Quoted">`200 OK (application/json)`</span>
-
-<span class="n n-Quoted">`</span><span class="n n-Quoted n-Quoted-Escape">``</span><span class="n n-Quoted">json</span>
-<span class="n n-Quoted">{</span>
-<span class="n n-Quoted">  &quot;status&quot;: &quot;connected&quot;</span>
-<span class="n n-Quoted">}</span>
-<span class="n n-Quoted n-Quoted-Escape">``</span><span class="n n-Quoted">`</span>
-
-<span class="n n-Quoted">`status`</span><span class="w"> </span><span class="n">might</span><span class="w"> </span><span class="n">be</span><span class="w"> </span><span class="k">one</span><span class="w"> </span><span class="k">of</span><span class="w"> </span><span class="n">the</span><span class="w"> </span><span class="k">following</span><span class="o">:</span>
-
-<span class="o">*</span><span class="w"> </span><span class="n n-Quoted">`idle`</span>
-<span class="o">*</span><span class="w"> </span><span class="n n-Quoted">`connect_failed`</span>
-<span class="o">*</span><span class="w"> </span><span class="n n-Quoted">`connection_lost`</span>
-<span class="o">*</span><span class="w"> </span><span class="n n-Quoted">`no_ssid_available`</span>
-<span class="o">*</span><span class="w"> </span><span class="n n-Quoted">`connected`</span><span class="w"> </span><span class="n">along</span><span class="w"> </span><span class="k">with</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="n n-Quoted">`local_ip`</span><span class="w"> </span><span class="n">field</span>
-<span class="o">*</span><span class="w"> </span><span class="n n-Quoted">`disconnected`</span>
+<p>Helpful when monitoring Wi-Fi connectivity after <code>PUT /wifi/connect</code>.</p>
+<h2 id="response_5">Response<a class="headerlink" href="#response_5" title="Permanent link">&para;</a></h2>
+<p><code>200 OK (application/json)</code></p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;connected&quot;</span>
+<span class="p">}</span>
 </code></pre></div>
-
+<p><code>status</code> might be one of the following:</p>
+<ul>
+<li><code>idle</code></li>
+<li><code>connect_failed</code></li>
+<li><code>connection_lost</code></li>
+<li><code>no_ssid_available</code></li>
+<li><code>connected</code> along with a <code>local_ip</code> field</li>
+<li><code>disconnected</code></li>
+</ul>
+</details>
 <hr />
 <details class="summary">
 <summary>PUT <code>/proxy/control</code></summary>
-</details>
-<p>Enable/disable the device to act as a transparent proxy between AP and Station networks.</p>
-<div class="codehilite"><pre><span></span><code><span class="k">All</span><span class="w"> </span><span class="n">requests</span><span class="w"> </span><span class="n">that</span><span class="w"> </span><span class="n">don</span><span class="s1">&#39;t collide with existing API paths will be bridged to the destination according to the `Host` HTTP header. The destination host is called using the existing Wi-Fi connection (established after a `PUT /wifi/connect`) and all contents are bridged back to the connection made to the AP side.</span>
-
-<span class="s1">This feature can be used to help captive portals to perform cloud API calls during device enrollment using the ESP8266 Wi-Fi AP connection without having to patch the Homie firmware. By using the transparent proxy, all operations can be performed by the custom JavaScript running on the browser (in the configured filesystem location `/data/homie/ui_bundle.gz`; SPIFFS by default).</span>
-
-<span class="s1">HTTPS is not supported.</span>
-
-<span class="s1">**Important**: The HTTP requests and responses must be kept as small as possible because all contents are transported using RAM memory, which is very limited.</span>
-
-<span class="s1">## Request body</span>
-
-<span class="s1">`(application/json)`</span>
-
-<span class="s1">```json</span>
-<span class="s1">{</span>
-<span class="s1">  &quot;enable&quot;: true</span>
-<span class="s1">}</span>
-<span class="s1">```</span>
-
-<span class="s1">## Response</span>
-
-<span class="s1">??? success &quot;In case of success&quot;</span>
-<span class="s1">    `200 OK (application/json)`</span>
-
-<span class="s1">    ```json</span>
-<span class="s1">    {</span>
-<span class="s1">      &quot;success&quot;: true</span>
-<span class="s1">    }</span>
-<span class="s1">    ```</span>
-
-<span class="s1">??? failure &quot;In case of error in the payload&quot;</span>
-<span class="s1">    `400 Bad Request (application/json)`</span>
-
-<span class="s1">    ```json</span>
-<span class="s1">    {</span>
-<span class="s1">      &quot;success&quot;: false,</span>
-<span class="s1">      &quot;error&quot;: &quot;Reason why the payload is invalid&quot;</span>
-<span class="s1">    }</span>
-<span class="s1">    ```</span>
+<p>Enable or disable the transparent proxy between AP and Station networks.</p>
+<p>All requests that do not collide with existing API paths are bridged to the
+destination according to the <code>Host</code> HTTP header. The destination host is
+called using the Wi-Fi connection established after <code>PUT /wifi/connect</code>, and
+all contents are bridged back to the connection made to the AP side.</p>
+<p>This feature can be used to help captive portals perform cloud API calls
+during device enrollment using the ESP8266 Wi-Fi AP connection without
+patching the Homie firmware. By using the transparent proxy, all operations
+can be performed by custom JavaScript running in the browser, from the
+configured filesystem location <code>/data/homie/ui_bundle.gz</code>. SPIFFS is used by
+default.</p>
+<p>HTTPS is not supported.</p>
+<p><strong>Important</strong>: Keep HTTP requests and responses as small as possible because
+all contents are transported through limited RAM.</p>
+<h2 id="request-body_2">Request body<a class="headerlink" href="#request-body_2" title="Permanent link">&para;</a></h2>
+<p><code>(application/json)</code></p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;enable&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span>
+<span class="p">}</span>
 </code></pre></div>
+<h2 id="response_6">Response<a class="headerlink" href="#response_6" title="Permanent link">&para;</a></h2>
+<details class="success">
+<summary>In case of success</summary>
+<p><code>200 OK (application/json)</code></p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;success&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span>
+<span class="p">}</span>
+</code></pre></div>
+</details>
+<details class="failure">
+<summary>In case of error in the payload</summary>
+<p><code>400 Bad Request (application/json)</code></p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;success&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;error&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Reason why the payload is invalid&quot;</span>
+<span class="p">}</span>
+</code></pre></div>
+</details>
+</details>
 
 
 

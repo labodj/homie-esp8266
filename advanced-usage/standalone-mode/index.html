@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Documentation for the maintained Homie 3.0.1 fork used by the LSH ecosystem.">
+        <meta name="description" content="Documentation for the maintained Homie fork used by the LSH ecosystem.">
       
       
         <meta name="author" content="Marvin ROGER, Jacopo Labardi">
@@ -76,6 +76,11 @@
     <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
+      
+        
+        <a href="#standalone-mode" class="md-skip">
+          Skip to content
+        </a>
       
     </div>
     <div data-md-component="announce">
@@ -700,7 +705,7 @@
   <span class="md-ellipsis">
     
   
-    Compiler-Flags
+    Compiler flags
   
 
     
@@ -726,6 +731,8 @@
       
       <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
       
+      
+        
       
       
       <a href="./" class="md-nav__link md-nav__link--active">
@@ -876,7 +883,7 @@
   <span class="md-ellipsis">
     
   
-    UI Bundle
+    UI bundle
   
 
     
@@ -1069,6 +1076,62 @@
     
   
     Maintained fork differences
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../others/homie-v4-v5-compatibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Homie v4/v5 compatibility
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../others/homie-v5-runtime-extension/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Homie v5 fork runtime extension
   
 
     
@@ -1330,6 +1393,8 @@
   
   
   
+    
+  
   
 </nav>
                   </div>
@@ -1349,16 +1414,20 @@
   
 
 
-  <h1>Standalone mode</h1>
-
-<p>Homie for ESP8266 has a special mode named <code>standalone</code>. It was a <a href="https://github.com/homieiot/homie-esp8266/issues/125">requested feature</a> to implement a way not to boot into <code>configuration</code> mode on initial boot, so that a device can work without being configured first. It was already possible in <code>configuration</code> mode, but the device would spawn an AP which would make it insecure.</p>
+<h1 id="standalone-mode">Standalone mode<a class="headerlink" href="#standalone-mode" title="Permanent link">&para;</a></h1>
+<p>Homie for ESP8266 has a special mode named <code>standalone</code>. It was added after a
+<a href="https://github.com/homieiot/homie-esp8266/issues/125">feature request</a> for
+devices that should not boot into <code>configuration</code> mode on first startup. This
+lets a device run before it has a saved configuration, without exposing the
+configuration AP.</p>
 <p>To enable this mode, call <code>Homie.setStandalone()</code>:</p>
 <div class="highlight"><pre><span></span><code><span class="kt">void</span><span class="w"> </span><span class="nf">setup</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="n">Homie</span><span class="p">.</span><span class="n">setStandalone</span><span class="p">();</span><span class="w"> </span><span class="c1">// before Homie.setup()</span>
 <span class="w">  </span><span class="c1">// ...</span>
 <span class="p">}</span>
 </code></pre></div>
-<p>To actually configure the device, you have to reset it, the same way you would to go from <code>normal</code> mode to <code>configuration</code> mode.</p>
+<p>To configure the device later, reset it the same way you would move from
+<code>normal</code> mode to <code>configuration</code> mode.</p>
 
 
 

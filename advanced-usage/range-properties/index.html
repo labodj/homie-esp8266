@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Documentation for the maintained Homie 3.0.1 fork used by the LSH ecosystem.">
+        <meta name="description" content="Documentation for the maintained Homie fork used by the LSH ecosystem.">
       
       
         <meta name="author" content="Marvin ROGER, Jacopo Labardi">
@@ -76,6 +76,11 @@
     <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
+      
+        
+        <a href="#range-properties" class="md-skip">
+          Skip to content
+        </a>
       
     </div>
     <div data-md-component="announce">
@@ -700,7 +705,7 @@
   <span class="md-ellipsis">
     
   
-    Compiler-Flags
+    Compiler flags
   
 
     
@@ -782,6 +787,8 @@
       
       <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
       
+      
+        
       
       
       <a href="./" class="md-nav__link md-nav__link--active">
@@ -876,7 +883,7 @@
   <span class="md-ellipsis">
     
   
-    UI Bundle
+    UI bundle
   
 
     
@@ -1069,6 +1076,62 @@
     
   
     Maintained fork differences
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../others/homie-v4-v5-compatibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Homie v4/v5 compatibility
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../others/homie-v5-runtime-extension/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Homie v5 fork runtime extension
   
 
     
@@ -1330,6 +1393,8 @@
   
   
   
+    
+  
   
 </nav>
                   </div>
@@ -1349,9 +1414,11 @@
   
 
 
-  <h1>Range properties</h1>
-
-<p>In all the previous examples you have seen, node properties were advertised one-by-one (e.g. <code>temperature</code>, <code>unit</code>...). But what if you have a LED strip with, say, 100 properties, one for each LED? You won't advertise these 100 LEDs one-by-one. This is what range properties are meant for.</p>
+<h1 id="range-properties">Range properties<a class="headerlink" href="#range-properties" title="Permanent link">&para;</a></h1>
+<p>In the previous examples, node properties were advertised one by one, such as
+<code>temperature</code> or <code>unit</code>. A LED strip may expose many similar properties, one for
+each LED. Range properties let you model that repeated shape without declaring
+each property separately.</p>
 <div class="highlight"><pre><span></span><code><span class="n">HomieNode</span><span class="w"> </span><span class="n">stripNode</span><span class="p">(</span><span class="s">&quot;strip&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;strip&quot;</span><span class="p">);</span>
 
 <span class="kt">bool</span><span class="w"> </span><span class="nf">ledHandler</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">HomieRange</span><span class="o">&amp;</span><span class="w"> </span><span class="n">range</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">String</span><span class="o">&amp;</span><span class="w"> </span><span class="n">value</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
@@ -1366,13 +1433,14 @@
 <span class="w">  </span><span class="c1">// before Homie.setup()</span>
 <span class="p">}</span>
 </code></pre></div>
-<p>On the mqtt broker you will see the following message show up:
+<p>On the MQTT broker you will see the following message show up:</p>
 <div class="highlight"><pre><span></span><code>topic                               message
 --------------------------------------------------------
-homie/&lt;device id&gt;/strip/$type         strip
+homie/&lt;device id&gt;/strip/$type       strip
 homie/&lt;device id&gt;/strip/$properties led[1-100]:settable
-</code></pre></div></p>
-<p>You can then publish the value <code>on</code> to topic <code>homie/&lt;device id&gt;/strip/led_1/set</code> to turn on led number 1.</p>
+</code></pre></div>
+<p>You can then publish the value <code>on</code> to topic <code>homie/&lt;device id&gt;/strip/led_1/set</code>
+to turn on led number 1.</p>
 <p>See the following example for a concrete use case:</p>
 <p><a href="https://github.com/labodj/homie-esp8266/blob/develop/examples/LedStrip/LedStrip.ino"><img alt="GitHub logo" src="../../assets/github.png" /> LedStrip</a></p>
 

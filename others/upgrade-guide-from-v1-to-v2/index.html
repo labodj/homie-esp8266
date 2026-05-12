@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Documentation for the maintained Homie 3.0.1 fork used by the LSH ecosystem.">
+        <meta name="description" content="Documentation for the maintained Homie fork used by the LSH ecosystem.">
       
       
         <meta name="author" content="Marvin ROGER, Jacopo Labardi">
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#new-convention" class="md-skip">
+        <a href="#upgrade-guide-from-v1-to-v2" class="md-skip">
           Skip to content
         </a>
       
@@ -703,7 +703,7 @@
   <span class="md-ellipsis">
     
   
-    Compiler-Flags
+    Compiler flags
   
 
     
@@ -871,7 +871,7 @@
   <span class="md-ellipsis">
     
   
-    UI Bundle
+    UI bundle
   
 
     
@@ -1086,6 +1086,62 @@
   
   
     <li class="md-nav__item">
+      <a href="../homie-v4-v5-compatibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Homie v4/v5 compatibility
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../homie-v5-runtime-extension/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Homie v5 fork runtime extension
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../ota-configuration-updates/" class="md-nav__link">
         
   
@@ -1232,6 +1288,8 @@
       <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
       
       
+        
+      
       
         <label class="md-nav__link md-nav__link--active" for="__toc">
           
@@ -1273,6 +1331,8 @@
 <nav class="md-nav md-nav--secondary" aria-label="Table of contents">
   
   
+  
+    
   
   
     <label class="md-nav__title" for="__toc">
@@ -1392,6 +1452,8 @@
   
   
   
+    
+  
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
@@ -1441,19 +1503,29 @@
   
 
 
-  <h1>Upgrade guide from v1 to v2</h1>
-
-<p>This is an upgrade guide to upgrade your Homie devices from v1 to v2.</p>
+<h1 id="upgrade-guide-from-v1-to-v2">Upgrade guide from v1 to v2<a class="headerlink" href="#upgrade-guide-from-v1-to-v2" title="Permanent link">&para;</a></h1>
+<p>Use this guide when upgrading Homie devices from v1 to v2.</p>
 <h2 id="new-convention">New convention<a class="headerlink" href="#new-convention" title="Permanent link">&para;</a></h2>
-<p>The Homie convention has been revised to v2 to be more extensible and introspectable. Be sure to <a href="https://github.com/homieiot/convention/tree/v2.0.0">check it out</a>.</p>
+<p>The Homie convention was revised in v2 to be more extensible and
+introspectable. Review the
+<a href="https://github.com/homieiot/convention/tree/v2.0.0">Homie v2 convention</a>
+before deploying upgraded devices.</p>
 <h2 id="api-changes-in-the-sketch">API changes in the sketch<a class="headerlink" href="#api-changes-in-the-sketch" title="Permanent link">&para;</a></h2>
 <ol>
-<li><code>Homie.setFirmware(name, version)</code> must be replaced by <code>Homie_setFirmware(name, version)</code></li>
+<li><code>Homie.setFirmware(name, version)</code> must be replaced by
+   <code>Homie_setFirmware(name, version)</code></li>
 <li><code>Homie.setBrand(brand)</code> must be replaced by <code>Homie_setBrand(brand)</code></li>
-<li><code>Homie.registerNode()</code> must be removed, nodes are now automagically registered</li>
-<li>If you've enabled Serial logging, <code>Serial.begin()</code> must be called explicitely in your sketch</li>
+<li><code>Homie.registerNode()</code> must be removed; nodes are now registered
+   automatically</li>
+<li>If you've enabled Serial logging, <code>Serial.begin()</code> must be called explicitly
+   in your sketch</li>
 <li>Remove the <code>HOMIE_OTA_MODE</code> in your event handler, if you have one</li>
-<li>The <code>Homie.setNodeProperty()</code> signature changed completely. If you had <code>Homie.setNodeProperty(node, "property", "value", true)</code>, the new equivalent syntax is <code>Homie.setNodeProperty(node, "property").setRetained(true).send("value")</code>. Note the <code>setRetained()</code> is not even required as messages are retained by default.</li>
+<li>The <code>Homie.setNodeProperty()</code> signature changed completely. If you had
+   <code>Homie.setNodeProperty(node, "property", "value", true)</code>, the new equivalent
+   syntax is
+   <code>Homie.setNodeProperty(node, "property").setRetained(true).send("value")</code>.
+   Note the <code>setRetained()</code> is not even required as messages are retained by
+   default.</li>
 <li>Recheck custom event handlers and direct MQTT topic assumptions against the
    v2 convention before deploying; the public MQTT layout changed between Homie
    convention v1 and v2.</li>

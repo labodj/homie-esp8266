@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Documentation for the maintained Homie 3.0.1 fork used by the LSH ecosystem.">
+        <meta name="description" content="Documentation for the maintained Homie fork used by the LSH ecosystem.">
       
       
         <meta name="author" content="Marvin ROGER, Jacopo Labardi">
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#know-if-the-device-is-configured-connected" class="md-skip">
+        <a href="#miscellaneous" class="md-skip">
           Skip to content
         </a>
       
@@ -705,7 +705,7 @@
   <span class="md-ellipsis">
     
   
-    Compiler-Flags
+    Compiler flags
   
 
     
@@ -847,6 +847,24 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Miscellaneous
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
@@ -863,6 +881,113 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#know-if-the-device-is-configured-connected" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Know if the device is configured / connected
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#organize-the-sketch-in-a-safe-order" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Organize the sketch in a safe order
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#why-is-setuphandler-needed-in-addition-to-setup-in-homie" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why is setupHandler() needed in addition to setup() in Homie?
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#why-is-loophandler-needed-in-addition-to-loop-in-homie" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why is loopHandler() needed in addition to loop() in Homie?
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#why-is-this-understanding-important" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why is this understanding important?
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#access-the-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Access the configuration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#get-access-to-the-mqtt-client" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Get access to the MQTT client
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#queue-mqtt-reports-while-wi-fi-is-not-connected" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Queue MQTT reports while Wi-Fi is not connected
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -883,7 +1008,7 @@
   <span class="md-ellipsis">
     
   
-    UI Bundle
+    UI bundle
   
 
     
@@ -1076,6 +1201,62 @@
     
   
     Maintained fork differences
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../others/homie-v4-v5-compatibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Homie v4/v5 compatibility
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../others/homie-v5-runtime-extension/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Homie v5 fork runtime extension
   
 
     
@@ -1340,6 +1521,102 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#know-if-the-device-is-configured-connected" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Know if the device is configured / connected
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#organize-the-sketch-in-a-safe-order" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Organize the sketch in a safe order
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#why-is-setuphandler-needed-in-addition-to-setup-in-homie" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why is setupHandler() needed in addition to setup() in Homie?
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#why-is-loophandler-needed-in-addition-to-loop-in-homie" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why is loopHandler() needed in addition to loop() in Homie?
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#why-is-this-understanding-important" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why is this understanding important?
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#access-the-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Access the configuration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#get-access-to-the-mqtt-client" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Get access to the MQTT client
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#queue-mqtt-reports-while-wi-fi-is-not-connected" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Queue MQTT reports while Wi-Fi is not connected
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -1358,8 +1635,11 @@
   
 
 
-<h1 id="know-if-the-device-is-configured-connected">Know if the device is configured / connected<a class="headerlink" href="#know-if-the-device-is-configured-connected" title="Permanent link">&para;</a></h1>
-<p>If, for some reason, you want to run some code in the Arduino <code>loop()</code> function, it might be useful for you to know if the device is in configured (so in <code>normal</code> mode) and if the network connection is up.</p>
+<h1 id="miscellaneous">Miscellaneous<a class="headerlink" href="#miscellaneous" title="Permanent link">&para;</a></h1>
+<h2 id="know-if-the-device-is-configured-connected">Know if the device is configured / connected<a class="headerlink" href="#know-if-the-device-is-configured-connected" title="Permanent link">&para;</a></h2>
+<p>If you need to run code in the Arduino <code>loop()</code> function, it can be useful to
+know whether the device is configured (<code>normal</code> mode) and whether the network
+connection is up.</p>
 <div class="highlight"><pre><span></span><code><span class="kt">void</span><span class="w"> </span><span class="nf">loop</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">Homie</span><span class="p">.</span><span class="n">isConfigured</span><span class="p">())</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="c1">// The device is configured, in normal mode</span>
@@ -1373,12 +1653,15 @@
 <span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
 </code></pre></div>
-<h1 id="organizing-the-sketch-in-good-and-safe-order">Organizing the sketch in good and safe order<a class="headerlink" href="#organizing-the-sketch-in-good-and-safe-order" title="Permanent link">&para;</a></h1>
-<p>The example above is good to demonstrate usage of <code>Homie.isConnected()</code>. However, consider to not add any code into <code>loop()</code> function. ESP8266 is relatively weak MCU and Homie manages a few important environmental tasks. Interferring with Homie might boomerang by sudden crashes. Advised sketch of Homie is:
+<h2 id="organize-the-sketch-in-a-safe-order">Organize the sketch in a safe order<a class="headerlink" href="#organize-the-sketch-in-a-safe-order" title="Permanent link">&para;</a></h2>
+<p>The example above demonstrates <code>Homie.isConnected()</code>, but most sketches should
+avoid adding application work directly to <code>loop()</code>. ESP8266 is a
+resource-constrained MCU, and Homie manages several runtime tasks. Interfering
+with those tasks can lead to crashes. A safer Homie sketch shape is:</p>
 <div class="highlight"><pre><span></span><code><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;Homie.h&gt;</span>
 
 <span class="kt">void</span><span class="w"> </span><span class="nf">setupHandler</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="c1">// Code which should run AFTER the WiFi is connected.</span>
+<span class="w">  </span><span class="c1">// Code which should run AFTER Wi-Fi is connected.</span>
 <span class="p">}</span>
 
 <span class="kt">void</span><span class="w"> </span><span class="nf">loopHandler</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
@@ -1389,10 +1672,11 @@
 <span class="w">  </span><span class="n">Serial</span><span class="p">.</span><span class="n">begin</span><span class="p">(</span><span class="mi">115200</span><span class="p">);</span>
 <span class="w">  </span><span class="n">Serial</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">endl</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">endl</span><span class="p">;</span>
 
-<span class="w">  </span><span class="n">Homie_setFirmware</span><span class="p">(</span><span class="s">&quot;bare-minimum&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;1.0.0&quot;</span><span class="p">);</span><span class="w"> </span><span class="c1">// The underscore is not a typo! See Magic bytes</span>
+<span class="w">  </span><span class="c1">// The underscore is not a typo. See Magic bytes.</span>
+<span class="w">  </span><span class="n">Homie_setFirmware</span><span class="p">(</span><span class="s">&quot;bare-minimum&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;1.0.0&quot;</span><span class="p">);</span>
 <span class="w">  </span><span class="n">Homie</span><span class="p">.</span><span class="n">setSetupFunction</span><span class="p">(</span><span class="n">setupHandler</span><span class="p">).</span><span class="n">setLoopFunction</span><span class="p">(</span><span class="n">loopHandler</span><span class="p">);</span>
 
-<span class="w"> </span><span class="c1">// Code which should run BEFORE the WiFi is connected.</span>
+<span class="w">  </span><span class="c1">// Code which should run BEFORE Wi-Fi is connected.</span>
 
 <span class="w">  </span><span class="n">Homie</span><span class="p">.</span><span class="n">setup</span><span class="p">();</span>
 <span class="p">}</span>
@@ -1400,22 +1684,35 @@
 <span class="kt">void</span><span class="w"> </span><span class="nf">loop</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="n">Homie</span><span class="p">.</span><span class="n">loop</span><span class="p">();</span>
 <span class="p">}</span>
-</code></pre></div></p>
-<p>This way you can be sure the run is safe enough (unless you use blocking delay, then it is not) and the sketch keeps 'regular' structure of <code>setup()</code>/<code>loop()</code> just in terms of Homie.</p>
+</code></pre></div>
+<p>This keeps the regular <code>setup()</code> / <code>loop()</code> structure while letting Homie decide
+when your application setup and loop handlers can run safely. Avoid blocking
+delays in those handlers as well.</p>
 <h2 id="why-is-setuphandler-needed-in-addition-to-setup-in-homie">Why is <code>setupHandler()</code> needed in addition to <code>setup()</code> in Homie?<a class="headerlink" href="#why-is-setuphandler-needed-in-addition-to-setup-in-homie" title="Permanent link">&para;</a></h2>
-<p><code>setup()</code> starts execution immediately after power on/wake up. <code>setupHandler()</code> starts to run after WiFi established the connection.</p>
-<h2 id="why-its-needed-loophandler-in-addition-to-loop-in-homie">Why it's needed <code>loopHandler()</code> in addition to <code>loop()</code> in Homie?<a class="headerlink" href="#why-its-needed-loophandler-in-addition-to-loop-in-homie" title="Permanent link">&para;</a></h2>
-<p><code>loop()</code> starts to run then <code>setup()</code> is completed. This somehow controls a run of <code>setupHandler()</code>. The <code>loopHandler()</code> serves safe way to run the loop.</p>
+<p><code>setup()</code> starts execution immediately after power on or wake-up.
+<code>setupHandler()</code> starts after Wi-Fi has established the connection.</p>
+<h2 id="why-is-loophandler-needed-in-addition-to-loop-in-homie">Why is <code>loopHandler()</code> needed in addition to <code>loop()</code> in Homie?<a class="headerlink" href="#why-is-loophandler-needed-in-addition-to-loop-in-homie" title="Permanent link">&para;</a></h2>
+<p><code>loop()</code> starts after <code>setup()</code> is completed. <code>loopHandler()</code> is the safer place
+for regular Homie work that should run only after network setup.</p>
 <h2 id="why-is-this-understanding-important">Why is this understanding important?<a class="headerlink" href="#why-is-this-understanding-important" title="Permanent link">&para;</a></h2>
 <ol>
-<li>Once your code in <code>setupHandler()</code> and <code>loopHandler()</code> engaged, you can be pretty sure the <code>Homie.isConnected()</code> is true without checking it. Unless, you intend your device is mobile and might reach out of WiFi coverage in the middle of the run.</li>
-<li>The <code>loop()</code> often starts before Wifi is connected. "Wifi connected" event causes significant load on the MCU with Wifi related tasks, also with sending initial MQTT reports. Therefore, running complex commands around the moment of "Wifi connected" might cause malfunction/crash.</li>
+<li>Once your code in <code>setupHandler()</code> and <code>loopHandler()</code> is running,
+   <code>Homie.isConnected()</code> is expected to be true unless the device moves out of
+   Wi-Fi coverage.</li>
+<li>The regular Arduino <code>loop()</code> often starts before Wi-Fi is connected. The
+   Wi-Fi connected event can add significant MCU load because Wi-Fi tasks and
+   initial MQTT reports happen around the same time.</li>
 </ol>
-<p>As solution, heavy commands (massive initializations, long calculations, filesystem reading/writing, etc.) should be initiated in one of 2 cases:
- - very early in setup() before "Wifi connected".
- - way after "Wifi connected" (non-blocking wait 3-5 seconds and then do the heavy commands).</p>
-<h1 id="get-access-to-the-configuration">Get access to the configuration<a class="headerlink" href="#get-access-to-the-configuration" title="Permanent link">&para;</a></h1>
-<p>You can get access to the configuration of the device. The representation of the configuration is:</p>
+<p>Heavy commands, such as large initializations, long calculations, or filesystem
+work, should run in one of two places:</p>
+<ul>
+<li>early in <code>setup()</code>, before Wi-Fi is connected</li>
+<li>after Wi-Fi is connected, using a non-blocking wait of a few seconds before
+  starting the heavy work</li>
+</ul>
+<h2 id="access-the-configuration">Access the configuration<a class="headerlink" href="#access-the-configuration" title="Permanent link">&para;</a></h2>
+<p>You can get access to the configuration of the device. The representation of the
+configuration is:</p>
 <div class="highlight"><pre><span></span><code><span class="k">struct</span><span class="w"> </span><span class="nc">ConfigStruct</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="kt">char</span><span class="o">*</span><span class="w"> </span><span class="n">name</span><span class="p">;</span>
 <span class="w">  </span><span class="kt">char</span><span class="o">*</span><span class="w"> </span><span class="n">deviceId</span><span class="p">;</span>
@@ -1444,36 +1741,48 @@
 <p>For example, to access the Wi-Fi SSID, you would do:</p>
 <div class="highlight"><pre><span></span><code><span class="n">Homie</span><span class="p">.</span><span class="n">getConfiguration</span><span class="p">().</span><span class="n">wifi</span><span class="p">.</span><span class="n">ssid</span><span class="p">;</span>
 </code></pre></div>
-<h1 id="get-access-to-the-mqtt-client">Get access to the MQTT client<a class="headerlink" href="#get-access-to-the-mqtt-client" title="Permanent link">&para;</a></h1>
-<p>You can get access to the underlying MQTT client. For example, to disconnect from the broker:</p>
+<h2 id="get-access-to-the-mqtt-client">Get access to the MQTT client<a class="headerlink" href="#get-access-to-the-mqtt-client" title="Permanent link">&para;</a></h2>
+<p>You can get access to the underlying MQTT client. For example, to disconnect
+from the broker:</p>
 <div class="highlight"><pre><span></span><code><span class="n">Homie</span><span class="p">.</span><span class="n">getMqttClient</span><span class="p">().</span><span class="n">disconnect</span><span class="p">();</span>
 </code></pre></div>
-<h1 id="keep-and-get-mqtt-reports-while-wifi-is-not-connected">Keep and get MQTT reports while WiFi is not connected<a class="headerlink" href="#keep-and-get-mqtt-reports-while-wifi-is-not-connected" title="Permanent link">&para;</a></h1>
+<h2 id="queue-mqtt-reports-while-wi-fi-is-not-connected">Queue MQTT reports while Wi-Fi is not connected<a class="headerlink" href="#queue-mqtt-reports-while-wi-fi-is-not-connected" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;cppQueue.h&gt;</span>
 
-<span class="n">HomieNode</span><span class="w"> </span><span class="n">myNode</span><span class="p">(</span><span class="s">&quot;q_test&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;test&quot;</span><span class="p">);</span><span class="w"> </span>
+<span class="n">HomieNode</span><span class="w"> </span><span class="n">myNode</span><span class="p">(</span><span class="s">&quot;q-test&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;test&quot;</span><span class="p">);</span>
 
-<span class="c1">// Struct for Queueing of postponed MQTT messages. Needed to gather messages while Wifi isn&#39;t connected yet.</span>
+<span class="kt">void</span><span class="w"> </span><span class="nf">setupHandler</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="n">myNode</span><span class="p">.</span><span class="n">advertise</span><span class="p">(</span><span class="s">&quot;alert&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="p">.</span><span class="n">setName</span><span class="p">(</span><span class="s">&quot;Alert&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="p">.</span><span class="n">setDatatype</span><span class="p">(</span><span class="s">&quot;string&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="p">.</span><span class="n">setRetained</span><span class="p">(</span><span class="nb">false</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="c1">// Queue postponed MQTT messages while Wi-Fi is not connected yet.</span>
 <span class="k">typedef</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">strRec</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="kt">char</span><span class="w"> </span><span class="n">topic</span><span class="p">[</span><span class="mi">10</span><span class="p">];</span>
+<span class="w">  </span><span class="kt">char</span><span class="w"> </span><span class="n">property</span><span class="p">[</span><span class="mi">10</span><span class="p">];</span>
 <span class="w">  </span><span class="kt">char</span><span class="w"> </span><span class="n">msg</span><span class="p">[</span><span class="mi">90</span><span class="p">];</span>
 <span class="p">}</span><span class="w"> </span><span class="n">Rec</span><span class="p">;</span>
-<span class="n">Queue</span><span class="w"> </span><span class="nf">msg_q</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="n">Rec</span><span class="p">),</span><span class="w"> </span><span class="mi">7</span><span class="p">,</span><span class="w"> </span><span class="n">FIFO</span><span class="p">,</span><span class="w"> </span><span class="nb">true</span><span class="p">);</span><span class="w">  </span><span class="c1">// RAM is limited. Keep reasonable Q length (5-10 messages).</span>
+<span class="c1">// RAM is limited. Keep a reasonable queue length.</span>
+<span class="n">Queue</span><span class="w"> </span><span class="nf">msg_q</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="n">Rec</span><span class="p">),</span><span class="w"> </span><span class="mi">7</span><span class="p">,</span><span class="w"> </span><span class="n">FIFO</span><span class="p">,</span><span class="w"> </span><span class="nb">true</span><span class="p">);</span>
 
-<span class="c1">// Here comes all other stuff, inclusing setup() and loop().</span>
+<span class="c1">// Other code, including setup() and loop().</span>
 </code></pre></div>
-<p>In functions, where WiFi is not expected, keep the report as example:
-<div class="highlight"><pre><span></span><code><span class="n">Rec</span><span class="w"> </span><span class="n">r</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="s">&quot;alert&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Low storage space is free on SPIFF.&quot;</span><span class="p">};</span>
+<p>When Wi-Fi is not expected to be connected, queue the report:</p>
+<div class="highlight"><pre><span></span><code><span class="n">Rec</span><span class="w"> </span><span class="n">r</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="s">&quot;alert&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Low free storage space on SPIFFS.&quot;</span><span class="p">};</span>
 <span class="n">msg_q</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="o">&amp;</span><span class="n">r</span><span class="p">);</span>
-</code></pre></div></p>
-<p>To release (AKA send) all kept messages from the queue, add in <code>loopHandler()</code>:
+</code></pre></div>
+<p>To flush queued messages, add this to <code>loopHandler()</code>:</p>
 <div class="highlight"><pre><span></span><code><span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">msg_q</span><span class="p">.</span><span class="n">isEmpty</span><span class="p">()</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">Homie</span><span class="p">.</span><span class="n">isConnected</span><span class="p">())</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="n">Rec</span><span class="w"> </span><span class="n">r</span><span class="p">;</span>
 <span class="w">  </span><span class="n">msg_q</span><span class="p">.</span><span class="n">pop</span><span class="p">(</span><span class="o">&amp;</span><span class="n">r</span><span class="p">);</span>
-<span class="w">  </span><span class="n">myNode</span><span class="p">.</span><span class="n">setProperty</span><span class="p">(</span><span class="n">r</span><span class="p">.</span><span class="n">topic</span><span class="p">).</span><span class="n">setRetained</span><span class="p">(</span><span class="nb">false</span><span class="p">).</span><span class="n">send</span><span class="p">(</span><span class="n">r</span><span class="p">.</span><span class="n">msg</span><span class="p">);</span>
+<span class="w">  </span><span class="n">myNode</span><span class="p">.</span><span class="n">setProperty</span><span class="p">(</span><span class="n">r</span><span class="p">.</span><span class="n">property</span><span class="p">).</span><span class="n">send</span><span class="p">(</span><span class="n">r</span><span class="p">.</span><span class="n">msg</span><span class="p">);</span>
 <span class="p">}</span>
-</code></pre></div></p>
-<p>It might be good practice to use the queue always, not only when WiFi is down. This might make Homie job easier, and you get stability as benefit.</p>
+</code></pre></div>
+<p>Each queued property must be advertised before it can be sent. Configure
+retention on <code>advertise()</code>, not on the queued send operation.</p>
+<p>It can be useful to use the queue consistently, not only when Wi-Fi is down. This
+keeps MQTT publishing predictable and reduces work in timing-sensitive paths.</p>
 
 
 

@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Documentation for the maintained Homie 3.0.1 fork used by the LSH ecosystem.">
+        <meta name="description" content="Documentation for the maintained Homie fork used by the LSH ecosystem.">
       
       
         <meta name="author" content="Marvin ROGER, Jacopo Labardi">
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#1-i-see-some-garbage-on-the-serial-monitor" class="md-skip">
+        <a href="#troubleshooting" class="md-skip">
           Skip to content
         </a>
       
@@ -703,7 +703,7 @@
   <span class="md-ellipsis">
     
   
-    Compiler-Flags
+    Compiler flags
   
 
     
@@ -871,7 +871,7 @@
   <span class="md-ellipsis">
     
   
-    UI Bundle
+    UI bundle
   
 
     
@@ -1086,6 +1086,62 @@
   
   
     <li class="md-nav__item">
+      <a href="../homie-v4-v5-compatibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Homie v4/v5 compatibility
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../homie-v5-runtime-extension/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Homie v5 fork runtime extension
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../ota-configuration-updates/" class="md-nav__link">
         
   
@@ -1176,6 +1232,8 @@
       <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
       
       
+        
+      
       
         <label class="md-nav__link md-nav__link--active" for="__toc">
           
@@ -1218,6 +1276,8 @@
   
   
   
+    
+  
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
@@ -1248,10 +1308,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#3-the-network-is-completely-unstable-whats-going-on" class="md-nav__link">
+  <a href="#3-why-is-the-network-unstable" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3. The network is completely unstable... What's going on?
+        3. Why is the network unstable?
       
     </span>
   </a>
@@ -1259,10 +1319,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#4-my-device-resets-itself-without-me-doing-anything" class="md-nav__link">
+  <a href="#4-my-device-resets-itself-unexpectedly" class="md-nav__link">
     <span class="md-ellipsis">
       
-        4. My device resets itself without me doing anything?
+        4. My device resets itself unexpectedly
       
     </span>
   </a>
@@ -1447,6 +1507,8 @@
   
   
   
+    
+  
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
@@ -1477,10 +1539,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#3-the-network-is-completely-unstable-whats-going-on" class="md-nav__link">
+  <a href="#3-why-is-the-network-unstable" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3. The network is completely unstable... What's going on?
+        3. Why is the network unstable?
       
     </span>
   </a>
@@ -1488,10 +1550,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#4-my-device-resets-itself-without-me-doing-anything" class="md-nav__link">
+  <a href="#4-my-device-resets-itself-unexpectedly" class="md-nav__link">
     <span class="md-ellipsis">
       
-        4. My device resets itself without me doing anything?
+        4. My device resets itself unexpectedly
       
     </span>
   </a>
@@ -1551,12 +1613,12 @@
   
 
 
-  <h1>Troubleshooting</h1>
-
+<h1 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h1>
 <h2 id="1-i-see-some-garbage-on-the-serial-monitor">1. I see some garbage on the Serial monitor?<a class="headerlink" href="#1-i-see-some-garbage-on-the-serial-monitor" title="Permanent link">&para;</a></h2>
-<p>You are probably using a generic ESP8266. The problem with these modules is the built-in LED is tied to the serial line. You can do two things:</p>
+<p>You are probably using a generic ESP8266. On these modules, the built-in LED is
+tied to the serial line. You have two options:</p>
 <ul>
-<li>Disable the serial logging, to have the LED working:</li>
+<li>Disable serial logging, so the LED can work normally:</li>
 </ul>
 <div class="highlight"><pre><span></span><code><span class="kt">void</span><span class="w"> </span><span class="nf">setup</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="n">Homie</span><span class="p">.</span><span class="n">enableLogging</span><span class="p">(</span><span class="nb">false</span><span class="p">);</span><span class="w"> </span><span class="c1">// before Homie.setup()</span>
@@ -1564,7 +1626,7 @@
 <span class="p">}</span>
 </code></pre></div>
 <ul>
-<li>Disable the LED blinking, to have the serial line working:</li>
+<li>Disable LED blinking, so the serial line stays usable:</li>
 </ul>
 <div class="highlight"><pre><span></span><code><span class="kt">void</span><span class="w"> </span><span class="nf">setup</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="n">Homie</span><span class="p">.</span><span class="n">enableBuiltInLedIndicator</span><span class="p">(</span><span class="nb">false</span><span class="p">);</span><span class="w"> </span><span class="c1">// before Homie.setup()</span>
@@ -1572,29 +1634,40 @@
 <span class="p">}</span>
 </code></pre></div>
 <h2 id="2-i-see-an-abort-message-on-the-serial-monitor">2. I see an <code>abort</code> message on the Serial monitor?<a class="headerlink" href="#2-i-see-an-abort-message-on-the-serial-monitor" title="Permanent link">&para;</a></h2>
-<p><code>abort()</code> is called by Homie for ESP8266 when the framework is used in a bad way. The possible causes are:</p>
+<p><code>abort()</code> is called by Homie for ESP8266 when the framework is used in a bad
+way. The possible causes are:</p>
 <ul>
 <li>
-<p>You are calling a function that is meant to be called before <code>Homie.setup()</code>, after <code>Homie.setup()</code></p>
+<p>You are calling a function that is meant to be called before <code>Homie.setup()</code>,
+  after <code>Homie.setup()</code></p>
 </li>
 <li>
-<p>One of the string you've used (in <code>setFirmware()</code>, <code>subscribe()</code>, etc.) is too long. Check the <code>Limits.hpp</code> file to see the max length possible for each string.</p>
+<p>One of the strings you've used (in <code>setFirmware()</code>, <code>subscribe()</code>, etc.) is too
+  long. Check the <code>Limits.hpp</code> file to see the max length possible for each
+  string.</p>
 </li>
 </ul>
-<h2 id="3-the-network-is-completely-unstable-whats-going-on">3. The network is completely unstable... What's going on?<a class="headerlink" href="#3-the-network-is-completely-unstable-whats-going-on" title="Permanent link">&para;</a></h2>
-<p>The framework needs to work continuously (ie. <code>Homie.loop()</code> needs to be called very frequently). In other words, don't use <code>delay()</code> (see <a href="http://playground.arduino.cc/Code/AvoidDelay">avoid delay</a>) or anything that might block the code for more than 50ms or so. There is also a known Arduino for ESP8266 issue with <code>analogRead()</code>, see <a href="../limitations-and-known-issues/#adc-readings">Limitations and known issues</a>.</p>
-<h2 id="4-my-device-resets-itself-without-me-doing-anything">4. My device resets itself without me doing anything?<a class="headerlink" href="#4-my-device-resets-itself-without-me-doing-anything" title="Permanent link">&para;</a></h2>
-<p>You have probably connected a sensor to the default reset pin of the framework (D3 on NodeMCU, GPIO0 on other boards). See <a href="../../advanced-usage/resetting/">Resetting</a>.</p>
+<h2 id="3-why-is-the-network-unstable">3. Why is the network unstable?<a class="headerlink" href="#3-why-is-the-network-unstable" title="Permanent link">&para;</a></h2>
+<p>The framework needs to work continuously, so <code>Homie.loop()</code> needs to be called
+frequently. Avoid <code>delay()</code> (see
+<a href="http://playground.arduino.cc/Code/AvoidDelay">avoid delay</a>) and any code that
+blocks execution for more than 50 ms at a time. There is also a known Arduino
+for ESP8266 issue with <code>analogRead()</code>, see
+<a href="../limitations-and-known-issues/#adc-readings">Limitations and known issues</a>.</p>
+<h2 id="4-my-device-resets-itself-unexpectedly">4. My device resets itself unexpectedly<a class="headerlink" href="#4-my-device-resets-itself-unexpectedly" title="Permanent link">&para;</a></h2>
+<p>You have probably connected a sensor to the default reset pin of the framework
+(D3 on NodeMCU, GPIO0 on other boards). See
+<a href="../../advanced-usage/resetting/">Resetting</a>.</p>
 <h2 id="5-i-see-mqtt-ack-queue-full-during-startup-or-reconnect">5. I see <code>MQTT ACK queue full</code> during startup or reconnect<a class="headerlink" href="#5-i-see-mqtt-ack-queue-full-during-startup-or-reconnect" title="Permanent link">&para;</a></h2>
 <p>This means the device is receiving MQTT publish acknowledgements faster than
 Homie can dispatch the related internal events.</p>
-<p>On this maintained fork you can increase the internal acknowledgement queue
-size with:</p>
+<p>On this maintained fork you can increase the internal acknowledgement queue size
+with:</p>
 <div class="highlight"><pre><span></span><code><span class="na">build_flags</span><span class="w"> </span><span class="o">=</span>
 <span class="w">  </span><span class="na">-D HOMIE_PENDING_MQTT_ACK_QUEUE_SIZE</span><span class="o">=</span><span class="s">64</span>
 </code></pre></div>
-<p>See <a href="../../advanced-usage/compiler-flags/">Compiler-Flags</a> for details. Only
-increase it if you actually see this warning in practice.</p>
+<p>See <a href="../../advanced-usage/compiler-flags/">Compiler flags</a> for details. Only
+increase it when this warning appears in practice.</p>
 <h2 id="6-platformio-tries-to-build-asynctcp-espasynctcp-or-rpasynctcp-for-the-wrong-board">6. PlatformIO tries to build <code>AsyncTCP</code>, <code>ESPAsyncTCP</code>, or <code>RPAsyncTCP</code> for the wrong board<a class="headerlink" href="#6-platformio-tries-to-build-asynctcp-espasynctcp-or-rpasynctcp-for-the-wrong-board" title="Permanent link">&para;</a></h2>
 <p>Use strict library compatibility mode in your <code>platformio.ini</code>:</p>
 <div class="highlight"><pre><span></span><code><span class="na">lib_compat_mode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">strict</span>
@@ -1608,11 +1681,23 @@ other targets when using <code>pio ci</code> or unusual dependency layouts.</p>
 <div class="highlight"><pre><span></span><code><span class="na">build_flags</span><span class="w"> </span><span class="o">=</span>
 <span class="w">  </span><span class="na">-D HOMIE_PENDING_MQTT_MESSAGE_QUEUE_SIZE</span><span class="o">=</span><span class="s">32</span>
 </code></pre></div>
+<p>On ESP32 builds that must avoid heap churn in the async MQTT callback path, the
+message queue can be preallocated:</p>
+<div class="highlight"><pre><span></span><code><span class="na">build_flags</span><span class="w"> </span><span class="o">=</span>
+<span class="w">  </span><span class="na">-D HOMIE_PENDING_MQTT_MESSAGE_PREALLOCATED</span><span class="o">=</span><span class="s">1</span>
+<span class="w">  </span><span class="na">-D HOMIE_PENDING_MQTT_MESSAGE_MAX_TOPIC_LENGTH</span><span class="o">=</span><span class="s">192</span>
+<span class="w">  </span><span class="na">-D HOMIE_PENDING_MQTT_MESSAGE_MAX_PAYLOAD_LENGTH</span><span class="o">=</span><span class="s">512</span>
+<span class="w">  </span><span class="na">-D HOMIE_PENDING_MQTT_MESSAGE_MAX_TOPIC_LEVELS</span><span class="o">=</span><span class="s">12</span>
+</code></pre></div>
+<p>Oversized messages are rejected and counted as inbound drops.</p>
 <p>Keep <code>Homie.loop()</code> frequent; increasing the queue only absorbs bursts.</p>
 <p>Both queue drop counters are published in the regular Homie statistics as
-<code>$stats/mqttackdropped</code> and <code>$stats/mqttinbounddropped</code>. If either value grows
-after boot under normal traffic, tune the related queue or reduce retained MQTT
-traffic delivered to the device.</p>
+<code>$stats/mqttackdropped</code> and <code>$stats/mqttinbounddropped</code>. The retained
+<code>$stats/mqttackmaxdepth</code> and <code>$stats/mqttinboundmaxdepth</code> values show the
+highest queue depth reached since boot. If a drop counter grows after boot under
+normal traffic, tune the related queue or reduce retained MQTT traffic delivered
+to the device. If max depth stays far below the configured queue size during
+stress tests, the configured queue has real headroom.</p>
 
 
 
