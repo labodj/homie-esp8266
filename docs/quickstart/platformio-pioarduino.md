@@ -11,7 +11,7 @@ board = esp32dev
 framework = arduino
 lib_compat_mode = strict
 lib_deps =
-  labodj/homie-v5 @ ^3.6.0
+  labodj/homie-v5 @ ^3.6.1
 ```
 
 For unreleased changes, use the git URL dependency and pin it to a commit SHA
@@ -28,7 +28,7 @@ lib_compat_mode = strict
 build_flags =
   -D PIO_FRAMEWORK_ARDUINO_LWIP2_LOW_MEMORY
 lib_deps =
-  labodj/homie-v5 @ ^3.6.0
+  labodj/homie-v5 @ ^3.6.1
 ```
 
 `lib_compat_mode = strict` is recommended because the async networking
