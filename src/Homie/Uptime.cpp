@@ -10,7 +10,7 @@ Uptime::Uptime()
 void Uptime::reset()
 {
   _milliseconds = 0;
-  _lastTick = millis(); 
+  _lastTick = millis();
 }
 
 void Uptime::update() {
