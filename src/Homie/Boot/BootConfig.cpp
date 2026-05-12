@@ -247,10 +247,50 @@ void BootConfig::_generateNetworksJson() {
       jsonNetwork["encryption"] = "wpa2";
       break;
     case (WIFI_AUTH_WPA_WPA2_PSK):
-      //FIXME
+      jsonNetwork["encryption"] = "auto";
       break;
     case (WIFI_AUTH_WPA2_ENTERPRISE):
-      //FIXME
+      jsonNetwork["encryption"] = "wpa2";
+      break;
+#if defined(ESP_IDF_VERSION) && defined(ESP_IDF_VERSION_VAL)
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0)
+    case (WIFI_AUTH_WPA3_PSK):
+      jsonNetwork["encryption"] = "wpa3";
+      break;
+    case (WIFI_AUTH_WPA2_WPA3_PSK):
+      jsonNetwork["encryption"] = "auto";
+      break;
+    case (WIFI_AUTH_WAPI_PSK):
+      jsonNetwork["encryption"] = "wapi";
+      break;
+    case (WIFI_AUTH_OWE):
+      jsonNetwork["encryption"] = "owe";
+      break;
+#endif
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 2, 0)
+    case (WIFI_AUTH_WPA3_EXT_PSK):
+    case (WIFI_AUTH_WPA3_EXT_PSK_MIXED_MODE):
+    case (WIFI_AUTH_WPA3_ENT_192):
+      jsonNetwork["encryption"] = "wpa3";
+      break;
+    case (WIFI_AUTH_WPA_ENTERPRISE):
+      jsonNetwork["encryption"] = "wpa";
+      break;
+#endif
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 4, 0)
+    case (WIFI_AUTH_WPA3_ENTERPRISE):
+      jsonNetwork["encryption"] = "wpa3";
+      break;
+    case (WIFI_AUTH_WPA2_WPA3_ENTERPRISE):
+      jsonNetwork["encryption"] = "auto";
+      break;
+    case (WIFI_AUTH_DPP):
+      jsonNetwork["encryption"] = "dpp";
+      break;
+#endif
+#endif
+    default:
+      jsonNetwork["encryption"] = "auto";
       break;
     }
     #elif defined(ESP8266)
@@ -268,6 +308,9 @@ void BootConfig::_generateNetworksJson() {
       jsonNetwork["encryption"] = "none";
       break;
     case ENC_TYPE_AUTO:
+      jsonNetwork["encryption"] = "auto";
+      break;
+    default:
       jsonNetwork["encryption"] = "auto";
       break;
     }

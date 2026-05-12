@@ -111,10 +111,15 @@ such as `500 Internal Server error`, `400 Bad request` and so on.
             { "ssid": "Network_1", "rssi": -57, "encryption": "wpa" },
             { "ssid": "Network_3", "rssi": -65, "encryption": "wpa2" },
             { "ssid": "Network_5", "rssi": -94, "encryption": "none" },
-            { "ssid": "Network_4", "rssi": -89, "encryption": "auto" }
+            { "ssid": "Network_4", "rssi": -89, "encryption": "auto" },
+            { "ssid": "Network_6", "rssi": -71, "encryption": "wpa3" }
           ]
         }
         ```
+
+        `encryption` can be `wep`, `wpa`, `wpa2`, `wpa3`, `none`,
+        `auto`, `wapi`, `owe` or `dpp`, depending on the Wi-Fi mode reported
+        by the platform.
 
     !!! failure "In case the initial Wi-Fi scan is not finished on the device"
         `503 Service Unavailable (application/json)`
