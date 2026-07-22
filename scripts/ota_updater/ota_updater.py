@@ -32,6 +32,7 @@ from pathlib import Path
 from typing import Protocol, TextIO, TypeAlias, cast
 
 from paho.mqtt import client as mqtt
+from paho.mqtt.enums import CallbackAPIVersion
 
 
 class _TomlModule(Protocol):
@@ -156,7 +157,7 @@ def normalize_base_topic(value: str, homie_version: str = DEFAULT_HOMIE_VERSION)
 
 def mqtt_error_name(code: int) -> str:
     """Return a stable human-readable MQTT client error string."""
-    return mqtt.error_string(code) if hasattr(mqtt, "error_string") else str(code)
+    return mqtt.error_string(code)
 
 
 def is_valid_md5(value: str) -> bool:
@@ -359,17 +360,12 @@ class OTAUpdater:
         return f"{self.base_topic}{self.device_id}/$implementation/ota/firmware/{self.firmware_md5}"
 
     def _create_client(self) -> mqtt.Client:
-        """Create a Paho client compatible with both 1.x and 2.x."""
-        if hasattr(mqtt, "CallbackAPIVersion"):
-            client = mqtt.Client(
-                callback_api_version=mqtt.CallbackAPIVersion.VERSION1,
-                client_id=self.client_id,
-            )
-        else:
-            client = mqtt.Client(client_id=self.client_id)
-
-        if hasattr(client, "reconnect_delay_set"):
-            client.reconnect_delay_set(min_delay=1, max_delay=5)
+        """Create the Paho client."""
+        client = mqtt.Client(
+            callback_api_version=CallbackAPIVersion.VERSION1,
+            client_id=self.client_id,
+        )
+        client.reconnect_delay_set(min_delay=1, max_delay=5)
 
         client.on_connect = self._on_connect
         client.on_disconnect = self._on_disconnect
