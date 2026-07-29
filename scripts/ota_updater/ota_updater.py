@@ -56,7 +56,7 @@ except ImportError:  # pragma: no cover - Python < 3.11 can still use JSON confi
 else:
     _TOML_MODULE = _tomllib
 
-JsonValue: TypeAlias = str | int | float | bool | None | list["JsonValue"] | dict[str, "JsonValue"]
+JsonValue: TypeAlias = str | int | float | bool | list["JsonValue"] | dict[str, "JsonValue"] | None
 Config: TypeAlias = dict[str, JsonValue]
 ConfigAlias: TypeAlias = str | tuple[str, str]
 
