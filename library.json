@@ -35,7 +35,7 @@
     },
     {
       "name": "AsyncMqttClient",
-      "version": "https://github.com/labodj/async-mqtt-client.git#0b9bf42851f3b227d9ebc404446a2b64729b925f",
+      "version": "https://github.com/labodj/async-mqtt-client.git#9c8ae4def4e960c6277d4b023a7674574a95d06c",
       "platforms": ["espressif8266", "espressif32"]
     },
     {
