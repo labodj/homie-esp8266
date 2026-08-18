@@ -40,7 +40,7 @@ board = esp32dev
 framework = arduino
 lib_compat_mode = strict
 lib_deps =
-  labodj/homie-v5 @ ^3.7.1
+  labodj/homie-v5 @ ^4.0.0
 ```
 
 Dependency metadata has been updated so PlatformIO can resolve ESP8266 and ESP32
@@ -56,7 +56,7 @@ once with `Homie.setMqttMessageHandler()` before setup. The asynchronous client
 does not support MQTT TLS, so `mqtt.ssl=true` is rejected instead of being
 silently ignored.
 
-These breaking changes require a new major version. Applications
+These are the breaking changes behind the `4.0.0` major version. Applications
 that only use Homie nodes and properties need no source changes; applications
 that access the MQTT client directly must adopt the types and callback API
 above, and TLS configurations must remain on a `3.x` release or move TLS outside

@@ -91,7 +91,7 @@ lib_compat_mode = strict
 build_flags =
   -D EMC_ALLOW_NOT_CONNECTED_PUBLISH=0
 lib_deps =
-  labodj/homie-v5 @ ^3.7.1
+  labodj/homie-v5 @ ^4.0.0
 ```
 
 For ESP8266 projects, keep the ESP8266 PlatformIO platform:
@@ -106,7 +106,7 @@ build_flags =
   -D PIO_FRAMEWORK_ARDUINO_LWIP2_LOW_MEMORY
   -D EMC_ALLOW_NOT_CONNECTED_PUBLISH=0
 lib_deps =
-  labodj/homie-v5 @ ^3.7.1
+  labodj/homie-v5 @ ^4.0.0
 ```
 
 `PIO_FRAMEWORK_ARDUINO_LWIP2_LOW_MEMORY` is useful for reliable OTA behavior on
