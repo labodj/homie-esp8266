@@ -43,6 +43,7 @@ HomieClass::HomieClass()
   Interface::get().flaggedForSleep = false;
   Interface::get().globalInputHandler = [](const HomieNode& node, const HomieRange& range, const String& property, const String& value) { return false; };
   Interface::get().broadcastHandler = [](const String& level, const String& value) { return false; };
+  Interface::get().mqttMessageHandler = nullptr;
   Interface::get().setupFunction = []() {};
   Interface::get().loopFunction = []() {};
   Interface::get().eventHandler = [](const HomieEvent& event) {};
@@ -300,6 +301,14 @@ HomieClass& HomieClass::setBroadcastHandler(const BroadcastHandler& broadcastHan
   return *this;
 }
 
+HomieClass& HomieClass::setMqttMessageHandler(const MqttMessageHandler& mqttMessageHandler) {
+  _checkBeforeSetup(F("setMqttMessageHandler"));
+
+  Interface::get().mqttMessageHandler = mqttMessageHandler;
+
+  return *this;
+}
+
 HomieClass& HomieClass::setSetupFunction(const OperationFunction& function) {
   _checkBeforeSetup(F("setSetupFunction"));
 
@@ -366,7 +375,7 @@ const ConfigStruct& HomieClass::getConfiguration() {
   return Interface::get().getConfig().get();
 }
 
-AsyncMqttClient& HomieClass::getMqttClient() {
+espMqttClientAsync& HomieClass::getMqttClient() {
   return _mqttClient;
 }
 

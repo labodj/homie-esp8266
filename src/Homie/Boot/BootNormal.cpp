@@ -138,23 +138,23 @@ const char* espResetReasonName(esp_reset_reason_t reason) {
 }
 #endif
 
-const char* mqttDisconnectReasonName(AsyncMqttClientDisconnectReason reason) {
+const char* mqttDisconnectReasonName(espMqttClientTypes::DisconnectReason reason) {
   switch (reason) {
-    case AsyncMqttClientDisconnectReason::TCP_DISCONNECTED:
+    case espMqttClientTypes::DisconnectReason::USER_OK:
+      return "user_ok";
+    case espMqttClientTypes::DisconnectReason::TCP_DISCONNECTED:
       return "tcp_disconnected";
-    case AsyncMqttClientDisconnectReason::MQTT_UNACCEPTABLE_PROTOCOL_VERSION:
+    case espMqttClientTypes::DisconnectReason::MQTT_UNACCEPTABLE_PROTOCOL_VERSION:
       return "mqtt_unacceptable_protocol_version";
-    case AsyncMqttClientDisconnectReason::MQTT_IDENTIFIER_REJECTED:
+    case espMqttClientTypes::DisconnectReason::MQTT_IDENTIFIER_REJECTED:
       return "mqtt_identifier_rejected";
-    case AsyncMqttClientDisconnectReason::MQTT_SERVER_UNAVAILABLE:
+    case espMqttClientTypes::DisconnectReason::MQTT_SERVER_UNAVAILABLE:
       return "mqtt_server_unavailable";
-    case AsyncMqttClientDisconnectReason::MQTT_MALFORMED_CREDENTIALS:
+    case espMqttClientTypes::DisconnectReason::MQTT_MALFORMED_CREDENTIALS:
       return "mqtt_malformed_credentials";
-    case AsyncMqttClientDisconnectReason::MQTT_NOT_AUTHORIZED:
+    case espMqttClientTypes::DisconnectReason::MQTT_NOT_AUTHORIZED:
       return "mqtt_not_authorized";
-    case AsyncMqttClientDisconnectReason::ESP8266_NOT_ENOUGH_SPACE:
-      return "esp8266_not_enough_space";
-    case AsyncMqttClientDisconnectReason::TLS_BAD_FINGERPRINT:
+    case espMqttClientTypes::DisconnectReason::TLS_BAD_FINGERPRINT:
       return "tls_bad_fingerprint";
     default:
       return "unknown";
@@ -402,6 +402,8 @@ BootNormal::BootNormal()
   , _mqttRootTopicLength(0)
   , _mqttClientId(nullptr)
   , _mqttWillTopic(nullptr)
+  , _otaDecodeBuffer(nullptr)
+  , _otaDecodeBufferCapacity(0)
   , _mqttPayloadBuffer(nullptr)
   , _mqttPayloadBufferCapacity(0)
   , _mqttTopicLevels(nullptr)
@@ -496,18 +498,6 @@ void BootNormal::setup() {
 
   Interface::get().getMqttClient().setServer(Interface::get().getConfig().get().mqtt.server.host, Interface::get().getConfig().get().mqtt.server.port);
 
-#if ASYNC_TCP_SSL_ENABLED
-  Interface::get().getLogger() << "SSL is: " << Interface::get().getConfig().get().mqtt.server.ssl.enabled << endl;
-  Interface::get().getMqttClient().setSecure(Interface::get().getConfig().get().mqtt.server.ssl.enabled);
-  if (Interface::get().getConfig().get().mqtt.server.ssl.enabled && Interface::get().getConfig().get().mqtt.server.ssl.hasFingerprint) {
-    char hexBuf[MAX_FINGERPRINT_STRING_LENGTH];
-    Helpers::byteArrayToHexString(Interface::get().getConfig().get().mqtt.server.ssl.fingerprint, hexBuf, MAX_FINGERPRINT_SIZE);
-    Interface::get().getLogger() << "Using fingerprint: " << hexBuf << endl;
-    Interface::get().getMqttClient().addServerFingerprint((const uint8_t*)Interface::get().getConfig().get().mqtt.server.ssl.fingerprint);
-  }
-#endif
-
-  Interface::get().getMqttClient().setMaxTopicLength(MAX_MQTT_TOPIC_LENGTH);
   _mqttClientId = std::unique_ptr<char[]>(new (std::nothrow) char[strlen(Interface::get().brand) + 1 + strlen(Interface::get().getConfig().get().deviceId) + 1]);
   if (!_mqttClientId) Helpers::abort(F("✖ Cannot allocate MQTT client id buffer"));
   strcpy(_mqttClientId.get(), Interface::get().brand);
@@ -578,6 +568,12 @@ void BootNormal::setup() {
 
 void BootNormal::loop() {
   Boot::loop();
+
+  // Once the MQTT-connected event has been handled, drain queued publishes and
+  // QoS replies without waiting for AsyncTCP's 500 ms poll. TCP/MQTT connection
+  // setup itself remains callback-driven.
+  auto& mqttClient = Interface::get().getMqttClient();
+  if (!_mqttDisconnectNotified && mqttClient.connected() && mqttClient.queueSize() != 0) mqttClient.loop();
 
   _processPendingAsyncEvents();
   _processPendingEventNotifications();
@@ -841,6 +837,8 @@ void BootNormal::_resetOtaTransferState(bool preserveRequestedChecksum) {
   _otaPayloadTotal = 0;
   _otaPayloadProcessed = 0;
   _otaProgressPublishCounter = 0;
+  _otaDecodeBuffer.reset();
+  _otaDecodeBufferCapacity = 0;
 }
 
 void BootNormal::_failOtaUpdate(int status, const char* info, const __FlashStringHelper* reason) {
@@ -918,12 +916,13 @@ void BootNormal::_endOtaUpdate(bool success, uint8_t update_error) {
   _resetOtaTransferState(success);
 }
 
-bool BootNormal::_writeOtaPayload(char* payload, size_t length) {
+bool BootNormal::_writeOtaPayload(const uint8_t* payload, size_t length) {
   size_t writtenTotal = 0;
   while (writtenTotal < length) {
     const size_t remaining = length - writtenTotal;
     const size_t chunkLength = remaining < OTA_FLASH_WRITE_SLICE_SIZE ? remaining : OTA_FLASH_WRITE_SLICE_SIZE;
-    const size_t written = Update.write(reinterpret_cast<uint8_t*>(payload + writtenTotal), chunkLength);
+    // Arduino's Update API is not const-correct but does not modify this buffer.
+    const size_t written = Update.write(const_cast<uint8_t*>(payload + writtenTotal), chunkLength);
     if (written != chunkLength) {
       return false;
     }
@@ -999,7 +998,7 @@ void BootNormal::_processPendingAsyncEvents() {
     if (Interface::get().getMqttClient().connected()) {
       _handleMqttConnected();
     } else {
-      _handleMqttDisconnected(static_cast<AsyncMqttClientDisconnectReason>(mqttDisconnectReason));
+      _handleMqttDisconnected(static_cast<espMqttClientTypes::DisconnectReason>(mqttDisconnectReason));
     }
   }
 }
@@ -1100,7 +1099,7 @@ bool BootNormal::_enqueuePendingMqttAck(uint16_t id) {
   return true;
 }
 
-bool BootNormal::_enqueuePendingMqttMessage(const char* topic, const char* payload, size_t payloadLength, const AsyncMqttClientMessageProperties& properties) {
+bool BootNormal::_enqueuePendingMqttMessage(const char* topic, const char* payload, size_t payloadLength, const espMqttClientTypes::MessageProperties& properties) {
 #if HOMIE_PENDING_MQTT_MESSAGE_PREALLOCATED
   const size_t topicLength = strlen(topic);
   if (topicLength > PENDING_MQTT_MESSAGE_MAX_TOPIC_LENGTH || payloadLength > PENDING_MQTT_MESSAGE_MAX_PAYLOAD_LENGTH) {
@@ -1126,7 +1125,7 @@ bool BootNormal::_enqueuePendingMqttMessage(const char* topic, const char* paylo
   if (_pendingMqttMessageCount > _pendingMqttMessageMaxDepth) _pendingMqttMessageMaxDepth = _pendingMqttMessageCount;
   return true;
 #else
-  // AsyncMqttClient owns topic/payload memory only for the callback duration.
+  // espMqttClient owns topic/payload memory only for the callback duration.
   // Preflight capacity before allocating, then enter the critical section only
   // for the ring mutation.
   {
@@ -1199,7 +1198,7 @@ void BootNormal::_flushPendingMqttMessages() {
 #endif
 }
 
-void BootNormal::_handleQueuedMqttMessage(char* topic, char* payload, size_t payloadLength, const AsyncMqttClientMessageProperties& properties) {
+void BootNormal::_handleQueuedMqttMessage(char* topic, char* payload, size_t payloadLength, const espMqttClientTypes::MessageProperties& properties) {
   std::unique_ptr<char*[]> topicLevels;
   uint8_t topicLevelsCount = 0;
   if (!__splitTopic(topic, topicLevels, topicLevelsCount)) {
@@ -1235,7 +1234,7 @@ void BootNormal::_processPendingMqttMessages() {
     std::unique_ptr<char[]> payloadBuffer;
 #endif
     size_t payloadLength = 0;
-    AsyncMqttClientMessageProperties properties{};
+    espMqttClientTypes::MessageProperties properties{};
     bool hasMoreMessages = false;
 
     {
@@ -1320,7 +1319,7 @@ void BootNormal::_recoverIfNetworkStateDrifted() {
     }
   } else if (!_mqttDisconnectNotified && _wifiGotIp) {
     Interface::get().getLogger() << F("! MQTT disconnect event was missed. Recovering...") << endl;
-    _handleMqttDisconnected(AsyncMqttClientDisconnectReason::TCP_DISCONNECTED);
+    _handleMqttDisconnected(espMqttClientTypes::DisconnectReason::TCP_DISCONNECTED);
   }
 }
 
@@ -1339,7 +1338,7 @@ void BootNormal::_recoverIfConnectAttemptStalled() {
     Interface::get().getLogger() << F("✖ MQTT connect attempt timed out. Forcing a fresh retry...") << endl;
     _mqttConnectInProgress = false;
     Interface::get().getMqttClient().disconnect(true);
-    _handleMqttDisconnected(AsyncMqttClientDisconnectReason::TCP_DISCONNECTED);
+    _handleMqttDisconnected(espMqttClientTypes::DisconnectReason::TCP_DISCONNECTED);
     if (_wifiGotIp) {
       _mqttReconnectTimer.deactivate();
       _mqttReconnectTimer.activate();
@@ -1363,7 +1362,7 @@ void BootNormal::_handleWifiConnected(const IPAddress& ip, const IPAddress& mask
     // session after a fresh GOT_IP event.
     Interface::get().getMqttClient().disconnect(false);
   }
-  _handleMqttDisconnected(AsyncMqttClientDisconnectReason::TCP_DISCONNECTED);
+  _handleMqttDisconnected(espMqttClientTypes::DisconnectReason::TCP_DISCONNECTED);
   _mqttReconnectTimer.deactivate();
 
   if (Interface::get().led.enabled) Interface::get().getBlinker().stop();
@@ -1397,7 +1396,7 @@ void BootNormal::_handleWifiDisconnected(int32_t reason) {
   }
 #endif
   Interface::get().getMqttClient().disconnect(true);
-  _handleMqttDisconnected(AsyncMqttClientDisconnectReason::TCP_DISCONNECTED);
+  _handleMqttDisconnected(espMqttClientTypes::DisconnectReason::TCP_DISCONNECTED);
   _mqttReconnectTimer.deactivate();
 
   if (Interface::get().led.enabled) Interface::get().getBlinker().start(LED_WIFI_DELAY);
@@ -1726,7 +1725,7 @@ void BootNormal::_handleMqttConnected() {
   _advertise();
 }
 
-void BootNormal::_handleMqttDisconnected(AsyncMqttClientDisconnectReason reason) {
+void BootNormal::_handleMqttDisconnected(espMqttClientTypes::DisconnectReason reason) {
   _abortOtaUpdateOnDisconnect();
 
   _lastMqttDisconnectReason = static_cast<int32_t>(reason);
@@ -1917,7 +1916,7 @@ void BootNormal::_advertise() {
     {
       const char* reason = _lastMqttDisconnectReason == NO_DISCONNECT_REASON
         ? "none"
-        : mqttDisconnectReasonName(static_cast<AsyncMqttClientDisconnectReason>(_lastMqttDisconnectReason));
+        : mqttDisconnectReasonName(static_cast<espMqttClientTypes::DisconnectReason>(_lastMqttDisconnectReason));
       packetId = Interface::get().getMqttClient().publish(_prefixMqttTopic(PSTR("/$implementation/mqtt/last_disconnect_reason")), 1, true, reason);
       if (packetId != 0) _advertisementProgress.globalStep = AdvertisementProgress::GlobalStep::PUB_IMPLEMENTATION_OTA_ENABLED;
       break;
@@ -2207,13 +2206,22 @@ void BootNormal::_onMqttConnected() {
   setFlag(_mqttEventPending);
 }
 
-void BootNormal::_onMqttDisconnected(AsyncMqttClientDisconnectReason reason) {
+void BootNormal::_onMqttDisconnected(espMqttClientTypes::DisconnectReason reason) {
   AsyncStateCriticalGuard lock;
   _mqttDisconnectReasonPending = static_cast<int32_t>(reason);
   _mqttEventPending = true;
 }
 
-void BootNormal::_onMqttMessage(char* topic, char* payload, AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total) {
+void BootNormal::_onMqttMessage(const espMqttClientTypes::MessageProperties& properties,
+                                const char* topic,
+                                const uint8_t* payload,
+                                size_t len,
+                                size_t index,
+                                size_t total) {
+  if (Interface::get().mqttMessageHandler) {
+    Interface::get().mqttMessageHandler(properties, topic, payload, len, index, total);
+  }
+
   if (total == 0) return;  // no empty message possible
   if (strlen(topic) < _mqttRootTopicLength || strncmp(topic, _mqttRootTopic.get(), _mqttRootTopicLength) != 0) return;
 
@@ -2402,7 +2410,7 @@ bool BootNormal::__splitTopicFixed(char* topic, std::array<char*, PENDING_MQTT_M
   return true;
 }
 
-bool BootNormal::__fillPreallocatedPayloadBuffer(char* payload, size_t len, size_t index, size_t total) {
+bool BootNormal::__fillPreallocatedPayloadBuffer(const uint8_t* payload, size_t len, size_t index, size_t total) {
   if (total > PENDING_MQTT_MESSAGE_MAX_PAYLOAD_LENGTH || index > total || len > total - index) {
     incrementDropCounters(_pendingMqttMessagesDropped, _pendingMqttMessagesDroppedTotal);
     return true;
@@ -2418,7 +2426,7 @@ bool BootNormal::__fillPreallocatedPayloadBuffer(char* payload, size_t len, size
 }
 #endif
 
-bool HomieInternals::BootNormal::__fillPayloadBuffer(std::unique_ptr<char[]>& payloadBuffer, size_t& payloadBufferCapacity, char* payload, size_t len, size_t index, size_t total) {
+bool HomieInternals::BootNormal::__fillPayloadBuffer(std::unique_ptr<char[]>& payloadBuffer, size_t& payloadBufferCapacity, const uint8_t* payload, size_t len, size_t index, size_t total) {
   if (total == static_cast<size_t>(-1) || index > total || len > total - index) {
     incrementDropCounters(_pendingMqttMessagesDropped, _pendingMqttMessagesDroppedTotal);
     return true;
@@ -2454,7 +2462,7 @@ bool HomieInternals::BootNormal::__fillPayloadBuffer(std::unique_ptr<char[]>& pa
   return false;
 }
 
-bool HomieInternals::BootNormal::__handleOTAUpdates(char* topic, char* payload, const AsyncMqttClientMessageProperties& properties, size_t len, size_t index, size_t total, char* const* topicLevels, uint8_t topicLevelsCount) {
+bool HomieInternals::BootNormal::__handleOTAUpdates(char* topic, const uint8_t* payload, const espMqttClientTypes::MessageProperties& properties, size_t len, size_t index, size_t total, char* const* topicLevels, uint8_t topicLevelsCount) {
   if (
     topicLevelsCount == 5
     && strcmp(topicLevels[0], Interface::get().getConfig().get().deviceId) == 0
@@ -2550,7 +2558,7 @@ bool HomieInternals::BootNormal::__handleOTAUpdates(char* topic, char* payload, 
         // Base64-decode first two bytes. Compare decoded value against magic byte.
         char plain[2];  // need 12 bits
         base64_init_decodestate(&_otaBase64State);
-        int l = base64_decode_block(payload, 2, plain, &_otaBase64State);
+        int l = base64_decode_block(reinterpret_cast<const char*>(payload), 2, plain, &_otaBase64State);
         if ((l == 1) && (plain[0] == 0xE9)) {
           _otaIsBase64 = true;
           _otaBase64Pads = 0;
@@ -2580,12 +2588,13 @@ bool HomieInternals::BootNormal::__handleOTAUpdates(char* topic, char* payload, 
     }
 
     size_t write_len;
+    const uint8_t* writePayload = payload;
     if (_otaIsBase64) {
       // Base64-firmware: Make sure there are no non-base64 characters in the payload.
       // libb64/cdecode.c doesn't ignore such characters if the compiler treats `char`
       // as `unsigned char`.
       size_t bin_len = 0;
-      char* p = payload;
+      const char* p = reinterpret_cast<const char*>(payload);
       for (size_t i = 0; i < len; i++) {
         char c = *p++;
         bool b64 = ((c >= 'A') && (c <= 'Z')) || ((c >= 'a') && (c <= 'z')) || ((c >= '0') && (c <= '9')) || (c == '+') || (c == '/');
@@ -2606,20 +2615,32 @@ bool HomieInternals::BootNormal::__handleOTAUpdates(char* topic, char* payload, 
         }
       }
       if (bin_len > 0) {
+        if (_otaDecodeBufferCapacity < len) {
+          std::unique_ptr<char[]> decodeBuffer(new (std::nothrow) char[len]);
+          if (!decodeBuffer) {
+            _failOtaUpdate(500, "OUT_OF_MEMORY", F("✖ Aborting, cannot allocate the OTA base64 decode buffer"));
+            return true;
+          }
+          _otaDecodeBuffer = std::move(decodeBuffer);
+          _otaDecodeBufferCapacity = len;
+        }
+        memcpy(_otaDecodeBuffer.get(), payload, len);
+
         // Decode base64 payload in-place. base64_decode_block() can decode in-place,
         // except for the first two base64-characters which make one binary byte plus
         // 4 extra bits (saved in _otaBase64State). So we "manually" decode the first
-        // two characters into a temporary buffer and manually merge that back into
-        // the payload. This one is a little tricky, but it saves us from having to
-        // dynamically allocate some 800 bytes of memory for every payload chunk.
+        // two characters into a temporary byte and merge it into the reusable copy.
+        // espMqttClient exposes its receive buffer as const, so it must remain untouched.
+        char* decodedPayload = _otaDecodeBuffer.get();
         size_t dec_len = bin_len > 1 ? 2 : 1;
         char c;
-        write_len = static_cast<size_t>(base64_decode_block(payload, dec_len, &c, &_otaBase64State));
-        *payload = c;
+        write_len = static_cast<size_t>(base64_decode_block(decodedPayload, dec_len, &c, &_otaBase64State));
+        *decodedPayload = c;
 
         if (bin_len > 1) {
-          write_len += static_cast<size_t>(base64_decode_block((const char*)payload + dec_len, bin_len - dec_len, payload + write_len, &_otaBase64State));
+          write_len += static_cast<size_t>(base64_decode_block(decodedPayload + dec_len, bin_len - dec_len, decodedPayload + write_len, &_otaBase64State));
         }
+        writePayload = reinterpret_cast<const uint8_t*>(decodedPayload);
       } else {
         write_len = 0;
       }
@@ -2628,7 +2649,7 @@ bool HomieInternals::BootNormal::__handleOTAUpdates(char* topic, char* payload, 
       write_len = len;
     }
     if (write_len > 0) {
-      bool success = _writeOtaPayload(payload, write_len);
+      bool success = _writeOtaPayload(writePayload, write_len);
       if (success) {
         // Flash write successful.
         _otaSizeDone += write_len;
@@ -2685,7 +2706,7 @@ bool HomieInternals::BootNormal::__handleOTAUpdates(char* topic, char* payload, 
   return false;
 }
 
-bool HomieInternals::BootNormal::__handleBroadcasts(char * topic, char * payload, const AsyncMqttClientMessageProperties & properties, size_t len, size_t index, size_t total, char* const* topicLevels, uint8_t topicLevelsCount) {
+bool HomieInternals::BootNormal::__handleBroadcasts(char * topic, char * payload, const espMqttClientTypes::MessageProperties & properties, size_t len, size_t index, size_t total, char* const* topicLevels, uint8_t topicLevelsCount) {
   if (
     topicLevelsCount >= 2
     && strcmp_P(topicLevels[0], PSTR("$broadcast")) == 0
@@ -2707,7 +2728,7 @@ bool HomieInternals::BootNormal::__handleBroadcasts(char * topic, char * payload
   return false;
 }
 
-bool HomieInternals::BootNormal::__handleResets(char * topic, char * payload, const AsyncMqttClientMessageProperties& properties, size_t len, size_t index, size_t total, char* const* topicLevels, uint8_t topicLevelsCount) {
+bool HomieInternals::BootNormal::__handleResets(char * topic, char * payload, const espMqttClientTypes::MessageProperties& properties, size_t len, size_t index, size_t total, char* const* topicLevels, uint8_t topicLevelsCount) {
   if (
     topicLevelsCount == 3
     && strcmp_P(topicLevels[1], PSTR("$implementation")) == 0
@@ -2723,7 +2744,7 @@ bool HomieInternals::BootNormal::__handleResets(char * topic, char * payload, co
   return false;
 }
 
-bool HomieInternals::BootNormal::__handleConfig(char * topic, char * payload, const AsyncMqttClientMessageProperties& properties, size_t len, size_t index, size_t total, char* const* topicLevels, uint8_t topicLevelsCount) {
+bool HomieInternals::BootNormal::__handleConfig(char * topic, char * payload, const espMqttClientTypes::MessageProperties& properties, size_t len, size_t index, size_t total, char* const* topicLevels, uint8_t topicLevelsCount) {
   if (
     topicLevelsCount == 4
     && strcmp_P(topicLevels[1], PSTR("$implementation")) == 0
@@ -2743,7 +2764,7 @@ bool HomieInternals::BootNormal::__handleConfig(char * topic, char * payload, co
   return false;
 }
 
-bool HomieInternals::BootNormal::__handleNodeProperty(char * topic, char * payload, const AsyncMqttClientMessageProperties& properties, size_t len, size_t index, size_t total, char* const* topicLevels, uint8_t topicLevelsCount) {
+bool HomieInternals::BootNormal::__handleNodeProperty(char * topic, char * payload, const espMqttClientTypes::MessageProperties& properties, size_t len, size_t index, size_t total, char* const* topicLevels, uint8_t topicLevelsCount) {
   if (topicLevelsCount != 4 || strcmp_P(topicLevels[3], PSTR("set")) != 0) {
     return false;
   }

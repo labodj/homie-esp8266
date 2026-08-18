@@ -80,15 +80,15 @@ void onHomieEvent(const HomieEvent& event) {
 
       // You can use event.mqttReason
       /*
-        MQTT Reason (source: https://github.com/marvinroger/async-mqtt-client/blob/master/src/AsyncMqttClient/DisconnectReasons.hpp)
-        0 TCP_DISCONNECTED
+        MQTT Reason (source: https://github.com/bertmelis/espMqttClient/blob/main/src/TypeDefs.h)
+        0 USER_OK
         1 MQTT_UNACCEPTABLE_PROTOCOL_VERSION
         2 MQTT_IDENTIFIER_REJECTED
         3 MQTT_SERVER_UNAVAILABLE
         4 MQTT_MALFORMED_CREDENTIALS
         5 MQTT_NOT_AUTHORIZED
-        6 ESP8266_NOT_ENOUGH_SPACE
-        7 TLS_BAD_FINGERPRINT
+        6 TLS_BAD_FINGERPRINT
+        7 TCP_DISCONNECTED
       */
       break;
     case HomieEventType::MQTT_PACKET_ACKNOWLEDGED:

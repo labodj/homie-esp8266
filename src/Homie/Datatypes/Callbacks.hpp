@@ -1,6 +1,7 @@
 #pragma once
 
 #include <functional>
+#include <espMqttClientAsync.h>
 #include "../../HomieEvent.hpp"
 #include "../../HomieRange.hpp"
 
@@ -16,4 +17,5 @@ namespace HomieInternals {
   typedef std::function<void(const HomieEvent& event)> EventHandler;
 
   typedef std::function<bool(const String& level, const String& value)> BroadcastHandler;
+  using MqttMessageHandler = espMqttClientTypes::OnMessageCallback;
 }  // namespace HomieInternals

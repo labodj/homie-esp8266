@@ -114,6 +114,16 @@ Set broadcast handler.
 - **`value`**: Value of the broadcast
 
 ```c++
+Homie& setMqttMessageHandler(espMqttClientTypes::OnMessageCallback handler);
+```
+
+Observe every incoming MQTT publish before Homie filters its own topic tree.
+Register the handler before `Homie.setup()`. It runs in the MQTT callback
+context; topic and payload buffers are read-only and valid only until the
+handler returns. Copy complete messages into bounded application storage and
+process them later from `loop()`.
+
+```c++
 Homie& onEvent(std::function<void(const HomieEvent& event)> callback);
 ```
 
@@ -223,10 +233,10 @@ Get the configuration struct.
     Be careful with this struct, never attempt to change it.
 
 ```c++
-AsyncMqttClient& getMqttClient();
+espMqttClientAsync& getMqttClient();
 ```
 
-Get the underlying `AsyncMqttClient` object.
+Get the underlying asynchronous `espMqttClient` object.
 
 ```c++
 Logger& getLogger();

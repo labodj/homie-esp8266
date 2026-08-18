@@ -10,6 +10,8 @@ platform = https://github.com/pioarduino/platform-espressif32/releases/download/
 board = esp32dev
 framework = arduino
 lib_compat_mode = strict
+build_flags =
+  -D EMC_ALLOW_NOT_CONNECTED_PUBLISH=0
 lib_deps =
   labodj/homie-v5 @ ^3.7.1
 ```
@@ -27,6 +29,7 @@ framework = arduino
 lib_compat_mode = strict
 build_flags =
   -D PIO_FRAMEWORK_ARDUINO_LWIP2_LOW_MEMORY
+  -D EMC_ALLOW_NOT_CONNECTED_PUBLISH=0
 lib_deps =
   labodj/homie-v5 @ ^3.7.1
 ```
@@ -36,13 +39,14 @@ dependencies are platform-specific. Without strict compatibility, PlatformIO may
 try to compile ESP32 or RP2040 async TCP dependencies for ESP8266 builds, or the
 other way around.
 
-The library package pins its internal AsyncMqttClient dependency to a commit
-hash instead of a moving tag so dependency resolution stays repeatable across CI
-and developer machines.
+The library package pins `bertmelis/espMqttClient` to an exact post-1.7.3 commit
+instead of a moving tag. This keeps CI and developer builds repeatable, includes
+the long-topic parser fix and directly resolves the maintained ESP32Async TCP
+packages. `EMC_ALLOW_NOT_CONNECTED_PUBLISH=0` keeps disconnected publishes from
+entering the client's offline outbox.
 
-The pinned dependency points to a small metadata-only fork of `AsyncMqttClient`.
-It only updates the async TCP dependency metadata to the maintained `esp32async`
-packages required by modern ESP8266 / ESP32 Arduino toolchains.
+The asynchronous client does not support MQTT TLS. Do not set
+`ASYNC_TCP_SSL_ENABLED`; configurations with `mqtt.ssl=true` are rejected.
 
 SPIFFS remains the default storage backend for compatibility with existing
 devices. To build and upload LittleFS images, configure both PlatformIO and

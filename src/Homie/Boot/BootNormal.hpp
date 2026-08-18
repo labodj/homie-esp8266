@@ -62,7 +62,7 @@
 #endif // ESP32
 
 
-#include <AsyncMqttClient.h>
+#include <espMqttClientAsync.h>
 #include "../../HomieNode.hpp"
 #include "../../HomieRange.hpp"
 #include "../../StreamingOperator.hpp"
@@ -85,7 +85,7 @@ class BootNormal : public Boot {
   void loop();
 
  private:
-  // These queues bridge AsyncMqttClient callbacks and Homie.loop(). They are
+  // These queues bridge espMqttClient callbacks and Homie.loop(). They are
   // intentionally bounded; callback context never waits for loop context.
   // Advanced consumers can raise them with HOMIE_PENDING_MQTT_*_QUEUE_SIZE when
   // retained MQTT bursts are expected.
@@ -94,6 +94,8 @@ class BootNormal : public Boot {
   static_assert(HOMIE_PENDING_MQTT_MESSAGE_QUEUE_SIZE <= 255,
                 "HOMIE_PENDING_MQTT_MESSAGE_QUEUE_SIZE must fit in uint8_t");
   static constexpr uint8_t PENDING_MQTT_MESSAGE_QUEUE_SIZE = HOMIE_PENDING_MQTT_MESSAGE_QUEUE_SIZE;
+  static_assert(EMC_MAX_TOPIC_LENGTH + 1 >= MAX_MQTT_TOPIC_LENGTH,
+                "EMC_MAX_TOPIC_LENGTH is smaller than Homie's supported MQTT topic length");
 #if HOMIE_PENDING_MQTT_MESSAGE_PREALLOCATED
   static_assert(HOMIE_PENDING_MQTT_MESSAGE_MAX_TOPIC_LENGTH > 0,
                 "HOMIE_PENDING_MQTT_MESSAGE_MAX_TOPIC_LENGTH must be greater than zero");
@@ -182,7 +184,7 @@ class BootNormal : public Boot {
     char topic[PENDING_MQTT_MESSAGE_MAX_TOPIC_LENGTH + 1];
     char payload[PENDING_MQTT_MESSAGE_MAX_PAYLOAD_LENGTH + 1];
 #else
-    // Owning copies are required because AsyncMqttClient callback buffers are
+    // Owning copies are required because espMqttClient callback buffers are
     // no longer valid once the callback returns.
     std::unique_ptr<char[]> topic;
     std::unique_ptr<char[]> payload;
@@ -190,7 +192,7 @@ class BootNormal : public Boot {
 #if HOMIE_STRICT_PROPERTY_VALIDATION
     size_t payloadLength = 0;
 #endif
-    AsyncMqttClientMessageProperties properties{};
+    espMqttClientTypes::MessageProperties properties{};
   };
   Uptime _uptime;
   Uptime _uptimeWifi;
@@ -270,6 +272,8 @@ class BootNormal : public Boot {
 
   std::unique_ptr<char[]> _mqttClientId;
   std::unique_ptr<char[]> _mqttWillTopic;
+  std::unique_ptr<char[]> _otaDecodeBuffer;
+  size_t _otaDecodeBufferCapacity;
   std::unique_ptr<char[]> _mqttPayloadBuffer;
   size_t _mqttPayloadBufferCapacity;
   std::unique_ptr<char*[]> _mqttTopicLevels;
@@ -298,8 +302,8 @@ class BootNormal : public Boot {
   void _processPendingMqttMessages();
   void _flushPendingMqttMessages();
   bool _enqueuePendingMqttAck(uint16_t id);
-  bool _enqueuePendingMqttMessage(const char* topic, const char* payload, size_t payloadLength, const AsyncMqttClientMessageProperties& properties);
-  void _handleQueuedMqttMessage(char* topic, char* payload, size_t payloadLength, const AsyncMqttClientMessageProperties& properties);
+  bool _enqueuePendingMqttMessage(const char* topic, const char* payload, size_t payloadLength, const espMqttClientTypes::MessageProperties& properties);
+  void _handleQueuedMqttMessage(char* topic, char* payload, size_t payloadLength, const espMqttClientTypes::MessageProperties& properties);
   void _recoverIfNetworkStateDrifted();
   void _recoverIfConnectAttemptStalled();
   void _handleWifiConnected(const IPAddress& ip, const IPAddress& mask, const IPAddress& gateway);
@@ -313,7 +317,7 @@ class BootNormal : public Boot {
   #endif // ESP32
   void _mqttConnect();
   void _handleMqttConnected();
-  void _handleMqttDisconnected(AsyncMqttClientDisconnectReason reason);
+  void _handleMqttDisconnected(espMqttClientTypes::DisconnectReason reason);
   void _resetAdvertisementProgress();
   // Homie v5 discovery is a single retained JSON document. These helpers keep
   // sizing, version hashing and publishing separate from the v3/v4 per-topic
@@ -323,8 +327,8 @@ class BootNormal : public Boot {
   uint16_t _publishV5Description();
   void _advertise();
   void _onMqttConnected();
-  void _onMqttDisconnected(AsyncMqttClientDisconnectReason reason);
-  void _onMqttMessage(char* topic, char* payload, AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total);
+  void _onMqttDisconnected(espMqttClientTypes::DisconnectReason reason);
+  void _onMqttMessage(const espMqttClientTypes::MessageProperties& properties, const char* topic, const uint8_t* payload, size_t len, size_t index, size_t total);
   void _onMqttPublish(uint16_t id);
   void _prefixMqttTopic();
   char* _prefixMqttTopic(PGM_P topic);
@@ -335,19 +339,19 @@ class BootNormal : public Boot {
   void _failOtaUpdate(int status, const char* info, const __FlashStringHelper* reason);
   void _abortOtaUpdateOnDisconnect();
   void _endOtaUpdate(bool success, uint8_t update_error = UPDATE_ERROR_OK);
-  bool _writeOtaPayload(char* payload, size_t length);
+  bool _writeOtaPayload(const uint8_t* payload, size_t length);
 
   // _onMqttMessage Helpers
   bool __splitTopic(char* topic, std::unique_ptr<char*[]>& topicLevels, uint8_t& topicLevelsCount, uint8_t* topicLevelsCapacity = nullptr);
 #if HOMIE_PENDING_MQTT_MESSAGE_PREALLOCATED
   bool __splitTopicFixed(char* topic, std::array<char*, PENDING_MQTT_MESSAGE_MAX_TOPIC_LEVELS>& topicLevels, uint8_t& topicLevelsCount);
-  bool __fillPreallocatedPayloadBuffer(char* payload, size_t len, size_t index, size_t total);
+  bool __fillPreallocatedPayloadBuffer(const uint8_t* payload, size_t len, size_t index, size_t total);
 #endif
-  bool __fillPayloadBuffer(std::unique_ptr<char[]>& payloadBuffer, size_t& payloadBufferCapacity, char* payload, size_t len, size_t index, size_t total);
-  bool __handleOTAUpdates(char* topic, char* payload, const AsyncMqttClientMessageProperties& properties, size_t len, size_t index, size_t total, char* const* topicLevels, uint8_t topicLevelsCount);
-  bool __handleBroadcasts(char* topic, char* payload, const AsyncMqttClientMessageProperties& properties, size_t len, size_t index, size_t total, char* const* topicLevels, uint8_t topicLevelsCount);
-  bool __handleResets(char* topic, char* payload, const AsyncMqttClientMessageProperties& properties, size_t len, size_t index, size_t total, char* const* topicLevels, uint8_t topicLevelsCount);
-  bool __handleConfig(char* topic, char* payload, const AsyncMqttClientMessageProperties& properties, size_t len, size_t index, size_t total, char* const* topicLevels, uint8_t topicLevelsCount);
-  bool __handleNodeProperty(char* topic, char* payload, const AsyncMqttClientMessageProperties& properties, size_t len, size_t index, size_t total, char* const* topicLevels, uint8_t topicLevelsCount);
+  bool __fillPayloadBuffer(std::unique_ptr<char[]>& payloadBuffer, size_t& payloadBufferCapacity, const uint8_t* payload, size_t len, size_t index, size_t total);
+  bool __handleOTAUpdates(char* topic, const uint8_t* payload, const espMqttClientTypes::MessageProperties& properties, size_t len, size_t index, size_t total, char* const* topicLevels, uint8_t topicLevelsCount);
+  bool __handleBroadcasts(char* topic, char* payload, const espMqttClientTypes::MessageProperties& properties, size_t len, size_t index, size_t total, char* const* topicLevels, uint8_t topicLevelsCount);
+  bool __handleResets(char* topic, char* payload, const espMqttClientTypes::MessageProperties& properties, size_t len, size_t index, size_t total, char* const* topicLevels, uint8_t topicLevelsCount);
+  bool __handleConfig(char* topic, char* payload, const espMqttClientTypes::MessageProperties& properties, size_t len, size_t index, size_t total, char* const* topicLevels, uint8_t topicLevelsCount);
+  bool __handleNodeProperty(char* topic, char* payload, const espMqttClientTypes::MessageProperties& properties, size_t len, size_t index, size_t total, char* const* topicLevels, uint8_t topicLevelsCount);
 };
 }  // namespace HomieInternals

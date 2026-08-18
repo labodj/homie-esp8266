@@ -88,6 +88,8 @@ platform = https://github.com/pioarduino/platform-espressif32/releases/download/
 board = esp32dev
 framework = arduino
 lib_compat_mode = strict
+build_flags =
+  -D EMC_ALLOW_NOT_CONNECTED_PUBLISH=0
 lib_deps =
   labodj/homie-v5 @ ^3.7.1
 ```
@@ -102,6 +104,7 @@ framework = arduino
 lib_compat_mode = strict
 build_flags =
   -D PIO_FRAMEWORK_ARDUINO_LWIP2_LOW_MEMORY
+  -D EMC_ALLOW_NOT_CONNECTED_PUBLISH=0
 lib_deps =
   labodj/homie-v5 @ ^3.7.1
 ```
@@ -112,9 +115,15 @@ ESP8266 builds. It is not part of the maintained ESP32 path.
 If you need unreleased changes, use a git dependency and pin a commit SHA
 instead of the branch name in `lib_deps`.
 
-The PlatformIO package pins a small metadata-only fork of `AsyncMqttClient`.
-That fork points the async TCP dependencies to the maintained `esp32async`
-packages required by modern ESP8266 / ESP32 Arduino toolchains.
+The PlatformIO package pins `bertmelis/espMqttClient` to an exact commit so
+dependency resolution is repeatable and includes the post-1.7.3 long-topic
+parser fix. The client directly supports the maintained ESP32Async transports
+used by current ESP8266 and ESP32 Arduino toolchains.
+
+`EMC_ALLOW_NOT_CONNECTED_PUBLISH=0` preserves Homie's previous contract: a
+publish attempted while disconnected fails instead of entering the MQTT
+client's offline outbox. The asynchronous client does not support MQTT TLS;
+configurations with `mqtt.ssl=true` are rejected explicitly.
 
 ### Compile-time tuning
 

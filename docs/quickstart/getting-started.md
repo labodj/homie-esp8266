@@ -78,6 +78,12 @@ Some of them are available through the Arduino IDE, with **Sketch → Include
 Library → Manage Libraries**. For the others, install it by downloading the
 `.zip` on GitHub.
 
+That list describes the original upstream release. The maintained PlatformIO
+package replaces AsyncMqttClient with
+[espMqttClient](https://github.com/bertmelis/espMqttClient) and resolves its
+current ESP32Async transport dependencies automatically. PlatformIO is the
+supported installation path for this fork.
+
 ## Bare minimum sketch
 
 ```c++

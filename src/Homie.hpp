@@ -2,7 +2,11 @@
 
 #include "Arduino.h"
 
-#include "AsyncMqttClient.h"
+#if defined(ASYNC_TCP_SSL_ENABLED) && ASYNC_TCP_SSL_ENABLED
+#error "espMqttClientAsync does not support MQTT TLS; remove ASYNC_TCP_SSL_ENABLED"
+#endif
+
+#include <espMqttClientAsync.h>
 #include "Homie/Datatypes/Interface.hpp"
 #include "Homie/Constants.hpp"
 #include "Homie/Limits.hpp"
@@ -48,6 +52,7 @@ class HomieClass {
   HomieClass& setConfigurationApPassword(const char* password);
   HomieClass& setGlobalInputHandler(const GlobalInputHandler& globalInputHandler);
   HomieClass& setBroadcastHandler(const BroadcastHandler& broadcastHandler);
+  HomieClass& setMqttMessageHandler(const MqttMessageHandler& mqttMessageHandler);
   HomieClass& onEvent(const EventHandler& handler);
   HomieClass& setResetTrigger(uint8_t pin, uint8_t state, uint16_t time);
   HomieClass& disableResetTrigger();
@@ -62,7 +67,7 @@ class HomieClass {
   static bool isConfigured();
   static bool isConnected();
   static const ConfigStruct& getConfiguration();
-  AsyncMqttClient& getMqttClient();
+  espMqttClientAsync& getMqttClient();
   Logger& getLogger();
   static void prepareToSleep();
   #ifdef ESP32
@@ -87,7 +92,7 @@ class HomieClass {
   Logger _logger;
   Blinker _blinker;
   Config _config;
-  AsyncMqttClient _mqttClient;
+  espMqttClientAsync _mqttClient;
 
   void _checkBeforeSetup(const __FlashStringHelper* functionName) const;
 

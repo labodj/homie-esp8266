@@ -44,13 +44,23 @@ lib_deps =
 ```
 
 Dependency metadata has been updated so PlatformIO can resolve ESP8266 and ESP32
-builds with strict library compatibility. The package also pins its
-AsyncMqttClient dependency to a commit hash so CI and production builds do not
-silently move to a different MQTT client implementation.
+builds with strict library compatibility. The package pins
+`bertmelis/espMqttClient` to an exact post-1.7.3 commit, including its long-topic
+parser fix, so CI and production builds do not silently move to another MQTT
+implementation. It directly uses the maintained ESP32Async transports.
 
-The pinned `AsyncMqttClient` source is a small metadata-only fork used to point
-PlatformIO at the maintained `esp32async` async TCP packages. It is not intended
-to diverge from AsyncMqttClient behavior.
+The migration changes advanced APIs: `Homie.getMqttClient()` now returns
+`espMqttClientAsync`, disconnect reasons use
+`espMqttClientTypes::DisconnectReason`, and raw MQTT observers should register
+once with `Homie.setMqttMessageHandler()` before setup. The asynchronous client
+does not support MQTT TLS, so `mqtt.ssl=true` is rejected instead of being
+silently ignored.
+
+These breaking changes require a new major version. Applications
+that only use Homie nodes and properties need no source changes; applications
+that access the MQTT client directly must adopt the types and callback API
+above, and TLS configurations must remain on a `3.x` release or move TLS outside
+the asynchronous client.
 
 ## Network and MQTT recovery
 

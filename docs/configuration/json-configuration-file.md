@@ -32,9 +32,7 @@ Use this JSON shape when provisioning the device:
     "base_topic": "devices/",
     "auth": true,
     "username": "user",
-    "password": "pass",
-    "ssl": true,
-    "ssl_fingerprint": "a27992d3420c89f293d351378ba5f5675f74fe3c"
+    "password": "pass"
   },
   "ota": {
     "enabled": true
@@ -63,8 +61,8 @@ Here are the rules:
   - to define the secondary DNS server `dns2`, define `dns1` as well. Setting
     DNS without `ip`, `mask` and `gw` does not affect the configuration; the DNS
     server is provided by DHCP. DNS servers are optional.
-- `ssl_fingerprint` can optionally be defined if `ssl` is enabled. The public
-  key of the MQTT server is then verified against the fingerprint.
+- MQTT TLS is not supported by the asynchronous `espMqttClient` backend.
+  `mqtt.ssl=true` and non-empty `mqtt.ssl_fingerprint` values are rejected.
 - Homie's limit for MQTT broker username and password is 32 characters. To
   increase this limit, change `MAX_MQTT_CREDS_LENGTH` in `Limits.hpp`
 

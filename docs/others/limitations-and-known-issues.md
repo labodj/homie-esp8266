@@ -2,9 +2,9 @@
 
 ## SSL support
 
-In Homie for ESP8266 v1.x, SSL was possible but it was not reliable. Due to the
-asynchronous nature of the v2.x, SSL is not completely available anymore. Only
-MQTT connections can be encrypted with SSL.
+The asynchronous `espMqttClient` backend does not support MQTT TLS. Builds with
+`ASYNC_TCP_SSL_ENABLED=1` and runtime configurations with `mqtt.ssl=true` are
+rejected explicitly.
 
 ## ADC readings
 

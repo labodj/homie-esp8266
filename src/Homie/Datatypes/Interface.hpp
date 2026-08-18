@@ -1,6 +1,6 @@
 #pragma once
 
-#include <AsyncMqttClient.h>
+#include <espMqttClientAsync.h>
 #include "../Logger.hpp"
 #include "../Blinker.hpp"
 #include "../Constants.hpp"
@@ -60,6 +60,7 @@ class InterfaceData {
 
   GlobalInputHandler globalInputHandler;
   BroadcastHandler broadcastHandler;
+  MqttMessageHandler mqttMessageHandler;
   OperationFunction setupFunction;
   OperationFunction loopFunction;
   EventHandler eventHandler;
@@ -70,14 +71,14 @@ class InterfaceData {
   Logger& getLogger() { return *_logger; }
   Blinker& getBlinker() { return *_blinker; }
   Config& getConfig() { return *_config; }
-  AsyncMqttClient& getMqttClient() { return *_mqttClient; }
+  espMqttClientAsync& getMqttClient() { return *_mqttClient; }
   SendingPromise& getSendingPromise() { return *_sendingPromise; }
 
  private:
   Logger* _logger;
   Blinker* _blinker;
   Config* _config;
-  AsyncMqttClient* _mqttClient;
+  espMqttClientAsync* _mqttClient;
   SendingPromise* _sendingPromise;
 };
 

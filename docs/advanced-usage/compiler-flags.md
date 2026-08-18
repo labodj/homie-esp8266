@@ -140,19 +140,11 @@ normalized where possible, outgoing property publishes are rejected if the
 payload does not match the advertised datatype and format, and incoming `/set`
 commands with invalid payloads are ignored before application handlers run.
 
-## ASYNC_TCP_SSL_ENABLED
+## MQTT TLS
 
-Set `ASYNC_TCP_SSL_ENABLED=1` to use SSL encryption for MQTT connections. HTTP
-and OTA connections are still not encrypted by this flag.
-
-```ini
-build_flags =
-  -D ASYNC_TCP_SSL_ENABLED=1
-  -D PIO_FRAMEWORK_ARDUINO_LWIP2_HIGHER_BANDWIDTH
-```
-
-The additional `PIO_FRAMEWORK_ARDUINO_LWIP2_HIGHER_BANDWIDTH` flag is necessary
-for SSL encryption to work properly on ESP8266.
+The asynchronous `espMqttClient` backend does not support MQTT TLS.
+`ASYNC_TCP_SSL_ENABLED=1` is therefore rejected at compile time instead of
+producing firmware that appears secure but connects in clear text.
 
 ## HOMIE_PENDING_MQTT_ACK_QUEUE_SIZE
 

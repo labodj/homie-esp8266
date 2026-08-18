@@ -272,6 +272,10 @@ ConfigValidationResult Validation::_validateConfigMqtt(const JsonObject object) 
       result.reason = F("mqtt.ssl is not a bool");
       return result;
     }
+    if (mqttSsl.as<bool>()) {
+      result.reason = F("mqtt.ssl is not supported by espMqttClientAsync");
+      return result;
+    }
   }
 
   {
@@ -281,8 +285,8 @@ ConfigValidationResult Validation::_validateConfigMqtt(const JsonObject object) 
         result.reason = F("mqtt.ssl_fingerprint is not a string");
         return result;
       }
-      if (strlen(mqttSslFingerprint.as<const char*>()) > MAX_FINGERPRINT_SIZE * 2) {
-        result.reason = F("mqtt.ssl_fingerprint is too long");
+      if (mqttSslFingerprint.as<const char*>()[0] != '\0') {
+        result.reason = F("mqtt.ssl_fingerprint is not supported by espMqttClientAsync");
         return result;
       }
     }

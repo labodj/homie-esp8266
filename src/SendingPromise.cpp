@@ -142,8 +142,14 @@ uint16_t SendingPromise::send(const String& value) {
   if (value.length() == 0) {
     // Homie v5 represents an actual empty string value with one NUL byte,
     // because an MQTT zero-length retained payload deletes the retained topic.
-    const char emptyStringPayload = '\0';
-    packetId = Interface::get().getMqttClient().publish(topic, qos, retained, &emptyStringPayload, 1);
+    const uint8_t emptyStringPayload = 0;
+    packetId = Interface::get().getMqttClient().publish(
+      topic,
+      qos,
+      retained,
+      &emptyStringPayload,
+      1
+    );
   } else {
     packetId = Interface::get().getMqttClient().publish(topic, qos, retained, value.c_str());
   }
