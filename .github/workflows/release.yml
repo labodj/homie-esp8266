@@ -101,7 +101,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install PlatformIO
-        run: python -m pip install --upgrade platformio
+        run: python -m pip install --upgrade platformio intelhex
       - name: Build Ping example
         env:
           PLATFORMIO_BUILD_FLAGS: ${{ matrix.build_flags }}

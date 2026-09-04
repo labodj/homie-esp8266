@@ -1,5 +1,5 @@
 PYTHON ?= python3
-MARKDOWNLINT ?= npx --yes markdownlint-cli2@0.22.1
+MARKDOWNLINT ?= npx --yes markdownlint-cli2@0.23.2
 PYTHON_OTA_FILES := scripts/homie_ota.py scripts/ota_updater/ota_updater.py scripts/ota_updater/test_ota_updater.py
 
 cpplint:
