@@ -4,6 +4,7 @@
 #include "Arduino.h"
 
 #include <array>
+#include <atomic>
 #include <functional>
 #include <libb64/cdecode.h>
 
@@ -28,7 +29,11 @@
 #endif
 
 #ifndef HOMIE_PENDING_MQTT_MESSAGE_MAX_PAYLOAD_LENGTH
+#if HOMIE_PENDING_MQTT_MESSAGE_PREALLOCATED
 #define HOMIE_PENDING_MQTT_MESSAGE_MAX_PAYLOAD_LENGTH 512
+#else
+#define HOMIE_PENDING_MQTT_MESSAGE_MAX_PAYLOAD_LENGTH 4096
+#endif
 #endif
 
 #ifndef HOMIE_PENDING_MQTT_MESSAGE_MAX_TOPIC_LEVELS
@@ -45,6 +50,11 @@
 
 #ifndef HOMIE_OTA_STATUS_INFO_MAX_LENGTH
 #define HOMIE_OTA_STATUS_INFO_MAX_LENGTH 48
+#endif
+
+// Inactivity limit, not a deadline for the complete firmware transfer.
+#ifndef HOMIE_OTA_TIMEOUT_MS
+#define HOMIE_OTA_TIMEOUT_MS 60000UL
 #endif
 
 
@@ -96,17 +106,19 @@ class BootNormal : public Boot {
   static constexpr uint8_t PENDING_MQTT_MESSAGE_QUEUE_SIZE = HOMIE_PENDING_MQTT_MESSAGE_QUEUE_SIZE;
   static_assert(EMC_MAX_TOPIC_LENGTH + 1 >= MAX_MQTT_TOPIC_LENGTH,
                 "EMC_MAX_TOPIC_LENGTH is smaller than Homie's supported MQTT topic length");
+  static_assert(HOMIE_PENDING_MQTT_MESSAGE_MAX_PAYLOAD_LENGTH > 0,
+                "HOMIE_PENDING_MQTT_MESSAGE_MAX_PAYLOAD_LENGTH must be greater than zero");
+  static_assert(HOMIE_PENDING_MQTT_MESSAGE_MAX_PAYLOAD_LENGTH < SIZE_MAX,
+                "The MQTT payload limit must leave room for the terminating NUL");
+  static constexpr size_t PENDING_MQTT_MESSAGE_MAX_PAYLOAD_LENGTH = HOMIE_PENDING_MQTT_MESSAGE_MAX_PAYLOAD_LENGTH;
 #if HOMIE_PENDING_MQTT_MESSAGE_PREALLOCATED
   static_assert(HOMIE_PENDING_MQTT_MESSAGE_MAX_TOPIC_LENGTH > 0,
                 "HOMIE_PENDING_MQTT_MESSAGE_MAX_TOPIC_LENGTH must be greater than zero");
-  static_assert(HOMIE_PENDING_MQTT_MESSAGE_MAX_PAYLOAD_LENGTH > 0,
-                "HOMIE_PENDING_MQTT_MESSAGE_MAX_PAYLOAD_LENGTH must be greater than zero");
   static_assert(HOMIE_PENDING_MQTT_MESSAGE_MAX_TOPIC_LEVELS > 0,
                 "HOMIE_PENDING_MQTT_MESSAGE_MAX_TOPIC_LEVELS must be greater than zero");
   static_assert(HOMIE_PENDING_MQTT_MESSAGE_MAX_TOPIC_LEVELS <= 255,
                 "HOMIE_PENDING_MQTT_MESSAGE_MAX_TOPIC_LEVELS must fit in uint8_t");
   static constexpr size_t PENDING_MQTT_MESSAGE_MAX_TOPIC_LENGTH = HOMIE_PENDING_MQTT_MESSAGE_MAX_TOPIC_LENGTH;
-  static constexpr size_t PENDING_MQTT_MESSAGE_MAX_PAYLOAD_LENGTH = HOMIE_PENDING_MQTT_MESSAGE_MAX_PAYLOAD_LENGTH;
   static constexpr uint8_t PENDING_MQTT_MESSAGE_MAX_TOPIC_LEVELS = HOMIE_PENDING_MQTT_MESSAGE_MAX_TOPIC_LEVELS;
 #endif
   static_assert(HOMIE_PENDING_MQTT_ACK_QUEUE_SIZE > 0,
@@ -250,9 +262,12 @@ class BootNormal : public Boot {
   #endif // ESP32
   bool _mqttConnectNotified;
   bool _mqttDisconnectNotified;
-  bool _otaOngoing;
-  bool _flaggedForReboot;
-  uint16_t _mqttOfflineMessageId;
+  std::atomic<bool> _otaOngoing;
+  std::atomic<bool> _flaggedForReboot;
+  volatile bool _otaDisconnected = false;
+  bool _otaUpdateStarted = false;
+  uint32_t _otaLastChunkAt = 0;
+  MqttPublishAck _mqttOfflineAck;
   char _fwChecksum[32 + 1];
   char _otaRequestedChecksum[32 + 1];
   bool _otaIsBase64;
@@ -338,7 +353,8 @@ class BootNormal : public Boot {
   void _resetOtaTransferState(bool preserveRequestedChecksum = false);
   void _failOtaUpdate(int status, const char* info, const __FlashStringHelper* reason);
   void _abortOtaUpdateOnDisconnect();
-  void _endOtaUpdate(bool success, uint8_t update_error = UPDATE_ERROR_OK);
+  void _serviceOta();
+  void _endOtaUpdate(bool success, uint8_t update_error = UPDATE_ERROR_OK, const char* phase = "VALIDATE");
   bool _writeOtaPayload(const uint8_t* payload, size_t length);
 
   // _onMqttMessage Helpers

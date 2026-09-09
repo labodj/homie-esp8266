@@ -92,7 +92,7 @@ class HomieClass {
   Logger _logger;
   Blinker _blinker;
   Config _config;
-  espMqttClientAsync _mqttClient;
+  HomieMqttClient _mqttClient;
 
   void _checkBeforeSetup(const __FlashStringHelper* functionName) const;
 

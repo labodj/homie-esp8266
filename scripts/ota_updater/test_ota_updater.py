@@ -230,6 +230,36 @@ def test_terminal_failure_status_finishes_session() -> None:
     assert not updater._success
 
 
+@pytest.mark.parametrize("payload", [b"500 INTERNAL_ERROR 0", b"200", b"invalid"])
+def test_retained_status_cannot_finish_a_new_upload(payload: bytes) -> None:
+    updater = _make_updater()
+    updater._published = True
+    client = _fake_client(_FakeClient())
+    message = mqtt.MQTTMessage(topic=updater._status_topic.encode())
+    message.payload = payload
+    message.retain = True
+
+    with _quiet_stdout():
+        updater._on_message(client, None, message)
+
+    assert not updater._done.is_set()
+    assert not updater._waiting_for_reboot
+
+
+def test_live_failure_status_still_finishes_upload() -> None:
+    updater = _make_updater()
+    updater._published = True
+    message = mqtt.MQTTMessage(topic=updater._status_topic.encode())
+    message.payload = b"500 INTERNAL_ERROR 0 BEGIN"
+    message.retain = False
+
+    with _quiet_stdout():
+        updater._on_message(_fake_client(_FakeClient()), None, message)
+
+    assert updater._done.is_set()
+    assert not updater._success
+
+
 def test_reboot_readiness_then_matching_checksum_succeeds() -> None:
     updater = _make_updater()
     updater._client = _fake_client(_FakeClient())

@@ -109,6 +109,9 @@ available for compatibility.
   date, and with a non-zero code on failure.
 * The helper is compatible with the maintained `homie-esp8266` OTA status codes,
   including `400 BAD_*` and `500 FLASH_ERROR`.
+* Retained OTA status replays are ignored: they describe an earlier transfer.
+  Live errors still terminate the current upload, including operation/error
+  details emitted by newer firmware. Firmware publication remains non-retained.
 
 Example
 -------

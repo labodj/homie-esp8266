@@ -112,6 +112,18 @@ jobs:
           fi
           pio ci "${args[@]}" examples/Ping/src
 
+      - name: Test OTA recovery and fragmented transfers with sanitizers
+        if: matrix.name == 'esp32-pioarduino'
+        run: make ota-test
+
+      - name: Test serialized MQTT callbacks with the pinned upstream client
+        if: matrix.name == 'esp32-pioarduino'
+        run: |
+          client="$(python -c 'import json; print(next(d["version"] for d in json.load(open("library.json"))["dependencies"] if d["name"] == "espMqttClient"))')"
+          mkdir -p "$RUNNER_TEMP/mqtt-test-deps"
+          pio pkg install --global --storage-dir "$RUNNER_TEMP/mqtt-test-deps" --library "$client" --skip-dependencies
+          make mqtt-test MQTT_CLIENT_DIR="$RUNNER_TEMP/mqtt-test-deps/espMqttClient"
+
   release:
     needs: platformio
     runs-on: ubuntu-latest

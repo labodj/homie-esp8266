@@ -238,6 +238,14 @@ espMqttClientAsync& getMqttClient();
 
 Get the underlying asynchronous `espMqttClient` object.
 
+Use it for publishing, subscriptions and the documented MQTT callbacks. Homie
+owns connection management and MQTT processing: do not call `connect()` or
+`loop()` through this reference, or start another MQTT worker task. The upstream
+methods are non-virtual, so calls through this base reference bypass Homie's
+internal ESP32 serialization. Callback payload/topic pointers are borrowed;
+consume or copy them before returning. Do not wait for the main Homie loop
+from inside a raw MQTT callback.
+
 ```c++
 Logger& getLogger();
 ```

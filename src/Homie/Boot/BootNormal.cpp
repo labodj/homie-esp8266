@@ -335,6 +335,9 @@ std::unique_ptr<char[]> buildV5AdvertisedSafeConfigFile(const char* safeConfigFi
 #endif
 }  // namespace
 
+#include "BootNormalOta.ipp"
+#include "BootNormalMqtt.ipp"
+
 BootNormal::BootNormal()
   : Boot("normal")
   , _advertisementProgress()
@@ -387,7 +390,7 @@ BootNormal::BootNormal()
   , _mqttDisconnectNotified(true)
   , _otaOngoing(false)
   , _flaggedForReboot(false)
-  , _mqttOfflineMessageId(0)
+  , _mqttOfflineAck()
   , _fwChecksum{0}
   , _otaRequestedChecksum{0}
   , _otaIsBase64(false)
@@ -576,6 +579,7 @@ void BootNormal::loop() {
   if (!_mqttDisconnectNotified && mqttClient.connected() && mqttClient.queueSize() != 0) mqttClient.loop();
 
   _processPendingAsyncEvents();
+  _serviceOta();
   _processPendingEventNotifications();
   _processPendingOtaStatus();
 
@@ -665,9 +669,14 @@ void BootNormal::loop() {
 
   // here, we have notified the sketch we are ready
 
-  if (_mqttOfflineMessageId == 0 && Interface::get().flaggedForSleep) {
+  if (_mqttOfflineAck.id() == 0 && Interface::get().flaggedForSleep) {
     Interface::get().getLogger() << F("Device in preparation to sleep...") << endl;
-    _mqttOfflineMessageId = Interface::get().getMqttClient().publish(_prefixMqttTopic(PSTR("/$state")), 1, true, "sleeping");
+#ifdef ESP32
+    Interface::get().getMqttClient().publishTracked(_prefixMqttTopic(PSTR("/$state")), 1, true, "sleeping", _mqttOfflineAck);
+#else
+    // Cooperative publish() only queues bytes; it cannot deliver a PUBACK here.
+    _mqttOfflineAck.track(Interface::get().getMqttClient().publish(_prefixMqttTopic(PSTR("/$state")), 1, true, "sleeping"));
+#endif
   }
 
   if (_statsTimer.check()) {
@@ -827,112 +836,6 @@ void BootNormal::_processPendingOtaStatus() {
   }
 }
 
-void BootNormal::_resetOtaTransferState(bool preserveRequestedChecksum) {
-  _otaOngoing = false;
-  if (!preserveRequestedChecksum) _otaRequestedChecksum[0] = '\0';
-  _otaIsBase64 = false;
-  _otaBase64Pads = 0;
-  _otaSizeTotal = 0;
-  _otaSizeDone = 0;
-  _otaPayloadTotal = 0;
-  _otaPayloadProcessed = 0;
-  _otaProgressPublishCounter = 0;
-  _otaDecodeBuffer.reset();
-  _otaDecodeBufferCapacity = 0;
-}
-
-void BootNormal::_failOtaUpdate(int status, const char* info, const __FlashStringHelper* reason) {
-  _queueOtaStatus(status, info);
-
-  Interface::get().getLogger() << F("✖ OTA failed (") << status;
-  if (info && info[0] != '\0') {
-    Interface::get().getLogger() << F(" ") << info;
-  }
-  Interface::get().getLogger() << F(")") << endl;
-  Interface::get().getLogger() << reason << endl;
-
-  setFlag(_otaFailedPending);
-  _resetOtaTransferState();
-}
-
-void BootNormal::_abortOtaUpdateOnDisconnect() {
-  if (!_otaOngoing) return;
-
-  Interface::get().getLogger() << F("✖ MQTT disconnected during OTA, aborting update") << endl;
-
-  #ifdef ESP32
-  if (Update.isRunning()) Update.abort();
-  #elif defined(ESP8266)
-  if (Update.isRunning()) Update.end(false);
-  #endif // ESP32
-
-  setFlag(_otaFailedPending);
-  _resetOtaTransferState();
-}
-
-void BootNormal::_endOtaUpdate(bool success, uint8_t update_error) {
-  if (success) {
-    Interface::get().getLogger() << F("✔ OTA succeeded") << endl;
-    setFlag(_otaSuccessfulPending);
-    _queueOtaStatus(200);  // 200 OK
-    _flaggedForReboot = true;
-  } else {
-    int code;
-    String info;
-    switch (update_error) {
-      case UPDATE_ERROR_SIZE:               // new firmware size is zero
-      case UPDATE_ERROR_MAGIC_BYTE:         // new firmware does not have 0xE9 in first byte
-      #ifdef ESP8266
-      case UPDATE_ERROR_NEW_FLASH_CONFIG:   // bad new flash config (does not match flash ID)
-      #endif // ESP8266
-        code = 400;  // 400 Bad Request
-        info.concat(F("BAD_FIRMWARE"));
-        break;
-      case UPDATE_ERROR_MD5:
-        code = 400;  // 400 Bad Request
-        info.concat(F("BAD_CHECKSUM"));
-        break;
-      case UPDATE_ERROR_SPACE:
-        code = 400;  // 400 Bad Request
-        info.concat(F("NOT_ENOUGH_SPACE"));
-        break;
-      case UPDATE_ERROR_WRITE:
-      case UPDATE_ERROR_ERASE:
-      case UPDATE_ERROR_READ:
-        code = 500;  // 500 Internal Server Error
-        info.concat(F("FLASH_ERROR"));
-        break;
-      default:
-        code = 500;  // 500 Internal Server Error
-        info.concat(F("INTERNAL_ERROR "));
-        info.concat(update_error);
-        break;
-    }
-    _queueOtaStatus(code, info.c_str());
-
-    Interface::get().getLogger() << F("✖ OTA failed (") << code << F(" ") << info << F(")") << endl;
-    setFlag(_otaFailedPending);
-  }
-  _resetOtaTransferState(success);
-}
-
-bool BootNormal::_writeOtaPayload(const uint8_t* payload, size_t length) {
-  size_t writtenTotal = 0;
-  while (writtenTotal < length) {
-    const size_t remaining = length - writtenTotal;
-    const size_t chunkLength = remaining < OTA_FLASH_WRITE_SLICE_SIZE ? remaining : OTA_FLASH_WRITE_SLICE_SIZE;
-    // Arduino's Update API is not const-correct but does not modify this buffer.
-    const size_t written = Update.write(const_cast<uint8_t*>(payload + writtenTotal), chunkLength);
-    if (written != chunkLength) {
-      return false;
-    }
-
-    writtenTotal += written;
-    yield();
-  }
-
-  return true;
-}
 
 void BootNormal::_markConnectivityRecovering() {
   if (_recoveryInProgress) return;
@@ -1066,12 +969,6 @@ void BootNormal::_processPendingEventNotifications() {
     dispatchEvent(event);
     ++processedAcks;
 
-    if (Interface::get().flaggedForSleep && id == _mqttOfflineMessageId) {
-      Interface::get().getLogger() << F("Offline message acknowledged. Disconnecting MQTT...") << endl;
-      Interface::get().getMqttClient().disconnect();
-      break;
-    }
-
     if (hasMoreAcks) {
       yield();
     }
@@ -1080,6 +977,11 @@ void BootNormal::_processPendingEventNotifications() {
   const uint16_t droppedAcks = takeAndResetCounter(_pendingMqttAcksDropped);
   if (droppedAcks != 0) {
     Interface::get().getLogger() << F("✖ MQTT ACK queue full, dropped ") << droppedAcks << F(" acknowledgement event(s)") << endl;
+  }
+  // Protocol control must not depend on space in the best-effort event queue.
+  if (Interface::get().flaggedForSleep && _mqttOfflineAck.takeAcknowledged()) {
+    Interface::get().getLogger() << F("Offline message acknowledged. Disconnecting MQTT...") << endl;
+    Interface::get().getMqttClient().disconnect();
   }
 }
 
@@ -1718,8 +1620,6 @@ void BootNormal::_handleMqttConnected() {
   _mqttReconnectTimer.deactivate();
   _statsTimer.activate();
 
-  Update.end();
-
   Interface::get().getLogger() << F("Sending initial information...") << endl;
 
   _advertise();
@@ -1727,6 +1627,7 @@ void BootNormal::_handleMqttConnected() {
 
 void BootNormal::_handleMqttDisconnected(espMqttClientTypes::DisconnectReason reason) {
   _abortOtaUpdateOnDisconnect();
+  _mqttOfflineAck.track(0);
 
   _lastMqttDisconnectReason = static_cast<int32_t>(reason);
   Interface::get().ready = false;
@@ -1746,7 +1647,6 @@ void BootNormal::_handleMqttDisconnected(espMqttClientTypes::DisconnectReason re
     _mqttDisconnectNotified = true;
 
     if (Interface::get().flaggedForSleep) {
-      _mqttOfflineMessageId = 0;
       Interface::get().getLogger() << F("Triggering READY_TO_SLEEP event...") << endl;
       const HomieEvent sleepEvent = makeEvent(HomieEventType::READY_TO_SLEEP);
       dispatchEvent(sleepEvent);
@@ -2207,6 +2107,8 @@ void BootNormal::_onMqttConnected() {
 }
 
 void BootNormal::_onMqttDisconnected(espMqttClientTypes::DisconnectReason reason) {
+  // Preserve the OTA cancellation even when disconnect/reconnect events coalesce.
+  setFlag(_otaDisconnected);
   AsyncStateCriticalGuard lock;
   _mqttDisconnectReasonPending = static_cast<int32_t>(reason);
   _mqttEventPending = true;
@@ -2322,11 +2224,6 @@ void BootNormal::_onMqttMessage(const espMqttClientTypes::MessageProperties& pro
 #endif
 }
 
-void BootNormal::_onMqttPublish(uint16_t id) {
-  if (!_enqueuePendingMqttAck(id)) {
-    incrementDropCounters(_pendingMqttAcksDropped, _pendingMqttAcksDroppedTotal);
-  }
-}
 
 // _onMqttMessage Helpers
 
@@ -2410,301 +2307,9 @@ bool BootNormal::__splitTopicFixed(char* topic, std::array<char*, PENDING_MQTT_M
   return true;
 }
 
-bool BootNormal::__fillPreallocatedPayloadBuffer(const uint8_t* payload, size_t len, size_t index, size_t total) {
-  if (total > PENDING_MQTT_MESSAGE_MAX_PAYLOAD_LENGTH || index > total || len > total - index) {
-    incrementDropCounters(_pendingMqttMessagesDropped, _pendingMqttMessagesDroppedTotal);
-    return true;
-  }
-
-  memcpy(_mqttPreallocatedPayloadBuffer.data() + index, payload, len);
-
-  if (index + len != total)
-    return true;
-
-  _mqttPreallocatedPayloadBuffer[total] = '\0';
-  return false;
-}
 #endif
 
-bool HomieInternals::BootNormal::__fillPayloadBuffer(std::unique_ptr<char[]>& payloadBuffer, size_t& payloadBufferCapacity, const uint8_t* payload, size_t len, size_t index, size_t total) {
-  if (total == static_cast<size_t>(-1) || index > total || len > total - index) {
-    incrementDropCounters(_pendingMqttMessagesDropped, _pendingMqttMessagesDroppedTotal);
-    return true;
-  }
 
-  if (index == 0 && payloadBufferCapacity < total + 1) {
-    std::unique_ptr<char[]> newPayloadBuffer(new (std::nothrow) char[total + 1]);
-    if (!newPayloadBuffer) {
-      payloadBuffer.reset();
-      payloadBufferCapacity = 0;
-      incrementDropCounters(_pendingMqttMessagesDropped, _pendingMqttMessagesDroppedTotal);
-      return true;
-    }
-
-    payloadBuffer = std::move(newPayloadBuffer);
-    payloadBufferCapacity = total + 1;
-  } else if (payloadBuffer == nullptr) {
-    incrementDropCounters(_pendingMqttMessagesDropped, _pendingMqttMessagesDroppedTotal);
-    return true;
-  } else if (payloadBufferCapacity < total + 1) {
-    incrementDropCounters(_pendingMqttMessagesDropped, _pendingMqttMessagesDroppedTotal);
-    return true;
-  }
-
-  // copy payload into buffer
-  memcpy(payloadBuffer.get() + index, payload, len);
-
-  // return if payload buffer is not complete
-  if (index + len != total)
-    return true;
-  // terminate buffer
-  payloadBuffer.get()[total] = '\0';
-  return false;
-}
-
-bool HomieInternals::BootNormal::__handleOTAUpdates(char* topic, const uint8_t* payload, const espMqttClientTypes::MessageProperties& properties, size_t len, size_t index, size_t total, char* const* topicLevels, uint8_t topicLevelsCount) {
-  if (
-    topicLevelsCount == 5
-    && strcmp(topicLevels[0], Interface::get().getConfig().get().deviceId) == 0
-    && strcmp_P(topicLevels[1], PSTR("$implementation")) == 0
-    && strcmp_P(topicLevels[2], PSTR("ota")) == 0
-    && strcmp_P(topicLevels[3], PSTR("firmware")) == 0
-    ) {
-    char* firmwareMd5 = topicLevels[4];
-
-    if (index == 0 && !_otaOngoing) {
-      if (_flaggedForReboot && _otaRequestedChecksum[0] != '\0' && strcmp(firmwareMd5, _otaRequestedChecksum) == 0) {
-        Interface::get().getLogger() << F("! Ignoring duplicate OTA payload for firmware already flashed; reboot pending") << endl;
-        _queueOtaStatus(200);  // repeat terminal success for a retransmitted QoS1 publish
-        return true;
-      }
-
-      Interface::get().getLogger() << F("Receiving OTA payload") << endl;
-      if (!Interface::get().getConfig().get().ota.enabled) {
-        _queueOtaStatus(403);  // 403 Forbidden
-        Interface::get().getLogger() << F("✖ Aborting, OTA not enabled") << endl;
-        return true;
-      }
-
-      if (!Helpers::validateMd5(firmwareMd5)) {
-        _endOtaUpdate(false, UPDATE_ERROR_MD5);
-        Interface::get().getLogger() << F("✖ Aborting, invalid MD5") << endl;
-        return true;
-      } else if (strcmp(firmwareMd5, _fwChecksum) == 0) {
-        _queueOtaStatus(304);  // 304 Not Modified
-        Interface::get().getLogger() << F("✖ Aborting, firmware is the same") << endl;
-        return true;
-      } else {
-        Update.setMD5(firmwareMd5);
-        strlcpy(_otaRequestedChecksum, firmwareMd5, sizeof(_otaRequestedChecksum));
-        _otaRequestedChecksum[sizeof(_otaRequestedChecksum) - 1] = '\0';
-        _otaPayloadTotal = total;
-        _otaPayloadProcessed = 0;
-        _otaProgressPublishCounter = 0;
-        _queueOtaStatus(202);
-        _otaOngoing = true;
-
-        Interface::get().getLogger() << F("↕ OTA started") << endl;
-        setFlag(_otaStartedPending);
-      }
-    } else if (!_otaOngoing) {
-      return true; // we've not validated the checksum
-    }
-
-    if (strcmp(firmwareMd5, _otaRequestedChecksum) != 0) {
-      _failOtaUpdate(400, "NOT_REQUESTED", F("✖ Aborting, received OTA data for a different firmware request"));
-      return true;
-    }
-
-    if (total != _otaPayloadTotal) {
-      _failOtaUpdate(500, "INTERNAL_ERROR", F("✖ Aborting, OTA payload size changed mid-transfer"));
-      return true;
-    }
-
-    const size_t rawChunkEnd = index + len;
-    size_t skipRawPrefix = 0;
-
-    if (index < _otaPayloadProcessed) {
-      skipRawPrefix = _otaPayloadProcessed - index;
-      if (skipRawPrefix >= len) {
-        Interface::get().getLogger() << F("! Ignoring duplicate OTA chunk at offset ") << index;
-        if (properties.dup) Interface::get().getLogger() << F(" (dup)");
-        Interface::get().getLogger() << endl;
-        return true;
-      }
-
-      Interface::get().getLogger() << F("! Trimming duplicate OTA bytes up to offset ") << _otaPayloadProcessed;
-      if (properties.dup) Interface::get().getLogger() << F(" (dup)");
-      Interface::get().getLogger() << endl;
-
-      payload += skipRawPrefix;
-      len -= skipRawPrefix;
-      index += skipRawPrefix;
-    }
-
-    if (index != _otaPayloadProcessed) {
-      _failOtaUpdate(500, "INTERNAL_ERROR", F("✖ Aborting, OTA chunk arrived out of sequence"));
-      return true;
-    }
-
-    // here, we need to flash the payload
-
-    if (index == 0) {
-      // Autodetect if firmware is binary or base64-encoded. ESP firmware always has a magic first byte 0xE9.
-      if (*payload == 0xE9) {
-        _otaIsBase64 = false;
-        Interface::get().getLogger() << F("Firmware is binary") << endl;
-      } else {
-        // Base64-decode first two bytes. Compare decoded value against magic byte.
-        char plain[2];  // need 12 bits
-        base64_init_decodestate(&_otaBase64State);
-        int l = base64_decode_block(reinterpret_cast<const char*>(payload), 2, plain, &_otaBase64State);
-        if ((l == 1) && (plain[0] == 0xE9)) {
-          _otaIsBase64 = true;
-          _otaBase64Pads = 0;
-          Interface::get().getLogger() << F("Firmware is base64-encoded") << endl;
-          if (total % 4) {
-            // Base64 encoded length not a multiple of 4 bytes
-            _endOtaUpdate(false, UPDATE_ERROR_MAGIC_BYTE);
-            return true;
-          }
-
-          // Restart base64-decoder
-          base64_init_decodestate(&_otaBase64State);
-        } else {
-          // Bad firmware format
-          _endOtaUpdate(false, UPDATE_ERROR_MAGIC_BYTE);
-          return true;
-        }
-      }
-      _otaSizeDone = 0;
-      _otaSizeTotal = _otaIsBase64 ? base64_decode_expected_len(total) : total;
-      bool success = Update.begin(_otaSizeTotal);
-      if (!success) {
-        // Detected error during begin (e.g. size == 0 or size > space)
-        _endOtaUpdate(false, Update.getError());
-        return true;
-      }
-    }
-
-    size_t write_len;
-    const uint8_t* writePayload = payload;
-    if (_otaIsBase64) {
-      // Base64-firmware: Make sure there are no non-base64 characters in the payload.
-      // libb64/cdecode.c doesn't ignore such characters if the compiler treats `char`
-      // as `unsigned char`.
-      size_t bin_len = 0;
-      const char* p = reinterpret_cast<const char*>(payload);
-      for (size_t i = 0; i < len; i++) {
-        char c = *p++;
-        bool b64 = ((c >= 'A') && (c <= 'Z')) || ((c >= 'a') && (c <= 'z')) || ((c >= '0') && (c <= '9')) || (c == '+') || (c == '/');
-        if (b64) {
-          bin_len++;
-        } else if (c == '=') {
-          // Ignore "=" padding (but only at the end and only up to 2)
-          if (index + i < total - 2) {
-            _endOtaUpdate(false, UPDATE_ERROR_MAGIC_BYTE);
-            return true;
-          }
-          // Note the number of pad characters at the end
-          _otaBase64Pads++;
-        } else {
-          // Non-base64 character in firmware
-          _endOtaUpdate(false, UPDATE_ERROR_MAGIC_BYTE);
-          return true;
-        }
-      }
-      if (bin_len > 0) {
-        if (_otaDecodeBufferCapacity < len) {
-          std::unique_ptr<char[]> decodeBuffer(new (std::nothrow) char[len]);
-          if (!decodeBuffer) {
-            _failOtaUpdate(500, "OUT_OF_MEMORY", F("✖ Aborting, cannot allocate the OTA base64 decode buffer"));
-            return true;
-          }
-          _otaDecodeBuffer = std::move(decodeBuffer);
-          _otaDecodeBufferCapacity = len;
-        }
-        memcpy(_otaDecodeBuffer.get(), payload, len);
-
-        // Decode base64 payload in-place. base64_decode_block() can decode in-place,
-        // except for the first two base64-characters which make one binary byte plus
-        // 4 extra bits (saved in _otaBase64State). So we "manually" decode the first
-        // two characters into a temporary byte and merge it into the reusable copy.
-        // espMqttClient exposes its receive buffer as const, so it must remain untouched.
-        char* decodedPayload = _otaDecodeBuffer.get();
-        size_t dec_len = bin_len > 1 ? 2 : 1;
-        char c;
-        write_len = static_cast<size_t>(base64_decode_block(decodedPayload, dec_len, &c, &_otaBase64State));
-        *decodedPayload = c;
-
-        if (bin_len > 1) {
-          write_len += static_cast<size_t>(base64_decode_block(decodedPayload + dec_len, bin_len - dec_len, decodedPayload + write_len, &_otaBase64State));
-        }
-        writePayload = reinterpret_cast<const uint8_t*>(decodedPayload);
-      } else {
-        write_len = 0;
-      }
-    } else {
-      // Binary firmware
-      write_len = len;
-    }
-    if (write_len > 0) {
-      bool success = _writeOtaPayload(writePayload, write_len);
-      if (success) {
-        // Flash write successful.
-        _otaSizeDone += write_len;
-        if (_otaIsBase64 && (index + len == total)) {
-          // Having received the last chunk of base64 encoded firmware, we can now determine
-          // the real size of the binary firmware from the number of padding character ("="):
-          // If we have received 1 pad character, real firmware size modulo 3 was 2.
-          // If we have received 2 pad characters, real firmware size modulo 3 was 1.
-          // Correct the total firmware length accordingly.
-          _otaSizeTotal -= _otaBase64Pads;
-        }
-
-        String progress(_otaSizeDone);
-        progress.concat(F("/"));
-        progress.concat(_otaSizeTotal);
-        Interface::get().getLogger() << F("Receiving OTA firmware (") << progress << F(")...") << endl;
-
-        {
-          AsyncStateCriticalGuard lock;
-          _otaProgressSizeDone = _otaSizeDone;
-          _otaProgressSizeTotal = _otaSizeTotal;
-          _otaProgressPending = true;
-        }
-
-        if (_otaProgressPublishCounter == 100) {
-          _queueOtaStatus(206, progress.c_str());  // 206 Partial Content
-          _otaProgressPublishCounter = 0;
-        }
-        ++_otaProgressPublishCounter;
-      } else {
-        // Error erasing or writing flash
-        _endOtaUpdate(false, Update.getError());
-        return true;
-      }
-    }
-
-    _otaPayloadProcessed = rawChunkEnd;
-
-    // Done with the update?
-    if (rawChunkEnd == total) {
-      // With base64-coded firmware, we may have provided a length off by one or two
-      // to Update.begin() because the base64-coded firmware may use padding (one or
-      // two "=") at the end. In case of base64, total length was adjusted above.
-      // Check the real length here and ask Update::end() to skip this test.
-      if ((_otaIsBase64) && (_otaSizeDone != _otaSizeTotal)) {
-        _endOtaUpdate(false, UPDATE_ERROR_SIZE);
-        return true;
-      }
-      bool success = Update.end(_otaIsBase64);
-      _endOtaUpdate(success, Update.getError());
-    }
-    return true;
-  }
-  return false;
-}
 
 bool HomieInternals::BootNormal::__handleBroadcasts(char * topic, char * payload, const espMqttClientTypes::MessageProperties & properties, size_t len, size_t index, size_t total, char* const* topicLevels, uint8_t topicLevelsCount) {
   if (

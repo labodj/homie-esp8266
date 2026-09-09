@@ -1,6 +1,6 @@
 #pragma once
 
-#include <espMqttClientAsync.h>
+#include "../Utils/HomieMqttClient.hpp"
 #include "../Logger.hpp"
 #include "../Blinker.hpp"
 #include "../Constants.hpp"
@@ -71,14 +71,14 @@ class InterfaceData {
   Logger& getLogger() { return *_logger; }
   Blinker& getBlinker() { return *_blinker; }
   Config& getConfig() { return *_config; }
-  espMqttClientAsync& getMqttClient() { return *_mqttClient; }
+  HomieMqttClient& getMqttClient() { return *_mqttClient; }
   SendingPromise& getSendingPromise() { return *_sendingPromise; }
 
  private:
   Logger* _logger;
   Blinker* _blinker;
   Config* _config;
-  espMqttClientAsync* _mqttClient;
+  HomieMqttClient* _mqttClient;
   SendingPromise* _sendingPromise;
 };
 

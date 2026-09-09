@@ -262,6 +262,23 @@ Messages exceeding those limits are rejected and counted in
 `$stats/mqttinbounddropped`. Keep the feature disabled on memory-constrained
 ESP8266 builds unless the reserved RAM budget is acceptable.
 
+## HOMIE_PENDING_MQTT_MESSAGE_MAX_PAYLOAD_LENGTH
+
+Maximum bytes in one ordinary inbound MQTT payload, checked before allocating
+the assembly buffer. Applies to property commands, broadcasts and configuration
+patches in both queue modes. Defaults to `4096` in dynamic mode and `512` when
+`HOMIE_PENDING_MQTT_MESSAGE_PREALLOCATED=1`. An explicit value overrides either
+default. Oversize messages are rejected and counted, never truncated.
+
+```ini
+build_flags =
+  -D HOMIE_PENDING_MQTT_MESSAGE_MAX_PAYLOAD_LENGTH=4096
+```
+
+Increase this only for legitimate larger messages and account for the assembly
+buffer plus queued copies in the RAM budget. OTA firmware is streamed separately
+and is not restricted by this limit.
+
 ## HOMIE_OTA_STATUS_INFO_MAX_LENGTH
 
 This flag controls the fixed-size buffer used to queue short OTA status text

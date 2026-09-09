@@ -16,7 +16,7 @@ It works this way:
    updates.
 2. The OTA entity publishes the latest available firmware payload to
    `$implementation/ota/firmware/<md5 checksum>`, either as binary or as a
-   Base64 encoded string.
+   Base64 encoded string, with MQTT retain disabled.
    - If OTA is disabled, Homie for ESP8266 reports `403` to
      `$implementation/ota/status` and aborts the OTA
    - If OTA is enabled and the latest available checksum is the same as what is
@@ -27,8 +27,8 @@ It works this way:
 3. Homie starts to flash the firmware
    - The firmware is updating. Homie for ESP8266 reports progress with
      `206 <bytes written>/<bytes total>`
-   - When all bytes are flashed, the firmware is verified, including the MD5 if
-     one was set. Homie for ESP8266 then reports `200` on success, `400` if the
+   - When all bytes are flashed, the firmware is verified against the requested
+     MD5. Homie for ESP8266 then reports `200` on success, `400` if the
      firmware is invalid, or `500` if there is an internal error.
 
 4. On this fork, the maintained OTA helper publishes firmware with MQTT QoS 1.
@@ -38,6 +38,43 @@ It works this way:
      retried
 
 5. Homie for ESP8266 reboots on success as soon as the device is idle.
+
+## Recovery and diagnostics
+
+Every failed transfer releases the flash updater and its temporary decode buffer,
+so a new attempt does not require a reboot. A disconnected transfer is discarded;
+it is not resumed across MQTT connections. After a successful update, another
+firmware cannot overwrite the staged image while the device waits to reboot.
+
+An incomplete transfer also expires after 60 seconds without new payload bytes.
+This is an inactivity timeout, not a limit on the total upload duration. Override
+`HOMIE_OTA_TIMEOUT_MS` at compile time when a deployment needs a longer interval.
+Duplicate fragments do not extend the timeout.
+
+Failures from the Arduino Update API include the operation and platform error
+number, for example `500 INTERNAL_ERROR 0 BEGIN` or `500 FLASH_ERROR 1 WRITE`.
+The serial log also reports byte counters and free heap. A zero error number
+means the API returned failure without recording a more specific cause; it is
+not evidence that flash hardware is faulty.
+
+The helper ignores retained OTA status messages replayed by the broker. They
+belong to an earlier transfer and cannot confirm or reject a new upload. Live
+status messages are still processed, and success is verified using the firmware
+checksum after the device returns online.
+
+Older installed firmware does not gain the recovery fix until it is updated.
+If its updater is already stuck, a reboot or serial flash may still be necessary
+to install the corrected firmware. This does not justify a factory reset.
+
+### Development tests
+
+After building the ESP32 pioarduino example, run `make ota-test` from the repository
+root. It uses the installed Arduino libb64 decoder; `OTA_CORE_DIR` can select a
+different core directory. The tests execute the private production OTA code with
+a simulated flash updater, inject failures and disconnections, and exercise
+Base64 chunk boundaries under AddressSanitizer and UndefinedBehaviorSanitizer.
+Both ESP32 and ESP8266 cleanup branches and signed/unsigned `char` are checked.
+Firmware compilation and on-device validation remain separate checks.
 
 For devices built with `HOMIE_CONVENTION_VERSION=5`, run the helper with
 `--homie-version 5`. The helper will publish to `homie/5/<device-id>/...` when

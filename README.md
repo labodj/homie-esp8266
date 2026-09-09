@@ -148,9 +148,13 @@ build_flags =
   -D HOMIE_PENDING_MQTT_MESSAGE_QUEUE_SIZE=16
   -D HOMIE_PENDING_MQTT_MESSAGE_PREALLOCATED=0
   -D HOMIE_PENDING_MQTT_MESSAGE_MAX_TOPIC_LENGTH=192
-  -D HOMIE_PENDING_MQTT_MESSAGE_MAX_PAYLOAD_LENGTH=512
+  -D HOMIE_PENDING_MQTT_MESSAGE_MAX_PAYLOAD_LENGTH=4096
   -D HOMIE_PENDING_MQTT_MESSAGE_MAX_TOPIC_LEVELS=12
 ```
+
+The payload limit applies to ordinary inbound messages in both modes: 4096 bytes
+by default in dynamic mode, 512 in preallocated mode. OTA firmware streams are
+not subject to that limit. Oversize messages are rejected before allocation.
 
 The ACK queue stores MQTT publish acknowledgement events before
 `BootNormal::loop()` dispatches them. The message queue defers non-OTA MQTT

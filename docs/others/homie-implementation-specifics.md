@@ -83,7 +83,7 @@ the advertised config back to the device.
 - `$implementation/ota/enabled`: `true` if OTA is enabled, `false` otherwise
 - `$implementation/ota/firmware/<md5 checksum>`: send the firmware payload to
   this topic, where the last topic level is the hexadecimal MD5 checksum of the
-  firmware image
+  firmware image. Publish with retain disabled.
 - `$implementation/ota/status`: HTTP-like status code indicating the status of
   the OTA. Common values are:
 
@@ -93,10 +93,22 @@ the advertised config back to the device.
   to `<bytes written>/<bytes total>`.
 - `304`: The current firmware is already up-to-date.
 - `400 BAD_FIRMWARE`: the OTA request is invalid. The identifier might be
-  `BAD_FIRMWARE`, `BAD_CHECKSUM`, `NOT_ENOUGH_SPACE` or `NOT_REQUESTED`.
+  `BAD_FIRMWARE`, `BAD_CHECKSUM`, `NOT_ENOUGH_SPACE`, `NOT_REQUESTED`,
+  `BAD_CHUNK`, `SIZE_CHANGED`, `OUT_OF_SEQUENCE` or `RETAINED_FIRMWARE`.
 - `403`: OTA is not enabled.
+- `408 TIMEOUT`: no new payload bytes arrived within `HOMIE_OTA_TIMEOUT_MS`
+  (60 seconds by default).
 - `500 FLASH_ERROR`: the device flash/update path failed. The identifier might
-  be `FLASH_ERROR`.
+  be `FLASH_ERROR`, `INTERNAL_ERROR`, `OUT_OF_MEMORY` or `DISCONNECTED`.
+- `503 UPDATE_BUSY`: another consumer already owns the Arduino Update session.
+- `503 REBOOT_PENDING`: an image has already been staged, or a reboot is pending.
+- `503 BUSY`: a reentrant OTA callback could not acquire the updater.
+
+Arduino Update failures append the numeric platform error and operation to the
+identifier: for example `400 BAD_CHECKSUM 7 END`. Operations are `BEGIN`,
+`SET_MD5`, `WRITE`, `END`, `BASE64`, `LENGTH` or `VALIDATE`. Error numbers are
+platform-specific. Status consumers should parse the leading code and treat the
+remaining text as diagnostic detail, not match the complete string.
 
 On this fork, the OTA handler is hardened for MQTT QoS 1 delivery:
 
@@ -106,6 +118,9 @@ On this fork, the OTA handler is hardened for MQTT QoS 1 delivery:
   update
 - if MQTT disconnects during OTA, the update is aborted cleanly and must be
   retried
+
+See [OTA recovery and diagnostics](ota-configuration-updates.md#recovery-and-diagnostics)
+for retry behavior, timeouts and native fault-injection tests.
 
 ## Filesystem
 

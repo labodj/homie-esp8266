@@ -92,6 +92,18 @@ The purpose is to keep user callbacks, Homie event handlers, and most MQTT input
 processing on one predictable execution path. This reduces races between async
 network callbacks and sketch code.
 
+On ESP32, Homie also serializes whole AsyncTCP callbacks with its foreground
+MQTT pump. The upstream client releases its own mutex while invoking application
+callbacks, even though their payload still refers to the shared receive buffer.
+Protecting only the OTA writer therefore cannot prevent corruption or reordered
+fragments. The internal adapter forwards to the original upstream callbacks,
+including connection, data, disconnection and poll; it does not fork the client.
+The pump skips a busy turn and retries on the next Homie loop, preserving fast
+publishes without waiting for the periodic TCP poll. Connection setup waits its
+turn, and recursive worker calls from callbacks are rejected. ESP8266 retains
+the upstream cooperative client. Actual device latency still requires hardware
+measurement; serialization does not promise that a long-running callback is free.
+
 ## MQTT queue tuning and diagnostics
 
 The fork exposes queue sizing and allocation flags for unusual MQTT bursts:
@@ -111,7 +123,7 @@ build_flags =
   -D HOMIE_PENDING_MQTT_MESSAGE_QUEUE_SIZE=16
   -D HOMIE_PENDING_MQTT_MESSAGE_PREALLOCATED=0
   -D HOMIE_PENDING_MQTT_MESSAGE_MAX_TOPIC_LENGTH=192
-  -D HOMIE_PENDING_MQTT_MESSAGE_MAX_PAYLOAD_LENGTH=512
+  -D HOMIE_PENDING_MQTT_MESSAGE_MAX_PAYLOAD_LENGTH=4096
   -D HOMIE_PENDING_MQTT_MESSAGE_MAX_TOPIC_LEVELS=12
 ```
 
@@ -123,6 +135,21 @@ expected traffic. Queue drops are also published as retained Homie statistics:
 
 Those counters are cumulative for the current boot and are intended for fleet
 monitoring.
+
+`HOMIE_PENDING_MQTT_MESSAGE_MAX_PAYLOAD_LENGTH` bounds each ordinary inbound
+payload before heap allocation, including configuration updates, broadcasts and
+property commands. The default is 4096 bytes in dynamic mode and 512 bytes in
+preallocated mode. Increase it explicitly if a legitimate configuration patch
+needs more space. Oversize payloads are discarded and counted, not truncated.
+The dynamic assembly buffer is reused and retains at most the limit plus one
+terminating byte; queued messages have separate bounded storage. OTA firmware
+bypasses this buffer and continues to stream without this size restriction.
+
+The confirmation of the `sleeping` publication is latched separately from the
+best-effort ACK event queue. A full event queue can drop a user notification,
+but cannot strand the sleep handshake. On ESP32, publication and packet-ID
+registration are serialized with MQTT callbacks so an immediate PUBACK cannot
+arrive before the ID is recorded. Disconnect clears the tracked request.
 
 When `HOMIE_PENDING_MQTT_MESSAGE_PREALLOCATED=1`, queued inbound MQTT messages
 use fixed-size slot storage. This removes per-message heap allocation from the

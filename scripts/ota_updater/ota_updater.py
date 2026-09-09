@@ -701,6 +701,10 @@ class OTAUpdater:
         payload = msg.payload.decode("utf-8", errors="replace")
 
         if msg.topic == self._status_topic:
+            # Subscription replays describe a previous transfer, even if they
+            # arrive after this session has already published its firmware.
+            if msg.retain:
+                return
             self._handle_status(payload)
         elif msg.topic == self._fw_checksum_topic:
             self._handle_checksum(payload)
