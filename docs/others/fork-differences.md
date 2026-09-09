@@ -40,7 +40,7 @@ board = esp32dev
 framework = arduino
 lib_compat_mode = strict
 lib_deps =
-  labodj/homie-v5 @ ^4.0.0
+  labodj/homie-v5 @ ^4.0.1
 ```
 
 Dependency metadata has been updated so PlatformIO can resolve ESP8266 and ESP32

@@ -13,7 +13,7 @@ lib_compat_mode = strict
 build_flags =
   -D EMC_ALLOW_NOT_CONNECTED_PUBLISH=0
 lib_deps =
-  labodj/homie-v5 @ ^4.0.0
+  labodj/homie-v5 @ ^4.0.1
 ```
 
 For unreleased changes, use the git URL dependency and pin it to a commit SHA
@@ -31,7 +31,7 @@ build_flags =
   -D PIO_FRAMEWORK_ARDUINO_LWIP2_LOW_MEMORY
   -D EMC_ALLOW_NOT_CONNECTED_PUBLISH=0
 lib_deps =
-  labodj/homie-v5 @ ^4.0.0
+  labodj/homie-v5 @ ^4.0.1
 ```
 
 `lib_compat_mode = strict` is recommended because the async networking
