@@ -3,6 +3,7 @@ MARKDOWNLINT ?= npx --yes markdownlint-cli2@0.24.0
 PYTHON_OTA_FILES := scripts/homie_ota.py scripts/ota_updater/ota_updater.py scripts/ota_updater/test_ota_updater.py
 OTA_CORE_DIR ?= $(HOME)/.platformio/packages/framework-arduinoespressif32/cores/esp32
 MQTT_CLIENT_DIR ?=
+ARDUINOJSON_DIR ?=
 
 config-storage-test config-reset-test: config-%-test:
 	@set -eu; tmp=$$(mktemp -d); trap 'rm -rf "$$tmp"' EXIT; \
@@ -10,6 +11,16 @@ config-storage-test config-reset-test: config-%-test:
 	  -fsanitize=address,undefined -fno-sanitize-recover=all -fno-omit-frame-pointer \
 	  "tests/config/test_$*.cpp" -o "$$tmp/config-test"; \
 	"$$tmp/config-test"
+
+config-connection-test:
+	@test -f "$(ARDUINOJSON_DIR)/src/ArduinoJson.h" || { echo "Set ARDUINOJSON_DIR to an installed ArduinoJson 6 directory"; exit 1; }
+	@set -eu; tmp=$$(mktemp -d); trap 'rm -rf "$$tmp"' EXIT; \
+	for arch in ESP32 ESP8266; do \
+	  $(CXX) -std=c++11 -O1 -g -Wall -Wextra -Werror \
+	    -fsanitize=address,undefined -fno-sanitize-recover=all -fno-omit-frame-pointer \
+	    -D$$arch -I "$(ARDUINOJSON_DIR)/src" tests/config/test_connections.cpp -o "$$tmp/config-test"; \
+	  "$$tmp/config-test"; \
+	done
 
 # Supply an installed espMqttClient checkout; CI installs the manifest's exact pin.
 mqtt-test: mqtt-message-test
@@ -86,4 +97,4 @@ docs-build:
 
 docs-check: docs-lint docs-build
 
-.PHONY: config-storage-test config-reset-test mqtt-test mqtt-message-test ota-test cpplint python-format python-format-check python-lint python-typecheck python-test python-check docs-lint docs-fix docs-build docs-check
+.PHONY: config-storage-test config-reset-test config-connection-test mqtt-test mqtt-message-test ota-test cpplint python-format python-format-check python-lint python-typecheck python-test python-check docs-lint docs-fix docs-build docs-check

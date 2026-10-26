@@ -4,7 +4,11 @@
 
 #if HOMIE_CONFIG
 #include "../Utils/ResetHandler.hpp"
+
 using namespace HomieInternals;
+
+#include "BootConfigTest.ipp"
+#include "BootConfigBody.ipp"
 
 BootConfig::BootConfig()
   : Boot("config")
@@ -35,7 +39,13 @@ void BootConfig::setup() {
 
   Interface::get().getLogger() << F("Device ID is ") << DeviceId::get() << endl;
 
+  WiFi.persistent(false);
   WiFi.mode(WIFI_AP_STA);
+  _testClientId = String("setup-") + DeviceId::get();
+  Interface::get().getMqttClient().onConnect([this](bool) { _testMqttConnected.store(true); });
+  Interface::get().getMqttClient().onDisconnect([this](espMqttClientTypes::DisconnectReason reason) {
+    _testMqttError.store(static_cast<uint8_t>(reason) + 1);
+  });
 
   char apName[MAX_WIFI_SSID_LENGTH];
   strlcpy(apName, Interface::get().brand, MAX_WIFI_SSID_LENGTH - 1 - (MAX_MAC_STRING_LENGTH - 1));
@@ -64,6 +74,9 @@ void BootConfig::setup() {
   _http.on("/device-info", HTTP_GET, [this](AsyncWebServerRequest *request) { _onDeviceInfoRequest(request); });
   _http.on("/networks", HTTP_GET, [this](AsyncWebServerRequest *request) { _onNetworksRequest(request); });
   _http.on("/config", HTTP_PUT, [this](AsyncWebServerRequest *request) { _onConfigRequest(request); }).onBody(BootConfig::__parsePost);
+  _http.on("/config", HTTP_GET, [this](AsyncWebServerRequest *request) { _onStoredConfigRequest(request); });
+  _http.on("/config/test", HTTP_PUT, [this](AsyncWebServerRequest *request) { _onConfigTestRequest(request); }).onBody(BootConfig::__parsePost);
+  _http.on("/config/status", HTTP_GET, [this](AsyncWebServerRequest *request) { _onConfigStatusRequest(request); });
   _http.on("/wifi/connect", HTTP_PUT, [this](AsyncWebServerRequest *request) { _onWifiConnectRequest(request); }).onBody(BootConfig::__parsePost);
   _http.on("/wifi/status", HTTP_GET, [this](AsyncWebServerRequest *request) { _onWifiStatusRequest(request); });
   _http.on("/proxy/control", HTTP_PUT, [this](AsyncWebServerRequest *request) { _onProxyControlRequest(request); }).onBody(BootConfig::__parsePost);
@@ -82,6 +95,7 @@ void BootConfig::loop() {
   Boot::loop();
 
   _dns.processNextRequest();
+  _loopConfigTest();
 
   if (_flaggedForReboot) {
     if (millis() - _flaggedForRebootAt >= 3000UL) {
@@ -92,6 +106,9 @@ void BootConfig::loop() {
 
     return;
   }
+
+  auto testPhase = _configTestPhase.load();
+  if (testPhase == ConfigTestPhase::WIFI || testPhase == ConfigTestPhase::MQTT || testPhase == ConfigTestPhase::CLOSING) return;
 
   if (!_lastWifiScanEnded) {
     int8_t scanResult = WiFi.scanComplete();
@@ -343,7 +360,6 @@ void BootConfig::_onCaptivePortal(AsyncWebServerRequest *request) {
       _proxyHttpRequest(request);
     }
   } else if (request->url() == "/" && !HOMIE_FS.exists(CONFIG_UI_BUNDLE_PATH)) {
-    // UI File not found
     String msg = String(F("UI bundle not loaded. See Configuration API usage: https://labodj.github.io/homie-esp8266/configuration/http-json-api/"));
     Interface::get().getLogger() << msg << endl;
     request->send(404, F("text/plain"), msg);
@@ -406,7 +422,7 @@ void BootConfig::_onDeviceInfoRequest(AsyncWebServerRequest *request) {
   auto numSettings = IHomieSetting::settings.size();
   auto numNodes = HomieNode::nodes.size();
   DynamicJsonDocument jsonDoc(
-    JSON_OBJECT_SIZE(5) + // Root object
+    JSON_OBJECT_SIZE(6) + // Root object
     JSON_OBJECT_SIZE(2) + // Object "firmware"
     JSON_ARRAY_SIZE(numNodes) + // Array "nodes"
     JSON_OBJECT_SIZE(2) * numNodes + // Objects in "nodes"
@@ -414,6 +430,8 @@ void BootConfig::_onDeviceInfoRequest(AsyncWebServerRequest *request) {
     numSettings * JSON_OBJECT_SIZE(5)); // Objects in "settings"
   JsonObject json = jsonDoc.to<JsonObject>();
   json["hardware_device_id"] = DeviceId::get();
+  json["device_id"] = Interface::get().getConfig().isValid()
+    ? Interface::get().getConfig().get().deviceId : DeviceId::get();
   json["homie_esp8266_version"] = HOMIE_ESP8266_VERSION;
   JsonObject firmware = json.createNestedObject("firmware");
   firmware["name"] = reinterpret_cast<const char*>(Interface::get().firmware.name);
@@ -469,80 +487,11 @@ void BootConfig::_onNetworksRequest(AsyncWebServerRequest *request) {
   }
 }
 
-void BootConfig::_onConfigRequest(AsyncWebServerRequest *request) {
-  Interface::get().getLogger() << F("Received config request") << endl;
-  if (_flaggedForReboot) {
-    __SendJSONError(request, F("✖ Device already configured"), 403);
-    return;
-  }
-  if (request->_tempObject == nullptr) {
-    __SendJSONError(request, F("✖ Empty or too large JSON"));
-    return;
-  }
-
-  DynamicJsonDocument parseJsonDoc(MAX_JSON_CONFIG_ARDUINOJSON_BUFFER_SIZE);
-  char* body = reinterpret_cast<char*>(request->_tempObject);
-  if (deserializeJson(parseJsonDoc, body) != DeserializationError::Ok || !parseJsonDoc.is<JsonObject>()) {
-    __SendJSONError(request, F("✖ Invalid or too big JSON"));
-    return;
-  }
-
-  JsonObject parsedJson = parseJsonDoc.as<JsonObject>();
-
-  ConfigValidationResult configValidationResult = Validation::validateConfig(parsedJson);
-  if (!configValidationResult.valid) {
-    __SendJSONError(request, String(F("✖ Config file is not valid, reason: ")) + configValidationResult.reason);
-    return;
-  }
-
-  if (!Interface::get().getConfig().write(parsedJson)) {
-    __SendJSONError(request, F("Cannot save configuration; previous settings preserved"), 500);
-    return;
-  }
-
-  Interface::get().getLogger() << F("✔ Configured") << endl;
-
-  request->send(200, FPSTR(PROGMEM_CONFIG_APPLICATION_JSON), FPSTR(PROGMEM_CONFIG_JSON_SUCCESS));
-
-  Interface::get().disable = true;
-  _flaggedForReboot = true;  // We don't reboot immediately, otherwise the response above is not sent
-  _flaggedForRebootAt = millis();
-}
-
 void BootConfig::__setCORS() {
   DefaultHeaders::Instance().addHeader(F("Access-Control-Allow-Origin"), F("*"));
   DefaultHeaders::Instance().addHeader(F("Access-Control-Allow-Methods"), F("GET, PUT"));
   DefaultHeaders::Instance().addHeader(F("Access-Control-Allow-Headers"), F("Content-Type, Origin, Referer, User-Agent"));
 }
 
-void BootConfig::__parsePost(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
-  if (total > MAX_POST_SIZE) {
-    Interface::get().getLogger() << F("Request is to large to be processed.") << endl;
-  } else {
-    if (index == 0) {
-      request->_tempObject = new (std::nothrow) char[total + 1];
-      if (request->_tempObject == nullptr) {
-        Interface::get().getLogger() << F("Cannot allocate request body buffer.") << endl;
-        return;
-      }
-    } else if (request->_tempObject == nullptr) {
-      Interface::get().getLogger() << F("Missing request body buffer.") << endl;
-      return;
-    }
-    char* buff = reinterpret_cast<char*>(request->_tempObject) + index;
-    memcpy(buff, data, len);
-    if (index + len == total) {
-      char* buff =  reinterpret_cast<char*>(request->_tempObject) + total;
-      *buff = '\0';
-    }
-  }
-}
 
-void HomieInternals::BootConfig::__SendJSONError(AsyncWebServerRequest * request, String msg, int16_t code) {
-  Interface::get().getLogger() << msg << endl;
-  const String BEGINNING = String(FPSTR(PROGMEM_CONFIG_JSON_FAILURE_BEGINNING));
-  const String END = String(FPSTR(PROGMEM_CONFIG_JSON_FAILURE_END));
-  String errorJson = BEGINNING + msg + END;
-  request->send(code, FPSTR(PROGMEM_CONFIG_APPLICATION_JSON), errorJson);
-}
 #endif

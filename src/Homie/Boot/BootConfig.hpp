@@ -6,6 +6,8 @@
 #if HOMIE_CONFIG
 
 #include <functional>
+#include <atomic>
+#include <memory>
 #ifdef ESP32
 #include <WiFi.h>
 #include <HTTPClient.h>
@@ -49,15 +51,29 @@ class BootConfig : public Boot {
   Timer _wifiScanTimer;
   bool _lastWifiScanEnded;
   String _jsonWifiNetworks;
-  bool _flaggedForReboot;
+  std::atomic<bool> _flaggedForReboot;
   uint32_t _flaggedForRebootAt;
   bool _proxyEnabled;
   char _apIpStr[MAX_IP_STRING_LENGTH];
+  enum class ConfigTestPhase : uint8_t { IDLE, PREPARING, QUEUED, WIFI, MQTT, CLOSING, READY, FAILED, SAVED };
+  std::atomic<ConfigTestPhase> _configTestPhase{ConfigTestPhase::IDLE};
+  std::unique_ptr<DynamicJsonDocument> _testConfig;
+  std::atomic<bool> _testMqttConnected{false};
+  std::atomic<uint8_t> _testMqttError{0};
+  std::atomic<uint8_t> _testFailure{0};
+  uint32_t _testStartedAt = 0;
+  String _testClientId;
 
   void _onCaptivePortal(AsyncWebServerRequest *request);
   void _onDeviceInfoRequest(AsyncWebServerRequest *request);
   void _onNetworksRequest(AsyncWebServerRequest *request);
   void _onConfigRequest(AsyncWebServerRequest *request);
+  void _onStoredConfigRequest(AsyncWebServerRequest *request);
+  bool _parseConfig(AsyncWebServerRequest *request, JsonDocument& document);
+  bool _claimConfigRequest(ConfigTestPhase expected);
+  void _onConfigTestRequest(AsyncWebServerRequest *request);
+  void _onConfigStatusRequest(AsyncWebServerRequest *request);
+  void _loopConfigTest();
   void _generateNetworksJson();
   void _onWifiConnectRequest(AsyncWebServerRequest *request);
   void _onProxyControlRequest(AsyncWebServerRequest *request);
