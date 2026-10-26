@@ -4,6 +4,13 @@ PYTHON_OTA_FILES := scripts/homie_ota.py scripts/ota_updater/ota_updater.py scri
 OTA_CORE_DIR ?= $(HOME)/.platformio/packages/framework-arduinoespressif32/cores/esp32
 MQTT_CLIENT_DIR ?=
 
+config-storage-test: config-%-test:
+	@set -eu; tmp=$$(mktemp -d); trap 'rm -rf "$$tmp"' EXIT; \
+	$(CXX) -std=c++11 -O1 -g -Wall -Wextra -Werror \
+	  -fsanitize=address,undefined -fno-sanitize-recover=all -fno-omit-frame-pointer \
+	  "tests/config/test_$*.cpp" -o "$$tmp/config-test"; \
+	"$$tmp/config-test"
+
 # Supply an installed espMqttClient checkout; CI installs the manifest's exact pin.
 mqtt-test: mqtt-message-test
 	@test -f "$(MQTT_CLIENT_DIR)/src/MqttClient.cpp" || { echo "Set MQTT_CLIENT_DIR to the installed espMqttClient directory"; exit 1; }
@@ -79,4 +86,4 @@ docs-build:
 
 docs-check: docs-lint docs-build
 
-.PHONY: mqtt-test mqtt-message-test ota-test cpplint python-format python-format-check python-lint python-typecheck python-test python-check docs-lint docs-fix docs-build docs-check
+.PHONY: config-storage-test mqtt-test mqtt-message-test ota-test cpplint python-format python-format-check python-lint python-typecheck python-test python-check docs-lint docs-fix docs-build docs-check

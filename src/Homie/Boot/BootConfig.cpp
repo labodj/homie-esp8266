@@ -493,7 +493,10 @@ void BootConfig::_onConfigRequest(AsyncWebServerRequest *request) {
     return;
   }
 
-  Interface::get().getConfig().write(parsedJson);
+  if (!Interface::get().getConfig().write(parsedJson)) {
+    __SendJSONError(request, F("Cannot save configuration; previous settings preserved"), 500);
+    return;
+  }
 
   Interface::get().getLogger() << F("✔ Configured") << endl;
 

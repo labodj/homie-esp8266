@@ -36,7 +36,7 @@ void ResetHandler::Loop() {
 void ResetHandler::_tick() {
   if (!Interface::get().reset.resetFlag && Interface::get().reset.enabled) {
     _resetBTNDebouncer.update();
-    if (_resetBTNDebouncer.read() == Interface::get().reset.triggerState) {
+    if (_resetBTNDebouncer.changed() && _resetBTNDebouncer.read() == Interface::get().reset.triggerState) {
       Interface::get().disable = true;
       Interface::get().reset.resetFlag = true;
     }
@@ -48,7 +48,12 @@ void ResetHandler::_handleReset() {
     Interface::get().getLogger() << F("Flagged for reset") << endl;
     Interface::get().getLogger() << F("Device is idle") << endl;
 
-    Interface::get().getConfig().erase();
+    if (!Interface::get().getConfig().erase()) {
+      Interface::get().getLogger() << F("Cannot erase configuration. Reset cancelled") << endl;
+      Interface::get().reset.resetFlag = false;
+      Interface::get().disable = false;
+      return;
+    }
     Interface::get().getLogger() << F("Configuration erased") << endl;
 
     // Set boot mode

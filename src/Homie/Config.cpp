@@ -1,11 +1,15 @@
 #include "Config.hpp"
+#include "Utils/ConfigFile.hpp"
 
 using namespace HomieInternals;
+
+#include "ConfigJson.ipp"
 
 Config::Config()
   : _configStruct()
   , _filesystemBegan(false)
-  , _valid(false) {
+  , _valid(false)
+  , _recovered(false) {
 }
 
 bool Config::_filesystemBegin() {
@@ -173,16 +177,23 @@ bool Config::_migrateSpiffsToLittleFs() {
 }
 
 bool Config::load() {
-  if (!_filesystemBegin()) { return false; }
-
   _valid = false;
+  _recovered = false;
+  if (!_filesystemBegin()) { return false; }
+  const auto result = ConfigFile::load(HOMIE_FS, CONFIG_FILE_PATH, CONFIG_BACKUP_FILE_PATH,
+                                       [this](const char* path) { return _loadFile(path); });
+  _valid = result != ConfigFile::LoadResult::INVALID;
+  _recovered = result == ConfigFile::LoadResult::RECOVERED;
+  return _valid;
+}
 
-  if (!HOMIE_FS.exists(CONFIG_FILE_PATH)) {
-    Interface::get().getLogger() << F("✖ ") << CONFIG_FILE_PATH << F(" doesn't exist") << endl;
+bool Config::_loadFile(const char* path) {
+  if (!HOMIE_FS.exists(path)) {
+    Interface::get().getLogger() << F("✖ ") << path << F(" doesn't exist") << endl;
     return false;
   }
 
-  File configFile = HOMIE_FS.open(CONFIG_FILE_PATH, "r");
+  File configFile = HOMIE_FS.open(path, "r");
   if (!configFile) {
     Interface::get().getLogger() << F("✖ Cannot open config file") << endl;
     return false;
@@ -196,8 +207,9 @@ bool Config::load() {
   }
 
   char buf[MAX_JSON_CONFIG_FILE_SIZE];
-  configFile.readBytes(buf, configSize);
+  const size_t configRead = configFile.readBytes(buf, configSize);
   configFile.close();
+  if (configRead != configSize) return false;
   buf[configSize] = '\0';
 
   StaticJsonDocument<MAX_JSON_CONFIG_ARDUINOJSON_BUFFER_SIZE> jsonDoc;
@@ -298,57 +310,32 @@ bool Config::load() {
   return true;
 }
 
-char* Config::getSafeConfigFile() const {
-  File configFile = HOMIE_FS.open(CONFIG_FILE_PATH, "r");
-  size_t configSize = configFile.size();
-
-  char buf[MAX_JSON_CONFIG_FILE_SIZE];
-  configFile.readBytes(buf, configSize);
-  configFile.close();
-  buf[configSize] = '\0';
-
-  StaticJsonDocument<MAX_JSON_CONFIG_ARDUINOJSON_BUFFER_SIZE> jsonDoc;
-  deserializeJson(jsonDoc, buf);
-  JsonObject parsedJson = jsonDoc.as<JsonObject>();
-  parsedJson["wifi"].as<JsonObject>().remove("password");
-  JsonObject mqtt = parsedJson["mqtt"].as<JsonObject>();
-  mqtt.remove("username");
-  mqtt.remove("password");
-  // Runtime-only diagnostics are injected when advertising over MQTT. Do not
-  // leak a stale value if a previous tool copied the advertised payload back
-  // into config.json.
-  mqtt.remove("effective_base_topic");
-
-  size_t jsonBufferLength = measureJson(jsonDoc) + 1;
-  char* jsonString = new char[jsonBufferLength];
-  serializeJson(jsonDoc, jsonString, jsonBufferLength);
-  return jsonString;
+bool Config::erase() {
+  if (!_filesystemBegin()) { return false; }
+  return ConfigFile::erase(HOMIE_FS, CONFIG_FILE_PATH, CONFIG_TEMP_FILE_PATH,
+                           CONFIG_BACKUP_FILE_PATH, CONFIG_NEXT_BOOT_MODE_FILE_PATH);
 }
 
-void Config::erase() {
-  if (!_filesystemBegin()) { return; }
-
-  HOMIE_FS.remove(CONFIG_FILE_PATH);
-  HOMIE_FS.remove(CONFIG_NEXT_BOOT_MODE_FILE_PATH);
-}
-
-void Config::setHomieBootModeOnNextBoot(HomieBootMode bootMode) {
-  if (!_filesystemBegin()) { return; }
-  if (!_ensureFilesystemDirectories()) { return; }
+bool Config::setHomieBootModeOnNextBoot(HomieBootMode bootMode) {
+  if (!_filesystemBegin()) { return false; }
+  if (!_ensureFilesystemDirectories()) { return false; }
 
   if (bootMode == HomieBootMode::UNDEFINED) {
-    HOMIE_FS.remove(CONFIG_NEXT_BOOT_MODE_FILE_PATH);
+    return !HOMIE_FS.exists(CONFIG_NEXT_BOOT_MODE_FILE_PATH) || HOMIE_FS.remove(CONFIG_NEXT_BOOT_MODE_FILE_PATH);
   } else {
     File bootModeFile = HOMIE_FS.open(CONFIG_NEXT_BOOT_MODE_FILE_PATH, "w");
     if (!bootModeFile) {
       Interface::get().getLogger() << F("✖ Cannot open NEXTMODE file") << endl;
-      return;
+      return false;
     }
 
-    bootModeFile.printf("#%d", static_cast<int>(bootMode));
+    const bool written = bootModeFile.printf("#%d", static_cast<int>(bootMode)) == 2;
+    bootModeFile.flush();
     bootModeFile.close();
+    if (!written || getHomieBootModeOnNextBoot() != bootMode) return false;
     Interface::get().getLogger().printf("Setting next boot mode to %d\n", static_cast<int>(bootMode));
   }
+  return true;
 }
 
 HomieBootMode Config::getHomieBootModeOnNextBoot() {
@@ -364,19 +351,14 @@ HomieBootMode Config::getHomieBootModeOnNextBoot() {
   }
 }
 
-void Config::write(const JsonObject config) {
-  if (!_filesystemBegin()) { return; }
-  if (!_ensureFilesystemDirectories()) { return; }
-
-  HOMIE_FS.remove(CONFIG_FILE_PATH);
-
-  File configFile = HOMIE_FS.open(CONFIG_FILE_PATH, "w");
-  if (!configFile) {
-    Interface::get().getLogger() << F("✖ Cannot open config file") << endl;
-    return;
-  }
-  serializeJson(config, configFile);
-  configFile.close();
+bool Config::write(const JsonObject config) {
+  if (!_filesystemBegin() || !_ensureFilesystemDirectories()) return false;
+  if (!Validation::validateConfig(config).valid || measureJson(config) >= MAX_JSON_CONFIG_FILE_SIZE) return false;
+  String serialized;
+  const size_t size = measureJson(config);
+  if (serializeJson(config, serialized) != size || serialized.length() != size) return false;
+  return ConfigFile::write(HOMIE_FS, CONFIG_FILE_PATH, CONFIG_TEMP_FILE_PATH,
+                           CONFIG_BACKUP_FILE_PATH, serialized.c_str(), size);
 }
 
 bool Config::patch(const char* patch) {
@@ -398,16 +380,20 @@ bool Config::patch(const char* patch) {
 
   size_t configSize = configFile.size();
 
+  if (configSize >= MAX_JSON_CONFIG_FILE_SIZE) return false;
+
   char configJson[MAX_JSON_CONFIG_FILE_SIZE];
-  configFile.readBytes(configJson, configSize);
+  const size_t configRead = configFile.readBytes(configJson, configSize);
   configFile.close();
+  if (configRead != configSize) return false;
   configJson[configSize] = '\0';
 
   StaticJsonDocument<MAX_JSON_CONFIG_ARDUINOJSON_BUFFER_SIZE> configJsonDoc;
-  deserializeJson(configJsonDoc, configJson);
+  if (deserializeJson(configJsonDoc, configJson) != DeserializationError::Ok || !configJsonDoc.is<JsonObject>()) return false;
   JsonObject configObject = configJsonDoc.as<JsonObject>();
 
   _patchJsonObject(configObject, patchObject);
+  if (configJsonDoc.overflowed()) return false;
   // mqtt.effective_base_topic is published for diagnostics only. If a consumer
   // echoes $implementation/config into /config/set, keep the persisted config
   // clean and let the advertiser regenerate the value from mqtt.base_topic.
@@ -419,29 +405,7 @@ bool Config::patch(const char* patch) {
     return false;
   }
 
-  write(configObject);
-
-  return true;
-}
-
-void Config::_patchJsonObject(JsonObject object, JsonObject patch) {
-  for (JsonPair patchItem : patch) {
-    JsonVariant patchElement = patchItem.value();
-    JsonVariant objectElement = object[patchItem.key()];
-
-    // If both object element and patch element are objects, then recursively call this method again
-    if (objectElement.is<JsonObject>() && patchElement.is<JsonObject>()) {
-      _patchJsonObject(objectElement.as<JsonObject>(), patchElement.as<JsonObject>());
-    } else {
-      // Delete the object element if the patch element is null
-      if (patchElement.isNull()) {
-        object.remove(patchItem.key());
-      } else {
-        // Otherwise replace the object element value with the patch element value
-        object[patchItem.key()] = patchElement;
-      }
-    }
-  }
+  return write(configObject);
 }
 
 bool Config::isValid() const {

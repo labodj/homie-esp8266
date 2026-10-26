@@ -84,4 +84,6 @@ const char HOMIE_DEFAULT_PROPERTY_DATATYPE[] = "string";
   const char CONFIG_UI_BUNDLE_PATH[] = "/homie/ui_bundle.gz";
   const char CONFIG_NEXT_BOOT_MODE_FILE_PATH[] = "/homie/NEXTMODE";
   const char CONFIG_FILE_PATH[] = "/homie/config.json";
+  const char CONFIG_TEMP_FILE_PATH[] = "/homie/config.tmp";
+  const char CONFIG_BACKUP_FILE_PATH[] = "/homie/config.bak";
 }  // namespace HomieInternals

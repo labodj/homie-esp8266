@@ -1,4 +1,5 @@
 #include "Validation.hpp"
+#include "ConventionValidation.hpp"
 
 using namespace HomieInternals;
 
@@ -51,6 +52,10 @@ ConfigValidationResult Validation::_validateConfigRoot(const JsonObject object) 
       }
       if (strlen(deviceId.as<const char*>()) + 1 > MAX_DEVICE_ID_LENGTH) {
         result.reason = F("device_id is too long");
+        return result;
+      }
+      if (!ConventionValidation::isValidTopicId(deviceId.as<const char*>())) {
+        result.reason = F("device_id is not a valid Homie ID");
         return result;
       }
     }
@@ -264,6 +269,10 @@ ConfigValidationResult Validation::_validateConfigMqtt(const JsonObject object) 
       result.reason = F("mqtt.port is not an integer");
       return result;
     }
+    if (!mqttPort.isNull() && mqttPort.as<uint16_t>() == 0) {
+      result.reason = F("mqtt.port must be between 1 and 65535");
+      return result;
+    }
   }
 
   {
@@ -301,6 +310,10 @@ ConfigValidationResult Validation::_validateConfigMqtt(const JsonObject object) 
       }
       if (strlen(mqttBaseTopic.as<const char*>()) + 1 > MAX_MQTT_BASE_TOPIC_LENGTH) {
         result.reason = F("mqtt.base_topic is too long");
+        return result;
+      }
+      if (!ConventionValidation::isValidRootTopic(mqttBaseTopic.as<const char*>())) {
+        result.reason = F("mqtt.base_topic is not a valid Homie root topic");
         return result;
       }
     }

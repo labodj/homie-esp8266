@@ -11,6 +11,9 @@ namespace HomieInternals {
   // max settings elements. The extra MQTT slot accepts the read-only
   // effective_base_topic diagnostic if a tool echoes the advertised config.
   const uint16_t MAX_JSON_CONFIG_ARDUINOJSON_BUFFER_SIZE = JSON_OBJECT_SIZE(6) + JSON_OBJECT_SIZE(9) + JSON_OBJECT_SIZE(7) + JSON_OBJECT_SIZE(1) + JSON_OBJECT_SIZE(MAX_CONFIG_SETTING_SIZE);
+  // HTTP requests outlive their buffers during connection tests. Merging also
+  // temporarily retains strings replaced in the previous configuration.
+  const uint16_t MAX_JSON_CONFIG_OWNED_BUFFER_SIZE = MAX_JSON_CONFIG_ARDUINOJSON_BUFFER_SIZE + 2 * MAX_JSON_CONFIG_FILE_SIZE;
 
   const uint8_t MAX_MAC_LENGTH = 6;
   const uint8_t MAX_MAC_STRING_LENGTH = (MAX_MAC_LENGTH * 2) + 1;

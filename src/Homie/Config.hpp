@@ -21,24 +21,28 @@ class Config {
   bool load();
   inline const ConfigStruct& get() const;
   char* getSafeConfigFile() const;
-  void erase();
-  void setHomieBootModeOnNextBoot(HomieBootMode bootMode);
+  bool erase();
+  bool setHomieBootModeOnNextBoot(HomieBootMode bootMode);
   HomieBootMode getHomieBootModeOnNextBoot();
-  void write(const JsonObject config);
+  bool write(const JsonObject config);
+  bool prepare(JsonDocument& document, const JsonObject changes);
   bool patch(const char* patch);
   void log() const;  // print the current config to log output
   bool isValid() const;
+  bool wasRecovered() const { return _recovered; }
 
  private:
   ConfigStruct _configStruct;
   bool _filesystemBegan;
   bool _valid;
+  bool _recovered;
 
   bool _filesystemBegin();
+  bool _loadFile(const char* path);
   bool _mountSelectedFilesystem(bool formatOnFail);
   bool _ensureFilesystemDirectories();
   bool _migrateSpiffsToLittleFs();
-  void _patchJsonObject(JsonObject object, JsonObject patch);
+  void _patchJsonObject(JsonObject object, JsonObjectConst patch);
 };
 
 const ConfigStruct& Config::get() const {
