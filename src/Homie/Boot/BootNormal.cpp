@@ -2343,6 +2343,7 @@ bool HomieInternals::BootNormal::__handleResets(char * topic, char * payload, co
     Interface::get().getMqttClient().publish(_prefixMqttTopic(PSTR("/$implementation/reset")), 1, true, "false");
     Interface::get().getLogger() << F("Flagged for reset by network") << endl;
     Interface::get().disable = true;
+    Interface::get().reset.configurationOnly = false;
     Interface::get().reset.resetFlag = true;
     return true;
   }

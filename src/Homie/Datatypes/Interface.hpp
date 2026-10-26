@@ -53,6 +53,7 @@ class InterfaceData {
     uint8_t triggerState;
     uint16_t triggerTime;
     bool resetFlag;
+    bool configurationOnly;
   } reset;
 
   bool disable;

@@ -3,6 +3,7 @@
 #include <new>
 
 #if HOMIE_CONFIG
+#include "../Utils/ResetHandler.hpp"
 using namespace HomieInternals;
 
 BootConfig::BootConfig()
@@ -26,6 +27,7 @@ BootConfig::~BootConfig() {
 
 void BootConfig::setup() {
   Boot::setup();
+  ResetHandler::Attach();
 
   if (Interface::get().led.enabled) {
     digitalWrite(Interface::get().led.pin, Interface::get().led.on);

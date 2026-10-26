@@ -1,9 +1,18 @@
 # Resetting
 
 Resetting the device means erasing the stored configuration and rebooting from
-`normal` mode to `configuration` mode. By default, you can do it by holding the
-configured reset trigger for 5 seconds. On many dev boards this is the `FLASH`
-or `BOOT` button.
+`normal` mode to `configuration` mode. A shorter press opens configuration
+without erasing the stored device ID, Wi-Fi, MQTT or firmware settings.
+On many dev boards the configured trigger is the `FLASH` or `BOOT` button:
+
+- Hold for at least 5 seconds, then release before 15 seconds: open the portal
+  and retain the current configuration. Leave unchanged password fields blank.
+- Hold for at least 15 seconds, then release: factory reset, including device ID.
+- Shorter presses do nothing. The action is selected on release and waits until
+  the device is idle. A failed erase or boot-mode write cancels the restart.
+
+To leave the portal without saving, power-cycle the device. If a valid stored
+configuration exists it will be used again.
 
 This behavior is configurable:
 
@@ -14,8 +23,9 @@ void setup() {
 }
 ```
 
-The device now resets if pin `1` is `LOW` for `2000` ms. You can also disable
-this reset trigger completely:
+Pin `1` held `LOW` for at least `2000` ms opens configuration on release;
+at least three times that interval (`6000` ms) selects factory reset.
+You can also disable this trigger completely:
 
 ```c++
 void setup() {
@@ -24,7 +34,7 @@ void setup() {
 }
 ```
 
-You can also trigger a device reset from your sketch:
+You can also trigger a factory reset from your sketch (this erases the ID):
 
 ```c++
 void loop() {

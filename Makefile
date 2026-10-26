@@ -4,7 +4,7 @@ PYTHON_OTA_FILES := scripts/homie_ota.py scripts/ota_updater/ota_updater.py scri
 OTA_CORE_DIR ?= $(HOME)/.platformio/packages/framework-arduinoespressif32/cores/esp32
 MQTT_CLIENT_DIR ?=
 
-config-storage-test: config-%-test:
+config-storage-test config-reset-test: config-%-test:
 	@set -eu; tmp=$$(mktemp -d); trap 'rm -rf "$$tmp"' EXIT; \
 	$(CXX) -std=c++11 -O1 -g -Wall -Wextra -Werror \
 	  -fsanitize=address,undefined -fno-sanitize-recover=all -fno-omit-frame-pointer \
@@ -86,4 +86,4 @@ docs-build:
 
 docs-check: docs-lint docs-build
 
-.PHONY: config-storage-test mqtt-test mqtt-message-test ota-test cpplint python-format python-format-check python-lint python-typecheck python-test python-check docs-lint docs-fix docs-build docs-check
+.PHONY: config-storage-test config-reset-test mqtt-test mqtt-message-test ota-test cpplint python-format python-format-check python-lint python-typecheck python-test python-check docs-lint docs-fix docs-build docs-check
