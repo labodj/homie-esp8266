@@ -22,6 +22,9 @@ config-connection-test:
 	  "$$tmp/config-test"; \
 	done
 
+config-test: config-storage-test config-reset-test config-connection-test
+	node --test tests/config/test_ui.mjs
+
 # Supply an installed espMqttClient checkout; CI installs the manifest's exact pin.
 mqtt-test: mqtt-message-test
 	@test -f "$(MQTT_CLIENT_DIR)/src/MqttClient.cpp" || { echo "Set MQTT_CLIENT_DIR to the installed espMqttClient directory"; exit 1; }
@@ -97,4 +100,4 @@ docs-build:
 
 docs-check: docs-lint docs-build
 
-.PHONY: config-storage-test config-reset-test config-connection-test mqtt-test mqtt-message-test ota-test cpplint python-format python-format-check python-lint python-typecheck python-test python-check docs-lint docs-fix docs-build docs-check
+.PHONY: config-test config-storage-test config-reset-test config-connection-test mqtt-test mqtt-message-test ota-test cpplint python-format python-format-check python-lint python-typecheck python-test python-check docs-lint docs-fix docs-build docs-check

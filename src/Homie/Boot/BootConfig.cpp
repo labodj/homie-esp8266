@@ -3,6 +3,7 @@
 #include <new>
 
 #if HOMIE_CONFIG
+#include "ConfigUi.hpp"
 #include "../Utils/ResetHandler.hpp"
 
 using namespace HomieInternals;
@@ -360,9 +361,10 @@ void BootConfig::_onCaptivePortal(AsyncWebServerRequest *request) {
       _proxyHttpRequest(request);
     }
   } else if (request->url() == "/" && !HOMIE_FS.exists(CONFIG_UI_BUNDLE_PATH)) {
-    String msg = String(F("UI bundle not loaded. See Configuration API usage: https://labodj.github.io/homie-esp8266/configuration/http-json-api/"));
-    Interface::get().getLogger() << msg << endl;
-    request->send(404, F("text/plain"), msg);
+    AsyncWebServerResponse *response = request->beginResponse(200, "text/html; charset=utf-8",
+      reinterpret_cast<const uint8_t*>(CONFIG_UI), sizeof(CONFIG_UI) - 1);
+    response->addHeader(F("Cache-Control"), F("no-store"));
+    request->send(response);
   } else if (request->url() == "/" && HOMIE_FS.exists(CONFIG_UI_BUNDLE_PATH)) {
     // Respond with UI
     Interface::get().getLogger() << F("UI bundle found") << endl;
