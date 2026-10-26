@@ -8,6 +8,7 @@ cores, use the PioArduino platform package:
 [env:esp32dev]
 platform = https://github.com/pioarduino/platform-espressif32/releases/download/stable/platform-espressif32.zip
 board = esp32dev
+board_build.partitions = min_spiffs.csv
 framework = arduino
 lib_compat_mode = strict
 build_flags =
@@ -15,6 +16,13 @@ build_flags =
 lib_deps =
   labodj/homie-v5 @ ^4.0.1
 ```
+
+On 4 MiB ESP32 boards, `min_spiffs.csv` provides two 1.875 MiB application
+slots for OTA and a 128 KiB filesystem. Current Arduino 3 builds exceed the
+default 1.25 MiB application slot. The official PlatformIO ESP32 8.0.0 platform
+is also supported; CI retains a separate Arduino 2 build using platform 7.1.3.
+Choose the partition layout before the first USB flash: a firmware-only OTA
+update does not replace an existing partition table.
 
 For unreleased changes, use the git URL dependency and pin it to a commit SHA
 instead of tracking the branch.

@@ -89,6 +89,10 @@ jobs:
             board: esp32dev
             platform: ""
             build_flags: -DHOMIE_USE_LITTLEFS=1 -DHOMIE_MIGRATE_SPIFFS_TO_LITTLEFS=1
+          - name: esp32-arduino2
+            board: esp32dev
+            platform: platformio/espressif32@7.1.3
+            build_flags: ""
           - name: esp32-pioarduino
             board: esp32dev
             platform: https://github.com/pioarduino/platform-espressif32/releases/download/stable/platform-espressif32.zip
@@ -107,6 +111,11 @@ jobs:
           args=(--lib=. --board "${{ matrix.board }}" -O "lib_compat_mode=strict")
           if [ -n "${{ matrix.platform }}" ]; then
             args+=(-O "platform=${{ matrix.platform }}")
+          elif [ "${{ matrix.board }}" = "esp32dev" ]; then
+            args+=(-O "platform=platformio/espressif32@8.0.0")
+          fi
+          if [ "${{ matrix.board }}" = "esp32dev" ]; then
+            args+=(-O "board_build.partitions=min_spiffs.csv")
           fi
           pio ci "${args[@]}" examples/Ping/src
 
