@@ -135,7 +135,7 @@ Homie for ESP8266 has 3 modes of operation:
 
 ## Connecting to the AP and configuring the device
 
-Homie for ESP8266 has spawned a secure AP named `Homie-xxxxxxxxxxxx`, like
+Homie for ESP8266 has spawned an AP named `Homie-xxxxxxxxxxxx`, like
 `Homie-c631f278df44`. Connect to it.
 
 !!! tip "Hardware device ID"
@@ -145,9 +145,11 @@ Homie for ESP8266 has spawned a secure AP named `Homie-xxxxxxxxxxxx`, like
 
 Once connected, the web server is available at `http://192.168.123.1`. Every
 domain name is resolved by the built-in DNS server to this address. You can then
-configure the device using the
-[HTTP JSON API](../configuration/http-json-api.md). When the device receives its
-configuration, it will reboot into `normal` mode.
+configure the device using the built-in
+[setup page](../advanced-usage/ui-bundle.md) or the
+[HTTP JSON API](../configuration/http-json-api.md). The setup page works offline
+without uploading any additional files. When the device receives its
+configuration, it reboots into `normal` mode and closes the hotspot and web server.
 
 ## Understanding what happens in `normal` mode
 

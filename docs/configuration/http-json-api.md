@@ -5,19 +5,17 @@ configuration. When you send a valid configuration to the `/config`
 endpoint, the configuration file is stored in the filesystem at
 `/homie/config.json`.
 
-If you prefer not to edit JSON by hand, you can use the bundled Web UI:
+If you prefer not to edit JSON by hand, use the built-in
+[setup page](../advanced-usage/ui-bundle.md):
 
-- At [the maintained fork configurator][fork-configurator]
+1. Connect to the `<brand>-<hardware ID>` hotspot spawned in `configuration` mode
+   (normally `Homie-xxxxxxxxxxxx`).
+2. Open `http://192.168.123.1` if the captive portal does not open automatically.
+3. Enter the device identity, Wi-Fi and MQTT configuration, confirm the ID is
+   unique, then test and save. Connection errors leave setup available.
 
-**Quick instructions to use the Web UI**:
-
-1. Open the Web UI
-2. Disconnect from your current Wi-Fi AP, and connect to the
-   `Homie-xxxxxxxxxxxx` AP spawned in `configuration` mode
-3. Follow the instructions
-
-You can see the
-[sources of the Web UI](https://github.com/homieiot/homie-esp8266-setup).
+No separate UI bundle or Internet connection is needed. After setup, the device
+restarts in normal mode with its hotspot and web server closed.
 
 Alternatively, you can use this `curl` command to send the configuration to the
 device. You must connect to the device in `configuration` mode, while it is
@@ -60,7 +58,8 @@ such as `500 Internal Server error`, `400 Bad request` and so on.
     ```json
     {
       "hardware_device_id": "52a8fa5d",
-    "homie_esp8266_version": "4.0.1",
+      "device_id": "my-device",
+      "homie_esp8266_version": "4.0.1",
       "firmware": {
         "name": "awesome-device",
         "version": "1.0.0"
@@ -93,6 +92,9 @@ such as `500 Internal Server error`, `400 Bad request` and so on.
 
     !!! note "Note about settings"
         If a setting is not required, the `default` field will always be set.
+
+    `device_id` is the saved logical ID when the configuration is valid, or the
+    hardware ID for a blank device. `hardware_device_id` always identifies the chip.
 
 ---
 
@@ -132,8 +134,43 @@ such as `500 Internal Server error`, `400 Bad request` and so on.
 
 ---
 
+??? summary "GET `/config`"
+    Return `{"configured": false, "config": {}}` for a blank device, or the saved
+    configuration with `configured: true`. Wi-Fi/MQTT passwords and MQTT usernames
+    are removed. Responses are not cached. This endpoint exists only in setup mode.
+
+---
+
+??? summary "PUT `/config/test` and GET `/config/status`"
+    Submit the proposed configuration as JSON to start an asynchronous connection
+    test (`202 Accepted`). Poll `GET /config/status`: `status` is `idle`, `wifi`,
+    `mqtt`, `ready`, `failed` or `saved`. On failure, `error` explains the problem;
+    nothing is saved and the hotspot remains available. Wi-Fi has a 30-second
+    deadline and MQTT a 15-second deadline. Duplicate active tests return HTTP 409.
+
+    Tests use the proposed static IP/DNS/BSSID settings too. MQTT authentication
+    is checked with a separate `setup-<hardware ID>` client ID, without
+    publishing, subscribing or evicting an existing device. Brokers with client-ID
+    restrictions must permit this setup ID. Authentication success is not proof of
+    MQTT topic permissions or normal firmware readiness.
+
+    Once ready, send the same proposed configuration to `PUT /config` to persist
+    it. Changing values requires a new test. The built-in page follows this flow.
+
+---
+
 ??? summary "PUT `/config`"
-    Save the config to the device.
+    Save the config to the device. Existing configuration is merged with supplied
+    fields: omitted fields are preserved, `null` deletes a field and an explicit
+    empty Wi-Fi password selects an open network. Passwords omitted by the web
+    form remain on the device.
+
+    Direct PUT without starting a test remains supported for compatibility with
+    external provisioning tools; it does not verify connectivity. After a test
+    starts, only a ready, unchanged candidate can be saved. Failed persistence
+    returns HTTP 500 without rebooting; in-flight or changed candidates return 409.
+    Success means the bytes were verified and stored, not that normal-mode MQTT
+    advertisements or bridge operation have been verified.
 
     ## Request body
 
@@ -289,5 +326,3 @@ such as `500 Internal Server error`, `400 Bad request` and so on.
           "error": "Reason why the payload is invalid"
         }
         ```
-
-[fork-configurator]: https://labodj.github.io/homie-esp8266/configurators/v2/
