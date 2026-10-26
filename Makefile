@@ -1,5 +1,5 @@
 PYTHON ?= python3
-MARKDOWNLINT ?= npx --yes markdownlint-cli2@0.23.2
+MARKDOWNLINT ?= npx --yes markdownlint-cli2@0.24.0
 PYTHON_OTA_FILES := scripts/homie_ota.py scripts/ota_updater/ota_updater.py scripts/ota_updater/test_ota_updater.py
 OTA_CORE_DIR ?= $(HOME)/.platformio/packages/framework-arduinoespressif32/cores/esp32
 MQTT_CLIENT_DIR ?=
