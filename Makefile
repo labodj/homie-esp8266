@@ -18,7 +18,7 @@ config-connection-test:
 	for arch in ESP32 ESP8266; do \
 	  $(CXX) -std=c++11 -O1 -g -Wall -Wextra -Werror \
 	    -fsanitize=address,undefined -fno-sanitize-recover=all -fno-omit-frame-pointer \
-	    -D$$arch -I "$(ARDUINOJSON_DIR)/src" tests/config/test_connections.cpp -o "$$tmp/config-test"; \
+	    -D$$arch -isystem "$(ARDUINOJSON_DIR)/src" tests/config/test_connections.cpp -o "$$tmp/config-test"; \
 	  "$$tmp/config-test"; \
 	done
 
