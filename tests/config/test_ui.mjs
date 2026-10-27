@@ -22,7 +22,7 @@ class Element {
   addEventListener(event, handler) { this['on' + event] = handler; }
 }
 
-async function fixture({device = {}, failInfo = false, failStorage = false, failScan = false, failSave = false, connectionFailure = null, testStatuses = [], stored = null} = {}) {
+async function fixture({device = {}, failInfo = false, failStorage = false, failScan = false, networks = [{ssid: '<script>unsafe</script>'}, {ssid: 'Home'}, {ssid: 'Home'}], failSave = false, connectionFailure = null, testStatuses = [], stored = null} = {}) {
   const elements = new Map([...html.matchAll(/id="([^"]+)"/g)].map(([, id]) => [id, new Element()]));
   elements.get('fields').disabled = true;
   elements.get('port').value = '1883';
@@ -53,7 +53,7 @@ async function fixture({device = {}, failInfo = false, failStorage = false, fail
           settings: [], ...device} : {error: 'Device unavailable'};
       } else if (path === '/networks') {
         ok = !failScan;
-        data = ok ? {networks: [{ssid: '<script>unsafe</script>'}, {ssid: 'Home'}, {ssid: 'Home'}]}
+        data = ok ? {networks}
           : {error: 'Initial Wi-Fi scan not finished yet'};
       } else if (path === '/config' && body === undefined) {
         ok = !failStorage;
@@ -154,6 +154,26 @@ test('firmware settings retain JSON types, optional fields can be omitted', asyn
   assert.deepEqual(result, JSON.parse('{"enabled":true,"count":4,"factor":1.5,"text":"hello","__proto__":"safe"}'));
 });
 
+test('required strings preserve empty values on new and configured devices', async () => {
+  const settings = [{name: 'text', type: 'string', required: true},
+    {name: 'count', type: 'long', required: true},
+    {name: 'factor', type: 'double', required: true}];
+  for (const stored of [null, {device_id: 'sensor', wifi: {ssid: 'Home'},
+    mqtt: {host: 'broker'}, settings: {text: '', count: 4, factor: 1.5}}]) {
+    const {el, calls, submit} = await fixture({stored, device: {settings}});
+    assert.equal(el('setting-0').value, '');
+    assert.equal(el('setting-0').required, false, 'required strings may be empty');
+    assert.equal(el('setting-1').required, true);
+    assert.equal(el('setting-2').required, true);
+    el('setting-1').value = '4';
+    el('setting-2').value = '1.5';
+    await submit();
+    const tested = calls.find(c => c.path === '/config/test').body;
+    assert.deepEqual(tested.settings, {text: '', count: 4, factor: 1.5});
+    assert.deepEqual(tested, calls.find(c => c.path === '/config' && c.body !== undefined).body);
+  }
+});
+
 test('clearing saved optional firmware settings restores defaults without dropping unknown settings', async () => {
   const stored = {device_id: 'sensor', wifi: {ssid: 'Home'}, mqtt: {host: 'broker'},
     settings: {label: 'old', count: 12, other: 'keep'}};
@@ -184,7 +204,39 @@ test('scan errors keep manual Wi-Fi entry available', async () => {
 
 test('network names are data, not HTML, and duplicates are removed', async () => {
   const {el} = await fixture();
-  assert.deepEqual(el('networks').children.map(option => option.value), ['<script>unsafe</script>', 'Home']);
+  assert.match(html, /<select\b[^>]*id="networks"/);
+  assert.doesNotMatch(html, /<datalist\b|\blist="networks"/);
+  const options = el('networks').children.slice(1);
+  assert.deepEqual(options.map(option => option.value), ['<script>unsafe</script>', 'Home']);
+  assert.deepEqual(options.map(option => option.textContent), ['<script>unsafe</script>', 'Home']);
+  assert.equal(el('networks').disabled, false);
+});
+
+test('selecting a nearby network updates SSID and clears a previous AP binding', async () => {
+  const stored = {device_id: 'sensor', wifi: {ssid: 'Old', bssid: 'aa:bb:cc:dd:ee:ff', channel: 6}, mqtt: {host: 'broker'}};
+  const {el} = await fixture({stored});
+  el('networks').value = 'Home';
+  el('networks').onchange();
+  assert.equal(el('ssid').value, 'Home');
+  assert.equal(el('lockAp').checked, false);
+  assert.equal(el('bssid').value, '');
+  assert.equal(el('channel').value, '0');
+  assert.equal(el('deviceId').value, 'sensor');
+  assert.equal(el('networks').value, 'Home');
+  el('ssid').value = 'Hidden';
+  el('ssid').oninput();
+  assert.equal(el('networks').value, '');
+});
+
+test('refresh does not replace a manually entered SSID and empty scans stay usable', async () => {
+  const {el} = await fixture({networks: [{ssid: ''}]});
+  assert.equal(el('networks').disabled, true);
+  assert.match(el('scanStatus').textContent, /No networks found/);
+  el('ssid').value = 'Hidden';
+  await el('scan').onclick();
+  assert.equal(el('ssid').value, 'Hidden');
+  assert.equal(el('scan').disabled, false);
+  assert.equal(el('fields').disabled, false);
 });
 
 test('validation failures show the server reason and allow correction', async () => {

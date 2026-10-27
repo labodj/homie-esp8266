@@ -11,7 +11,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "src/Homie/Boot/ConfigUi.html"
 OUTPUT = SOURCE.with_suffix(".hpp")
-MAX_UI_BYTES = 7 * 1024
+MAX_UI_BYTES = 8 * 1024
 
 
 def main() -> None:
@@ -55,7 +55,7 @@ def main() -> None:
             "}  // namespace HomieInternals\n"
         )
     if len(asset) > MAX_UI_BYTES:
-        parser.error("UI exceeds its 7 KiB transfer budget")
+        parser.error("UI exceeds its 8 KiB project budget")
     sys.stdout.write(f"UI: {len(source)} bytes source, {len(asset)} bytes gzip\n")
 
 

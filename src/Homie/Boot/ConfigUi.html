@@ -10,12 +10,12 @@
 *{box-sizing:border-box}[hidden]{display:none!important}body{margin:0}main{max-width:62rem;margin:auto;padding:clamp(1rem,4vw,3rem)}
 header{margin-bottom:1.5rem}.eyebrow{font-size:.75rem;font-weight:700;letter-spacing:.12em;color:#456056}h1{font-size:clamp(1.9rem,5vw,2.7rem);line-height:1.15;letter-spacing:-.035em;margin:.5rem 0 .75rem}p{margin:.5rem 0 1rem}.intro{max-width:45rem;color:#4b6057}
 fieldset{min-width:0;border:0;padding:0;margin:0}#fields{display:grid;gap:1rem}.panel,.actions{min-width:0;padding:clamp(1rem,3vw,1.5rem);border:1px solid #ced6ce;border-radius:1rem;background:#fff}.panel legend{float:left;width:100%;padding:0;margin:0 0 .5rem;font-weight:700}.panel legend+*{clear:both}
-.sectionTitle{font-size:1rem;margin:0 0 .5rem}.grid{display:grid;gap:1rem}.row{display:grid;grid-template-columns:minmax(0,1fr) 6rem;gap:1rem}label{min-width:0;overflow-wrap:anywhere;display:block;margin:.75rem 0 .25rem;font-weight:600;font-size:.94rem}input,button{font:inherit;font-size:1rem}input:not([type=checkbox]){display:block;width:100%;min-width:0;min-height:2.9rem;margin-top:.35rem;padding:.65rem .8rem;font-weight:400;color:inherit;background:#fff;border:1px solid #7e9287;border-radius:.5rem}input::placeholder{color:#5e7167}input[type=checkbox]{width:1.15rem;height:1.15rem;margin:.15rem 0;flex:none}.check{display:flex;align-items:center;gap:.7rem;min-height:2.75rem;font-weight:400}.check input{order:-1}
+.sectionTitle{font-size:1rem;margin:0 0 .5rem}.grid{display:grid;gap:1rem}.row{display:grid;grid-template-columns:minmax(0,1fr) 6rem;gap:1rem}label{min-width:0;overflow-wrap:anywhere;display:block;margin:.75rem 0 .25rem;font-weight:600;font-size:.94rem}input,select,button{font:inherit;font-size:1rem}input:not([type=checkbox]),select{display:block;width:100%;min-width:0;min-height:2.9rem;margin-top:.35rem;padding:.65rem .8rem;font-weight:400;color:inherit;background:#fff;border:1px solid #7e9287;border-radius:.5rem}input::placeholder{color:#5e7167}input[type=checkbox]{width:1.15rem;height:1.15rem;margin:.15rem 0;flex:none}.check{display:flex;align-items:center;gap:.7rem;min-height:2.75rem;font-weight:400}.check input{order:-1}
 small,.hint{display:block;font-size:.82rem;line-height:1.5;color:#4b6057;margin:.4rem 0}.password{display:flex;align-items:stretch;gap:.4rem}.password input{flex:1}.password button{margin-top:.35rem;padding:.5rem .7rem}.password label{margin:0}
 button{min-height:2.8rem;border:1px solid #24594d;border-radius:.5rem;padding:.65rem 1rem;font-weight:600;color:#fff;background:#24594d;cursor:pointer}button.secondary{background:#fff;color:#24594d}button:disabled{opacity:.55;cursor:default}button:not(:disabled):hover{background:#183f36;color:#fff}:focus-visible{outline:3px solid #b5680b;outline-offset:3px}#scan{margin-top:.6rem}#credentials{margin-top:.5rem;padding-left:1rem;border-left:2px solid #ced6ce}
 #info{font-size:.85rem;color:#456056;overflow-wrap:anywhere}#result{margin:1rem 0 0;border-radius:.65rem;padding:1rem;background:#eaf2ec;white-space:pre-wrap;overflow-wrap:anywhere}#result:empty{display:none}[role=alert]{color:#8e2424!important}#result[role=alert]{background:#fff0ed}.actions p{font-size:.9rem;color:#4b6057}.actions button{width:100%;margin-top:.5rem}details{font-size:.85rem;color:#4b6057;margin:.75rem 0}summary{cursor:pointer;min-height:2.75rem;display:list-item;align-content:center}#advanced{margin:0;font-size:1rem}#advanced>summary{font-weight:600}footer{font-size:.8rem;color:#4b6057;margin:1rem .2rem}noscript{display:block;padding:1rem;background:#fff0ed}
 @media(min-width:48rem){.grid{grid-template-columns:1fr 1fr}.identity{display:grid;grid-template-columns:1fr 1fr;gap:1rem}.actions button{width:auto;min-width:16rem}}
-@media(forced-colors:active){button,input{border:1px solid ButtonText}:focus-visible{outline-color:Highlight}}
+@media(forced-colors:active){button,input,select{border:1px solid ButtonText}:focus-visible{outline-color:Highlight}}
 </style>
 </head>
 <body>
@@ -39,10 +39,10 @@ button{min-height:2.8rem;border:1px solid #24594d;border-radius:.5rem;padding:.6
 </section>
 <div class="grid">
 <fieldset class="panel"><legend>Wi-Fi</legend>
-<label for="ssid">Network name<input id="ssid" name="ssid" list="networks" maxlength="32" autocapitalize="none" spellcheck="false" aria-describedby="scanStatus" required></label>
-<datalist id="networks"></datalist>
+<label for="networks">Nearby networks<select id="networks" aria-describedby="scanStatus" disabled></select></label>
 <button id="scan" class="secondary" type="button">Refresh networks</button>
 <small id="scanStatus" role="status">Choose a 2.4 GHz network or enter its name manually.</small>
+<label for="ssid">Network name<input id="ssid" name="ssid" maxlength="32" autocapitalize="none" spellcheck="false" aria-describedby="scanStatus" required></label>
 <label for="wifiPassword">Password</label>
 <div class="password"><input id="wifiPassword" name="wifi_password" type="password" maxlength="64" autocomplete="new-password" aria-describedby="wifiHelp"><button id="showWifi" class="secondary" type="button" aria-controls="wifiPassword" aria-pressed="false" aria-label="Show Wi-Fi password">Show</button></div>
 <small id="wifiHelp">Enter the network password, or select open network below.</small>
@@ -64,7 +64,7 @@ button{min-height:2.8rem;border:1px solid #24594d;border-radius:.5rem;padding:.6
 </fieldset>
 </fieldset>
 </div>
-<fieldset id="settingsGroup" class="panel" hidden><legend>Firmware settings</legend><div id="settings" class="identity"></div></fieldset>
+<fieldset id="settingsGroup" class="panel" aria-describedby="settingsHelp" hidden><legend>Firmware settings</legend><small id="settingsHelp">Required settings must be present in the configuration. A required text setting may be empty if the sketch's validator allows it.</small><div id="settings" class="identity"></div></fieldset>
 <details id="advanced" class="panel">
 <summary>Advanced settings</summary>
 <div class="grid">
@@ -161,7 +161,7 @@ async function loadDevice() {
         input.checked = value === true;
       }
       else {
-        input.required = setting.required;
+        input.required = setting.required && input.type === 'number';
         input.value = value === undefined ? '' : value;
         if (input.type === 'number') input.step = setting.type === 'double' ? 'any' : '1';
         if (setting.type === 'ulong') input.min = '0';
@@ -207,15 +207,26 @@ async function loadDevice() {
 }
 async function scanNetworks() {
   el('scan').disabled = true;
+  el('scanStatus').setAttribute('role', 'status');
+  el('scanStatus').textContent = 'Loading nearby networks…';
   try {
     const data = await api('/networks');
+    const ssids = new Set(data.networks.map(network => network.ssid).filter(ssid => ssid));
     el('networks').replaceChildren();
-    for (const ssid of new Set(data.networks.map(network => network.ssid))) {
+    const placeholder = document.createElement('option');
+    placeholder.value = '';
+    placeholder.textContent = ssids.size ? 'Choose a network' : 'No networks found';
+    el('networks').append(placeholder);
+    for (const ssid of ssids) {
       const option = document.createElement('option');
-      option.value = ssid;
+      option.value = option.textContent = ssid;
       el('networks').append(option);
     }
-    el('scanStatus').textContent = 'Network list updated. You can also enter a network name manually.';
+    el('networks').value = ssids.has(el('ssid').value) ? el('ssid').value : '';
+    el('networks').disabled = ssids.size === 0;
+    el('scanStatus').textContent = ssids.size
+      ? 'Choose a network above or enter its name below.'
+      : 'No networks found. Refresh again or enter the network name below.';
   } catch (error) {
     showError('scanStatus', error);
   } finally {
@@ -241,11 +252,17 @@ el('lockAp').onchange = () => {
   el('lockAp').setAttribute('aria-expanded', String(el('lockAp').checked));
 };
 el('ssid').oninput = () => {
+  if (el('networks').value !== el('ssid').value) el('networks').value = '';
   if (el('ssid').value === boundSsid) return;
   el('lockAp').checked = false;
   el('bssid').value = '';
   el('channel').value = '0';
   el('lockAp').onchange();
+};
+el('networks').onchange = () => {
+  if (!el('networks').value) return;
+  el('ssid').value = el('networks').value;
+  el('ssid').oninput();
 };
 el('advanced').addEventListener('invalid', () => { el('advanced').open = true; }, true);
 const octet = '(25[0-5]|2[0-4][0-9]|[01]?[0-9]?[0-9])';
@@ -326,7 +343,7 @@ el('setup').onsubmit = async event => {
   for (const [index, setting] of settings.entries()) {
     const input = el('setting-' + index);
     if (input.type === 'checkbox') config.settings[setting.name] = input.checked;
-    else if (input.value !== '') config.settings[setting.name] =
+    else if (input.value !== '' || (setting.required && input.type === 'text')) config.settings[setting.name] =
       input.type === 'number' ? Number(input.value) : input.value;
     else if (!setting.required && stored && stored.settings
         && Object.prototype.hasOwnProperty.call(stored.settings, setting.name)) config.settings[setting.name] = null;

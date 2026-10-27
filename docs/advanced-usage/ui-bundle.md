@@ -30,6 +30,12 @@ network checkbox to clear the Wi-Fi password. Disabling MQTT authentication
 removes its saved credentials. Fields outside the form, including custom
 settings, are preserved unless explicitly changed.
 Clearing a saved optional firmware setting restores its sketch-defined default.
+Required firmware settings must be present in the configuration, but a required
+string setting may contain an empty string (`""`) if the sketch's validator
+accepts it. Missing the setting and supplying an empty string are different:
+the page includes required empty strings when testing and saving. Required
+numeric settings still need a value. To forbid empty strings, the sketch must
+reject them in its setting validator.
 The [JSON API](../configuration/http-json-api.md) remains available for automated
 provisioning and custom configurators.
 See [Resetting](resetting.md) for explicit factory reset and custom trigger times.
@@ -47,8 +53,11 @@ Homie convention (v3, v4 or v5), without application-specific restrictions.
 Edit `src/Homie/Boot/ConfigUi.html` and run
 `python tools/generate_config_ui.py` to rebuild the compressed flash asset.
 `make config-test` checks that the shipped asset and content-security hashes
-match the source. The page has a 7 KiB compressed transfer budget and no external
-fonts, scripts, styles or browser-storage dependency.
+match the source. The page has an 8 KiB compressed size budget chosen by the
+project to keep firmware size and transfer costs small; this is not an ESP8266
+or ESP32 hardware limit. Available application flash and OTA space depend on the
+target's flash layout and the complete firmware. The page has no external fonts,
+scripts, styles or browser-storage dependency.
 
 An existing `/homie/ui_bundle.gz` in the selected filesystem overrides the
 built-in page. This is optional and remains useful for a custom interface.
