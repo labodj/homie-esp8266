@@ -62,6 +62,7 @@
       "library.properties",
       "src",
       "examples",
+      "tools/generate_config_ui.py",
       "scripts/homie_ota.py",
       "scripts/ota_updater"
     ]

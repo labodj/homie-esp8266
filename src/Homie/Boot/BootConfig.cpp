@@ -362,7 +362,10 @@ void BootConfig::_onCaptivePortal(AsyncWebServerRequest *request) {
     }
   } else if (request->url() == "/" && !HOMIE_FS.exists(CONFIG_UI_BUNDLE_PATH)) {
     AsyncWebServerResponse *response = request->beginResponse(200, "text/html; charset=utf-8",
-      reinterpret_cast<const uint8_t*>(CONFIG_UI), sizeof(CONFIG_UI) - 1);
+      CONFIG_UI, sizeof(CONFIG_UI));
+    response->addHeader(F("Content-Encoding"), F("gzip"));
+    response->addHeader(F("Content-Security-Policy"), FPSTR(CONFIG_UI_CSP));
+    response->addHeader(F("X-Content-Type-Options"), F("nosniff"));
     response->addHeader(F("Cache-Control"), F("no-store"));
     request->send(response);
   } else if (request->url() == "/" && HOMIE_FS.exists(CONFIG_UI_BUNDLE_PATH)) {
@@ -424,7 +427,7 @@ void BootConfig::_onDeviceInfoRequest(AsyncWebServerRequest *request) {
   auto numSettings = IHomieSetting::settings.size();
   auto numNodes = HomieNode::nodes.size();
   DynamicJsonDocument jsonDoc(
-    JSON_OBJECT_SIZE(6) + // Root object
+    JSON_OBJECT_SIZE(7) + // Root object
     JSON_OBJECT_SIZE(2) + // Object "firmware"
     JSON_ARRAY_SIZE(numNodes) + // Array "nodes"
     JSON_OBJECT_SIZE(2) * numNodes + // Objects in "nodes"
@@ -435,6 +438,7 @@ void BootConfig::_onDeviceInfoRequest(AsyncWebServerRequest *request) {
   json["device_id"] = Interface::get().getConfig().isValid()
     ? Interface::get().getConfig().get().deviceId : DeviceId::get();
   json["homie_esp8266_version"] = HOMIE_ESP8266_VERSION;
+  json["homie_convention_version"] = HOMIE_CONVENTION_VERSION;
   JsonObject firmware = json.createNestedObject("firmware");
   firmware["name"] = reinterpret_cast<const char*>(Interface::get().firmware.name);
   firmware["version"] = reinterpret_cast<const char*>(Interface::get().firmware.version);

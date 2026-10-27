@@ -3,8 +3,7 @@ import {readFileSync} from 'node:fs';
 import test from 'node:test';
 import vm from 'node:vm';
 
-const source = readFileSync(new URL('../../src/Homie/Boot/ConfigUi.hpp', import.meta.url), 'utf8');
-const html = source.split('R"HOMIE_UI(')[1].split(')HOMIE_UI"')[0];
+const html = readFileSync(new URL('../../src/Homie/Boot/ConfigUi.html', import.meta.url), 'utf8');
 const script = html.match(/<script>([\s\S]*?)<\/script>/)[1];
 
 // Minimal DOM for exercising the actual inline script without browser dependencies.
@@ -19,15 +18,19 @@ class Element {
   }
   append(child) { this.children.push(child); }
   replaceChildren() { this.children = []; }
+  setAttribute(key, value) { this[key] = value; }
+  addEventListener(event, handler) { this['on' + event] = handler; }
 }
 
-async function fixture({device = {}, failInfo = false, failScan = false, failSave = false, connectionFailure = null, testStatuses = [], stored = null} = {}) {
+async function fixture({device = {}, failInfo = false, failStorage = false, failScan = false, failSave = false, connectionFailure = null, testStatuses = [], stored = null} = {}) {
   const elements = new Map([...html.matchAll(/id="([^"]+)"/g)].map(([, id]) => [id, new Element()]));
   elements.get('fields').disabled = true;
   elements.get('port').value = '1883';
   elements.get('baseTopic').value = 'homie/';
   elements.get('ota').checked = true;
   elements.get('uniqueId').checked = true;
+  elements.get('wifiPassword').type = 'password';
+  elements.get('mqttPassword').type = 'password';
   const calls = [];
   const context = vm.createContext({
     document: {
@@ -53,7 +56,8 @@ async function fixture({device = {}, failInfo = false, failScan = false, failSav
         data = ok ? {networks: [{ssid: '<script>unsafe</script>'}, {ssid: 'Home'}, {ssid: 'Home'}]}
           : {error: 'Initial Wi-Fi scan not finished yet'};
       } else if (path === '/config' && body === undefined) {
-        data = {configured: stored !== null, config: stored || {}};
+        ok = !failStorage;
+        data = ok ? {configured: stored !== null, config: stored || {}} : {error: 'Cannot mount storage. Existing data was preserved.'};
       } else if (path === '/config/test') {
         data = {success: true};
       } else if (path === '/config/status') {
@@ -70,6 +74,19 @@ async function fixture({device = {}, failInfo = false, failScan = false, failSav
   const el = id => context.document.getElementById(id);
   return {el, calls, submit: () => el('setup').onsubmit({preventDefault() {}})};
 }
+
+test('unreadable storage blocks setup instead of offering a replacement hardware ID', async () => {
+  const {el, calls} = await fixture({failStorage: true});
+  assert.equal(el('fields').disabled, true);
+  assert.equal(el('setup').hidden, true);
+  assert.equal(el('deviceId').value, '');
+  assert.equal(el('retry').hidden, false);
+  assert.match(el('info').textContent, /Existing data was preserved/);
+  assert.equal(calls.some(c => c.body !== undefined), false);
+  el('fields').disabled = false;
+  await el('retry').onclick();
+  assert.equal(el('fields').disabled, true);
+});
 
 test('blank device works offline and allows explicit replacement ID and authenticated MQTT', async () => {
   const {el, calls, submit} = await fixture();
@@ -135,6 +152,20 @@ test('firmware settings retain JSON types, optional fields can be omitted', asyn
   await submit();
   const result = calls.find(call => call.path === '/config' && call.body !== undefined).body.settings;
   assert.deepEqual(result, JSON.parse('{"enabled":true,"count":4,"factor":1.5,"text":"hello","__proto__":"safe"}'));
+});
+
+test('clearing saved optional firmware settings restores defaults without dropping unknown settings', async () => {
+  const stored = {device_id: 'sensor', wifi: {ssid: 'Home'}, mqtt: {host: 'broker'},
+    settings: {label: 'old', count: 12, other: 'keep'}};
+  const settings = [{name: 'label', type: 'string', required: false, default: 'default'},
+    {name: 'count', type: 'long', required: false, default: 2}];
+  const {el, calls, submit} = await fixture({stored, device: {settings}});
+  el('setting-0').value = ''; el('setting-1').value = '';
+  await submit();
+  const body = calls.find(c => c.path === '/config/test').body;
+  assert.deepEqual(body.settings, {label: null, count: null});
+  assert.equal(body.device_id, 'sensor');
+  assert.deepEqual(body, calls.find(c => c.path === '/config' && c.body !== undefined).body);
 });
 
 test('device-info failure blocks submission and offers retry', async () => {
@@ -219,6 +250,27 @@ test('reconfiguration preloads stored values, preserves ID and omits unchanged s
   assert.equal('username' in body.mqtt, false); assert.equal('password' in body.mqtt, false);
 });
 
+test('changing SSID clears the obsolete BSSID and channel, preserving logical ID', async () => {
+  const stored = {device_id: 'j4', wifi: {ssid: 'Old', bssid: 'aa:bb:cc:dd:ee:ff', channel: 6}, mqtt: {host: 'broker'}};
+  const {el, calls, submit} = await fixture({stored});
+  el('ssid').value = 'New';
+  await submit();
+  const body = calls.find(c => c.path === '/config/test').body;
+  assert.equal(body.wifi.bssid, null); assert.equal(body.wifi.channel, null);
+  assert.equal(body.device_id, 'j4');
+});
+
+test('password visibility controls expose their state without changing values', async () => {
+  const {el} = await fixture();
+  el('wifiPassword').value = 'private';
+  el('showWifi').onclick(); assert.equal(el('wifiPassword').type, 'text');
+  assert.equal(el('showWifi')['aria-pressed'], 'true');
+  el('showWifi').onclick(); assert.equal(el('wifiPassword').type, 'password');
+  assert.equal(el('wifiPassword').value, 'private');
+  el('openWifi').checked = true; el('openWifi').onchange();
+  assert.equal(el('wifiPassword').disabled, true);
+});
+
 test('clearing stored Wi-Fi password is explicit and disabling MQTT auth removes old credentials', async () => {
   const {el, calls, submit} = await fixture({stored: {device_id: 'j4', wifi: {ssid: 'Old'}, mqtt: {host: 'broker.invalid', auth: true}}});
   el('openWifi').checked = true; el('auth').checked = false;
@@ -228,8 +280,94 @@ test('clearing stored Wi-Fi password is explicit and disabling MQTT auth removes
   assert.equal(body.mqtt.username, null); assert.equal(body.mqtt.password, null);
 });
 
-test('the form enforces IDs compatible with LSH discovery', () => {
-  const pattern = new RegExp('^(?:' + html.match(/id="deviceId"[^>]*pattern="([^"]+)"/)[1] + ')$');
-  for (const id of ['j4', 'my-bridge', 'bridge2']) assert.ok(pattern.test(id));
-  for (const id of ['Bad', 'a/b', 'a+b', 'a b', 'my--bridge', '-device', 'device-']) assert.equal(pattern.test(id), false);
+test('the generic UI follows Homie v3/v4/v5 ID rules without application-specific constraints', async () => {
+  for (const version of [3, 4, 5]) {
+    const {el} = await fixture({device: {homie_convention_version: version}});
+    const pattern = new RegExp('^(?:' + el('deviceId').pattern + ')$');
+    for (const id of ['sensor', 'my--sensor', 'temperature2']) assert.ok(pattern.test(id));
+    for (const id of ['Bad', 'a/b', 'a+b', 'a b', '']) assert.equal(pattern.test(id), false);
+    for (const id of ['-sensor', 'sensor-', '-']) assert.equal(pattern.test(id), version === 5);
+  }
+});
+
+const advancedStored = {
+  device_id: 'sensor', device_stats_interval: 300,
+  wifi: {ssid: 'Home', ip: '192.0.2.10', mask: '255.255.255.0', gw: '192.0.2.1',
+    dns1: '192.0.2.2', dns2: '192.0.2.3', bssid: 'aa:bb:cc:dd:ee:ff', channel: 6},
+  mqtt: {host: 'broker.example'}
+};
+
+test('advanced values preload and remain effective with the panel closed', async () => {
+  const {el, calls, submit} = await fixture({stored: advancedStored});
+  assert.equal(Boolean(el('advanced').open), false);
+  assert.equal(el('useStatic').checked, true); assert.equal(el('staticFields').disabled, false);
+  assert.equal(el('lockAp').checked, true); assert.equal(el('pinFields').disabled, false);
+  assert.equal(el('ip').value, '192.0.2.10'); assert.equal(el('dns2').value, '192.0.2.3');
+  assert.equal(el('statsInterval').value, '300');
+  await submit();
+  const body = calls.find(c => c.path === '/config/test').body;
+  for (const field of ['ip', 'mask', 'gw', 'dns1', 'dns2', 'bssid', 'channel']) {
+    assert.equal(body.wifi[field], advancedStored.wifi[field]);
+  }
+  assert.equal('device_stats_interval' in body, false, 'unchanged interval stays in stored configuration');
+  assert.equal(body.device_id, 'sensor');
+});
+
+test('DHCP and roaming explicitly remove all previous static and binding values', async () => {
+  const {el, calls, submit} = await fixture({stored: advancedStored});
+  el('useStatic').checked = false; el('useStatic').onchange();
+  el('lockAp').checked = false; el('lockAp').onchange();
+  assert.equal(el('staticFields').disabled, true); assert.equal(el('pinFields').disabled, true);
+  assert.equal(el('dns1').required, false);
+  await submit();
+  const body = calls.find(c => c.path === '/config/test').body;
+  for (const field of ['ip', 'mask', 'gw', 'dns1', 'dns2', 'bssid', 'channel']) assert.equal(body.wifi[field], null);
+});
+
+test('new static address, optional DNS and zero automatic channel use typed JSON', async () => {
+  const {el, calls, submit} = await fixture();
+  el('ssid').value = 'Home';
+  el('useStatic').checked = true; el('useStatic').onchange();
+  el('ip').value = '192.0.2.10'; el('mask').value = '255.255.255.0'; el('gw').value = '192.0.2.1';
+  el('dns1').value = '192.0.2.2';
+  el('lockAp').checked = true; el('lockAp').onchange(); el('bssid').value = 'aa:bb:cc:dd:ee:ff';
+  el('statsInterval').value = '120';
+  await submit();
+  const tested = calls.find(c => c.path === '/config/test').body;
+  assert.equal(tested.device_stats_interval, 120); assert.equal(tested.wifi.channel, 0);
+  assert.equal(tested.wifi.dns2, null); assert.equal(tested.wifi.ip, '192.0.2.10');
+  assert.deepEqual(tested, calls.find(c => c.path === '/config' && c.body !== undefined).body);
+});
+
+test('SSID edits clear old binding but allow explicitly selecting a new access point', async () => {
+  const {el, calls, submit} = await fixture({stored: advancedStored});
+  el('ssid').value = 'New'; el('ssid').oninput();
+  assert.equal(el('lockAp').checked, false); assert.equal(el('pinFields').disabled, true);
+  assert.equal(el('bssid').value, '');
+  el('bssid').value = '11:22:33:44:55:66'; el('channel').value = '11';
+  el('lockAp').checked = true; el('lockAp').onchange();
+  await submit();
+  const body = calls.find(c => c.path === '/config/test').body;
+  assert.equal(body.wifi.bssid, '11:22:33:44:55:66'); assert.equal(body.wifi.channel, 11);
+});
+
+test('clearing any stored interval restores the default and zero remains an explicit value', async () => {
+  for (const interval of [0, 60, 300]) {
+    const first = await fixture({stored: {...advancedStored, device_stats_interval: interval}});
+    first.el('statsInterval').value = '';
+    await first.submit(); assert.equal(first.calls.find(c => c.path === '/config/test').body.device_stats_interval, null);
+  }
+  const second = await fixture(); second.el('statsInterval').value = '0';
+  await second.submit(); assert.equal(second.calls.find(c => c.path === '/config/test').body.device_stats_interval, 0);
+});
+
+test('advanced validation opens the panel, validates IPv4 and requires a primary DNS', async () => {
+  const {el} = await fixture();
+  const ip = new RegExp('^(?:' + el('ip').pattern + ')$');
+  for (const address of ['0.0.0.0', '192.168.1.10', '255.255.255.255']) assert.ok(ip.test(address));
+  for (const address of ['256.1.2.3', '1.2.3', '1.2.3.4.5', 'not-an-ip']) assert.equal(ip.test(address), false);
+  el('useStatic').checked = true; el('useStatic').onchange();
+  el('dns2').value = '192.0.2.3'; el('dns2').oninput(); assert.equal(el('dns1').required, true);
+  el('dns2').value = ''; el('dns2').oninput(); assert.equal(el('dns1').required, false);
+  el('advanced').oninvalid(); assert.equal(el('advanced').open, true);
 });

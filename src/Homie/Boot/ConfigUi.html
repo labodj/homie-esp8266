@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Device setup</title>
+<style>
+:root{font:16px/1.5 system-ui,sans-serif;color:#20342e;background:#f4f5f0;accent-color:#24594d}
+*{box-sizing:border-box}[hidden]{display:none!important}body{margin:0}main{max-width:62rem;margin:auto;padding:clamp(1rem,4vw,3rem)}
+header{margin-bottom:1.5rem}.eyebrow{font-size:.75rem;font-weight:700;letter-spacing:.12em;color:#456056}h1{font-size:clamp(1.9rem,5vw,2.7rem);line-height:1.15;letter-spacing:-.035em;margin:.5rem 0 .75rem}p{margin:.5rem 0 1rem}.intro{max-width:45rem;color:#4b6057}
+fieldset{min-width:0;border:0;padding:0;margin:0}#fields{display:grid;gap:1rem}.panel,.actions{min-width:0;padding:clamp(1rem,3vw,1.5rem);border:1px solid #ced6ce;border-radius:1rem;background:#fff}.panel legend{float:left;width:100%;padding:0;margin:0 0 .5rem;font-weight:700}.panel legend+*{clear:both}
+.sectionTitle{font-size:1rem;margin:0 0 .5rem}.grid{display:grid;gap:1rem}.row{display:grid;grid-template-columns:minmax(0,1fr) 6rem;gap:1rem}label{min-width:0;overflow-wrap:anywhere;display:block;margin:.75rem 0 .25rem;font-weight:600;font-size:.94rem}input,button{font:inherit;font-size:1rem}input:not([type=checkbox]){display:block;width:100%;min-width:0;min-height:2.9rem;margin-top:.35rem;padding:.65rem .8rem;font-weight:400;color:inherit;background:#fff;border:1px solid #7e9287;border-radius:.5rem}input::placeholder{color:#5e7167}input[type=checkbox]{width:1.15rem;height:1.15rem;margin:.15rem 0;flex:none}.check{display:flex;align-items:center;gap:.7rem;min-height:2.75rem;font-weight:400}.check input{order:-1}
+small,.hint{display:block;font-size:.82rem;line-height:1.5;color:#4b6057;margin:.4rem 0}.password{display:flex;align-items:stretch;gap:.4rem}.password input{flex:1}.password button{margin-top:.35rem;padding:.5rem .7rem}.password label{margin:0}
+button{min-height:2.8rem;border:1px solid #24594d;border-radius:.5rem;padding:.65rem 1rem;font-weight:600;color:#fff;background:#24594d;cursor:pointer}button.secondary{background:#fff;color:#24594d}button:disabled{opacity:.55;cursor:default}button:not(:disabled):hover{background:#183f36;color:#fff}:focus-visible{outline:3px solid #b5680b;outline-offset:3px}#scan{margin-top:.6rem}#credentials{margin-top:.5rem;padding-left:1rem;border-left:2px solid #ced6ce}
+#info{font-size:.85rem;color:#456056;overflow-wrap:anywhere}#result{margin:1rem 0 0;border-radius:.65rem;padding:1rem;background:#eaf2ec;white-space:pre-wrap;overflow-wrap:anywhere}#result:empty{display:none}[role=alert]{color:#8e2424!important}#result[role=alert]{background:#fff0ed}.actions p{font-size:.9rem;color:#4b6057}.actions button{width:100%;margin-top:.5rem}details{font-size:.85rem;color:#4b6057;margin:.75rem 0}summary{cursor:pointer;min-height:2.75rem;display:list-item;align-content:center}#advanced{margin:0;font-size:1rem}#advanced>summary{font-weight:600}footer{font-size:.8rem;color:#4b6057;margin:1rem .2rem}noscript{display:block;padding:1rem;background:#fff0ed}
+@media(min-width:48rem){.grid{grid-template-columns:1fr 1fr}.identity{display:grid;grid-template-columns:1fr 1fr;gap:1rem}.actions button{width:auto;min-width:16rem}}
+@media(forced-colors:active){button,input{border:1px solid ButtonText}:focus-visible{outline-color:Highlight}}
+</style>
+</head>
+<body>
+<main>
+<header>
+<span class="eyebrow">LOCAL DEVICE SETUP</span>
+<h1>Set up your device.</h1>
+<p class="intro">Set up your Wi-Fi and MQTT connection. Everything runs on this device, with no Internet connection needed.</p>
+<p id="info" role="status" aria-live="polite">Loading device information…</p>
+<button id="retry" class="secondary" type="button" hidden>Try loading again</button>
+</header>
+<form id="setup" autocomplete="off" aria-busy="false" hidden>
+<fieldset id="fields" disabled aria-label="Device configuration">
+<section class="panel" aria-labelledby="identityTitle">
+<h2 id="identityTitle" class="sectionTitle">Device identity</h2>
+<div class="identity">
+<label for="name">Device name<input id="name" name="name" maxlength="64" required placeholder="Living room sensor"></label>
+<label for="deviceId">Device ID<input id="deviceId" name="device_id" maxlength="32" pattern="[a-z0-9]([a-z0-9\-]*[a-z0-9])?" autocapitalize="none" spellcheck="false" aria-describedby="idHelp" required></label>
+</div>
+<small id="idHelp">Replacing a device? Keep its existing ID and switch the old device off before saving.</small>
+</section>
+<div class="grid">
+<fieldset class="panel"><legend>Wi-Fi</legend>
+<label for="ssid">Network name<input id="ssid" name="ssid" list="networks" maxlength="32" autocapitalize="none" spellcheck="false" aria-describedby="scanStatus" required></label>
+<datalist id="networks"></datalist>
+<button id="scan" class="secondary" type="button">Refresh networks</button>
+<small id="scanStatus" role="status">Choose a 2.4 GHz network or enter its name manually.</small>
+<label for="wifiPassword">Password</label>
+<div class="password"><input id="wifiPassword" name="wifi_password" type="password" maxlength="64" autocomplete="new-password" aria-describedby="wifiHelp"><button id="showWifi" class="secondary" type="button" aria-controls="wifiPassword" aria-pressed="false" aria-label="Show Wi-Fi password">Show</button></div>
+<small id="wifiHelp">Enter the network password, or select open network below.</small>
+<label class="check"><input id="openWifi" type="checkbox"> Open network (no password)</label>
+</fieldset>
+<fieldset class="panel"><legend>MQTT</legend>
+<div class="row">
+<label for="host">Broker address<input id="host" name="host" maxlength="255" placeholder="192.168.1.10" inputmode="url" autocapitalize="none" spellcheck="false" required></label>
+<label for="port">Port<input id="port" name="port" type="number" min="1" max="65535" value="1883" inputmode="numeric" required></label>
+</div>
+<label for="baseTopic">Base topic<input id="baseTopic" name="base_topic" maxlength="48" value="homie/" autocapitalize="none" spellcheck="false" aria-describedby="topicHelp" required></label>
+<small id="topicHelp">Keep the topic used by your other devices. The default is homie/.</small>
+<label class="check"><input id="auth" type="checkbox" aria-controls="credentials" aria-expanded="false"> Broker requires a username and password</label>
+<fieldset id="credentials" disabled hidden><legend>Broker credentials</legend>
+<label for="username">Username<input id="username" name="username" maxlength="32" autocomplete="off" autocapitalize="none" spellcheck="false" aria-describedby="mqttHelp"></label>
+<label for="mqttPassword">Password</label>
+<div class="password"><input id="mqttPassword" name="mqtt_password" type="password" maxlength="32" autocomplete="new-password" aria-describedby="mqttHelp"><button id="showMqtt" class="secondary" type="button" aria-controls="mqttPassword" aria-pressed="false" aria-label="Show MQTT password">Show</button></div>
+<small id="mqttHelp">Enter your broker credentials.</small>
+</fieldset>
+</fieldset>
+</div>
+<fieldset id="settingsGroup" class="panel" hidden><legend>Firmware settings</legend><div id="settings" class="identity"></div></fieldset>
+<details id="advanced" class="panel">
+<summary>Advanced settings</summary>
+<div class="grid">
+<fieldset><legend>IP configuration</legend>
+<label class="check"><input id="useStatic" type="checkbox" aria-controls="staticFields" aria-expanded="false"> Use a static IPv4 address</label>
+<small>Off uses automatic addressing (DHCP).</small>
+<fieldset id="staticFields" disabled hidden><legend>Static IPv4</legend>
+<div class="identity">
+<label for="ip">IP address<input id="ip" maxlength="15" inputmode="url" spellcheck="false" placeholder="192.168.1.50" required></label>
+<label for="mask">Subnet mask<input id="mask" maxlength="15" inputmode="url" spellcheck="false" placeholder="255.255.255.0" required></label>
+<label for="gw">Gateway<input id="gw" maxlength="15" inputmode="url" spellcheck="false" placeholder="192.168.1.1" required></label>
+<label for="dns1">Primary DNS<input id="dns1" maxlength="15" inputmode="url" spellcheck="false" aria-describedby="dnsHelp"></label>
+<label for="dns2">Secondary DNS<input id="dns2" maxlength="15" inputmode="url" spellcheck="false" aria-describedby="dnsHelp"></label>
+</div>
+<small id="dnsHelp">DNS is optional; provide it for broker hostnames. Secondary DNS requires primary DNS.</small>
+</fieldset>
+</fieldset>
+<fieldset><legend>Access point &amp; statistics</legend>
+<label class="check"><input id="lockAp" type="checkbox" aria-controls="pinFields" aria-expanded="false"> Bind to one access point</label>
+<small>Off allows roaming within the network.</small>
+<fieldset id="pinFields" disabled hidden><legend>Access point binding</legend>
+<label for="bssid">BSSID (access point MAC)<input id="bssid" maxlength="17" pattern="([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}" placeholder="AA:BB:CC:DD:EE:FF" autocapitalize="none" spellcheck="false" required></label>
+<label for="channel">Channel<input id="channel" type="number" min="0" max="65535" step="1" value="0" inputmode="numeric" aria-describedby="channelHelp" required></label>
+<small id="channelHelp">0 scans automatically. Use a channel supported by your device.</small>
+</fieldset>
+<label for="statsInterval">Statistics interval (seconds)<input id="statsInterval" type="number" min="0" max="65535" step="1" value="60" placeholder="60" inputmode="numeric" aria-describedby="statsHelp"></label>
+<small id="statsHelp">Blank restores 60 seconds; 0 publishes continuously.</small>
+</fieldset>
+</div>
+</details>
+<div class="actions">
+<label class="check"><input id="ota" type="checkbox" checked> Allow firmware updates over MQTT</label>
+<label class="check"><input id="uniqueId" type="checkbox" required aria-describedby="idHelp"> No other online device uses this ID.</label>
+<p>We check Wi-Fi and MQTT before saving. If either check fails, your current configuration stays unchanged.</p>
+<details><summary>What happens after saving?</summary><p>The device restarts and closes this hotspot. Reconnect to your usual Wi-Fi to check normal operation and MQTT topic permissions.</p></details>
+<button id="save" type="submit">Test, save and restart</button>
+</div>
+</fieldset>
+</form>
+<p id="result" role="status" aria-live="polite" aria-atomic="true" tabindex="-1"></p>
+<footer>Stored passwords stay on the device. Leave unchanged credentials empty when reconfiguring.</footer>
+<noscript>JavaScript is required for setup. Enable it, then reload this page.</noscript>
+</main>
+<script>
+'use strict';
+const el = id => document.getElementById(id);
+let settings = [];
+let stored = null;
+let boundSsid = '';
+const addressFields = ['ip', 'mask', 'gw', 'dns1', 'dns2'];
+async function api(path, body) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 15000);
+  try {
+    const response = await fetch(path, {
+      method: body === undefined ? 'GET' : 'PUT',
+      headers: body === undefined ? {} : {'Content-Type': 'application/json'},
+      body: body === undefined ? undefined : JSON.stringify(body),
+      cache: 'no-store', signal: controller.signal
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || 'Request failed (' + response.status + ')');
+    return data;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+function showError(target, error) {
+  el(target).setAttribute('role', 'alert');
+  el(target).textContent = error.name === 'AbortError'
+    ? 'Device did not respond. Stay connected to its hotspot and try again.' : error.message;
+}
+async function loadDevice() {
+  el('setup').hidden = true;
+  el('fields').disabled = true;
+  el('retry').hidden = true;
+  try {
+    const device = await api('/device-info');
+    const saved = await api('/config');
+    stored = saved.configured ? saved.config : null;
+    settings = device.settings || [];
+    el('settings').replaceChildren();
+    for (const [index, setting] of settings.entries()) {
+      const label = document.createElement('label');
+      label.textContent = setting.description || setting.name;
+      const input = document.createElement('input');
+      input.id = 'setting-' + index;
+      input.type = setting.type === 'bool' ? 'checkbox' :
+        (['long', 'ulong', 'double'].includes(setting.type) ? 'number' : 'text');
+      const value = stored && stored.settings && Object.prototype.hasOwnProperty.call(stored.settings, setting.name)
+        ? stored.settings[setting.name] : setting.default;
+      if (input.type === 'checkbox') {
+        label.className = 'check';
+        input.checked = value === true;
+      }
+      else {
+        input.required = setting.required;
+        input.value = value === undefined ? '' : value;
+        if (input.type === 'number') input.step = setting.type === 'double' ? 'any' : '1';
+        if (setting.type === 'ulong') input.min = '0';
+      }
+      label.append(input);
+      el('settings').append(label);
+    }
+    el('settingsGroup').hidden = settings.length === 0;
+    el('deviceId').value = (stored && stored.device_id) || device.device_id || device.hardware_device_id;
+    el('deviceId').pattern = device.homie_convention_version === 5
+      ? '[a-z0-9\\-]+' : '[a-z0-9]([a-z0-9\\-]*[a-z0-9])?';
+    if (stored) {
+      el('name').value = stored.name || '';
+      el('ssid').value = stored.wifi.ssid;
+      el('host').value = stored.mqtt.host;
+      el('port').value = stored.mqtt.port || 1883;
+      el('baseTopic').value = stored.mqtt.base_topic || 'homie/';
+      el('auth').checked = stored.mqtt.auth === true;
+      el('auth').onchange();
+      el('ota').checked = !!(stored.ota && stored.ota.enabled);
+      el('wifiHelp').textContent = 'Leave empty to keep the stored password. For an open network, select the checkbox below.';
+      el('mqttHelp').textContent = 'Leave credentials empty to keep the stored values. Enter only the values you want to replace.';
+    }
+    const wifi = stored ? stored.wifi : {};
+    el('useStatic').checked = !!wifi.ip;
+    for (const field of addressFields) el(field).value = wifi[field] || '';
+    el('useStatic').onchange();
+    el('lockAp').checked = !!wifi.bssid;
+    el('bssid').value = wifi.bssid || '';
+    el('channel').value = wifi.channel === undefined ? '0' : String(wifi.channel);
+    el('lockAp').onchange();
+    el('statsInterval').value = stored && stored.device_stats_interval !== undefined
+      ? String(stored.device_stats_interval) : '60';
+    el('info').textContent = device.firmware.name + ' ' + device.firmware.version;
+    el('info').setAttribute('role', 'status');
+    el('fields').disabled = false;
+    el('setup').hidden = false;
+    scanNetworks();
+  } catch (error) {
+    showError('info', error);
+    el('retry').hidden = false;
+  }
+}
+async function scanNetworks() {
+  el('scan').disabled = true;
+  try {
+    const data = await api('/networks');
+    el('networks').replaceChildren();
+    for (const ssid of new Set(data.networks.map(network => network.ssid))) {
+      const option = document.createElement('option');
+      option.value = ssid;
+      el('networks').append(option);
+    }
+    el('scanStatus').textContent = 'Network list updated. You can also enter a network name manually.';
+  } catch (error) {
+    showError('scanStatus', error);
+  } finally {
+    el('scan').disabled = false;
+  }
+}
+el('auth').onchange = () => {
+  el('credentials').hidden = el('credentials').disabled = !el('auth').checked;
+  el('auth').setAttribute('aria-expanded', String(el('auth').checked));
+};
+el('openWifi').onchange = () => { el('wifiPassword').disabled = el('openWifi').checked; };
+el('dns2').oninput = () => {
+  el('dns1').required = el('useStatic').checked && el('dns2').value.trim() !== '';
+};
+el('useStatic').onchange = () => {
+  el('staticFields').hidden = el('staticFields').disabled = !el('useStatic').checked;
+  el('useStatic').setAttribute('aria-expanded', String(el('useStatic').checked));
+  el('dns2').oninput();
+};
+el('lockAp').onchange = () => {
+  boundSsid = el('ssid').value;
+  el('pinFields').hidden = el('pinFields').disabled = !el('lockAp').checked;
+  el('lockAp').setAttribute('aria-expanded', String(el('lockAp').checked));
+};
+el('ssid').oninput = () => {
+  if (el('ssid').value === boundSsid) return;
+  el('lockAp').checked = false;
+  el('bssid').value = '';
+  el('channel').value = '0';
+  el('lockAp').onchange();
+};
+el('advanced').addEventListener('invalid', () => { el('advanced').open = true; }, true);
+const octet = '(25[0-5]|2[0-4][0-9]|[01]?[0-9]?[0-9])';
+for (const field of addressFields) el(field).pattern = octet + '(\\.' + octet + '){3}';
+for (const [button, field, name] of [['showWifi', 'wifiPassword', 'Wi-Fi'], ['showMqtt', 'mqttPassword', 'MQTT']]) {
+  el(button).onclick = () => {
+    const visible = el(field).type === 'password';
+    el(field).type = visible ? 'text' : 'password';
+    el(button).textContent = visible ? 'Hide' : 'Show';
+    el(button).setAttribute('aria-pressed', String(visible));
+    el(button).setAttribute('aria-label', (visible ? 'Hide ' : 'Show ') + name + ' password');
+  };
+}
+el('scan').onclick = scanNetworks;
+el('retry').onclick = loadDevice;
+async function testConnections(config) {
+  await api('/config/test', config);
+  const deadline = Date.now() + 70000;
+  while (Date.now() < deadline) {
+    let status;
+    try { status = await api('/config/status'); }
+    catch (error) {
+      // Joining a Wi-Fi network can change the AP channel and interrupt a phone.
+      el('result').textContent = 'Reconnect to this hotspot. The connection test is still running; nothing has been saved.';
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      continue;
+    }
+    if (status.status === 'ready') return;
+    if (status.status === 'failed') throw new Error(status.error);
+    if (status.status === 'saved') throw new Error('Configuration was already saved. Reconnect to your usual Wi-Fi and check the device.');
+    el('result').textContent = status.status === 'mqtt'
+      ? 'Wi-Fi connected. Testing MQTT authentication...'
+      : 'Testing Wi-Fi (2.4 GHz). Stay connected to this hotspot...';
+    await new Promise(resolve => setTimeout(resolve, 750));
+  }
+  throw new Error('Test confirmation was not received. Nothing was saved by this page. Stay on the hotspot and retry.');
+}
+el('setup').onsubmit = async event => {
+  event.preventDefault();
+  if (el('fields').disabled) return;
+  if (!el('uniqueId').checked) {
+    el('result').textContent = 'Confirm that this device ID is unique or switch off the previous device first.';
+    return;
+  }
+  const config = {
+    name: el('name').value, device_id: el('deviceId').value,
+    wifi: {ssid: el('ssid').value, password: el('wifiPassword').value},
+    mqtt: {host: el('host').value, port: Number(el('port').value),
+      base_topic: el('baseTopic').value, auth: el('auth').checked},
+    ota: {enabled: el('ota').checked}, settings: Object.create(null)
+  };
+  if (stored && !el('wifiPassword').value && !el('openWifi').checked) delete config.wifi.password;
+  if (el('useStatic').checked) {
+    for (const field of addressFields) config.wifi[field] = el(field).value.trim() || null;
+  } else if (stored) {
+    for (const field of addressFields) if (stored.wifi[field] !== undefined) config.wifi[field] = null;
+  }
+  if (el('lockAp').checked && config.wifi.ssid === boundSsid) {
+    config.wifi.bssid = el('bssid').value.trim();
+    config.wifi.channel = Number(el('channel').value);
+  } else if (stored && (stored.wifi.bssid !== undefined || stored.wifi.channel !== undefined)) {
+    config.wifi.bssid = null;
+    config.wifi.channel = null;
+  }
+  const interval = el('statsInterval').value;
+  const previousInterval = stored && stored.device_stats_interval !== undefined ? stored.device_stats_interval : 60;
+  if (interval === '') {
+    if (stored && stored.device_stats_interval !== undefined) config.device_stats_interval = null;
+  } else if (Number(interval) !== previousInterval) config.device_stats_interval = Number(interval);
+  if (el('openWifi').checked) config.wifi.password = '';
+  if (config.mqtt.auth) {
+    if (!stored || el('username').value) config.mqtt.username = el('username').value;
+    if (!stored || el('mqttPassword').value) config.mqtt.password = el('mqttPassword').value;
+  } else if (stored) {
+    config.mqtt.username = null;
+    config.mqtt.password = null;
+  }
+  for (const [index, setting] of settings.entries()) {
+    const input = el('setting-' + index);
+    if (input.type === 'checkbox') config.settings[setting.name] = input.checked;
+    else if (input.value !== '') config.settings[setting.name] =
+      input.type === 'number' ? Number(input.value) : input.value;
+    else if (!setting.required && stored && stored.settings
+        && Object.prototype.hasOwnProperty.call(stored.settings, setting.name)) config.settings[setting.name] = null;
+  }
+  if (new TextEncoder().encode(JSON.stringify(config)).length >= 1000) {
+    el('result').textContent = 'Configuration is too large. Shorten the names or firmware settings and try again.';
+    return;
+  }
+  el('fields').disabled = true;
+  el('setup').setAttribute('aria-busy', 'true');
+  el('result').setAttribute('role', 'status');
+  el('save').textContent = 'Checking connections…';
+  el('result').textContent = 'Testing connection settings...';
+  try {
+    await testConnections(config);
+  } catch (error) {
+    showError('result', error);
+    el('fields').disabled = false;
+    el('setup').setAttribute('aria-busy', 'false');
+    el('save').textContent = 'Test, save and restart';
+    return;
+  }
+  el('result').textContent = 'Saving verified configuration...';
+  el('save').textContent = 'Saving…';
+  try {
+    await api('/config', config);
+    el('result').textContent = 'Configuration saved. The device is restarting and will close setup and its hotspot. Reconnect to your usual Wi-Fi.';
+    el('save').textContent = 'Configuration saved';
+  } catch (error) {
+    showError('result', error);
+    el('result').textContent += ' If the hotspot closed, saving may already have succeeded: reconnect to your usual Wi-Fi and check the device before retrying.';
+    el('fields').disabled = false;
+    el('save').textContent = 'Test, save and restart';
+  } finally {
+    el('setup').setAttribute('aria-busy', 'false');
+  }
+};
+loadDevice();
+</script>
+</body>
+</html>

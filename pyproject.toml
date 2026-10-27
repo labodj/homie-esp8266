@@ -1,7 +1,7 @@
 [tool.ruff]
 line-length = 100
 target-version = "py311"
-include = ["scripts/homie_ota.py", "scripts/ota_updater/*.py"]
+include = ["scripts/homie_ota.py", "scripts/ota_updater/*.py", "tools/generate_config_ui.py", "tests/config/test_ui_asset.py"]
 src = ["scripts"]
 extend-exclude = ["scripts/firmware_parser"]
 
@@ -21,6 +21,8 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
+"tools/generate_config_ui.py" = ["INP001"] # Standalone CLI, not a Python package.
+"tests/config/test_ui_asset.py" = ["INP001", "D103", "S101", "S603", "PLR2004"]
 "scripts/ota_updater/test_ota_updater.py" = [
   "D101",
   "D102",
@@ -47,4 +49,5 @@ files = [
   "scripts/homie_ota.py",
   "scripts/ota_updater/ota_updater.py",
   "scripts/ota_updater/test_ota_updater.py",
+  "tools/generate_config_ui.py",
 ]

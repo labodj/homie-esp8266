@@ -1,6 +1,6 @@
 PYTHON ?= python3
 MARKDOWNLINT ?= npx --yes markdownlint-cli2@0.24.0
-PYTHON_OTA_FILES := scripts/homie_ota.py scripts/ota_updater/ota_updater.py scripts/ota_updater/test_ota_updater.py
+PYTHON_CHECK_FILES := scripts/homie_ota.py scripts/ota_updater/ota_updater.py scripts/ota_updater/test_ota_updater.py tools/generate_config_ui.py tests/config/test_ui_asset.py
 OTA_CORE_DIR ?= $(HOME)/.platformio/packages/framework-arduinoespressif32/cores/esp32
 MQTT_CLIENT_DIR ?=
 ARDUINOJSON_DIR ?=
@@ -22,7 +22,21 @@ config-connection-test:
 	  "$$tmp/config-test"; \
 	done
 
-config-test: config-storage-test config-reset-test config-connection-test
+config-filesystem-test:
+	@set -eu; tmp=$$(mktemp -d); trap 'rm -rf "$$tmp"' EXIT; \
+	for arch in ESP32 ESP8266; do \
+	for littlefs in 0 1; do \
+	  $(CXX) -std=c++11 -O1 -g -Wall -Wextra -Werror \
+	    -fsanitize=address,undefined -fno-sanitize-recover=all -fno-omit-frame-pointer \
+	    -D$$arch -DHOMIE_USE_LITTLEFS=$$littlefs tests/config/test_filesystem.cpp -o "$$tmp/config-test"; \
+	  "$$tmp/config-test"; \
+	done; \
+	done
+
+config-ui-check:
+	$(PYTHON) tools/generate_config_ui.py --check
+
+config-test: config-ui-check config-storage-test config-reset-test config-connection-test config-filesystem-test
 	node --test tests/config/test_ui.mjs
 
 # Supply an installed espMqttClient checkout; CI installs the manifest's exact pin.
@@ -73,19 +87,19 @@ cpplint:
 	cpplint --repository=. --recursive --filter=-whitespace/line_length,-legal/copyright,-runtime/printf,-build/include,-build/namespace,-runtime/int,-whitespace/comments,-runtime/threadsafe_fn,-whitespace/indent_namespace,-runtime/references,-whitespace/newline,-whitespace/parens,-whitespace/braces ./src
 
 python-format:
-	$(PYTHON) -m ruff format $(PYTHON_OTA_FILES)
+	$(PYTHON) -m ruff format $(PYTHON_CHECK_FILES)
 
 python-format-check:
-	$(PYTHON) -m ruff format --check $(PYTHON_OTA_FILES)
+	$(PYTHON) -m ruff format --check $(PYTHON_CHECK_FILES)
 
 python-lint:
-	$(PYTHON) -m ruff check $(PYTHON_OTA_FILES)
+	$(PYTHON) -m ruff check $(PYTHON_CHECK_FILES)
 
 python-typecheck:
 	$(PYTHON) -m mypy
 
 python-test:
-	$(PYTHON) -m pytest scripts/ota_updater/test_ota_updater.py
+	$(PYTHON) -m pytest scripts/ota_updater/test_ota_updater.py tests/config/test_ui_asset.py
 
 python-check: python-format-check python-lint python-typecheck python-test
 
@@ -100,4 +114,4 @@ docs-build:
 
 docs-check: docs-lint docs-build
 
-.PHONY: config-test config-storage-test config-reset-test config-connection-test mqtt-test mqtt-message-test ota-test cpplint python-format python-format-check python-lint python-typecheck python-test python-check docs-lint docs-fix docs-build docs-check
+.PHONY: config-test config-ui-check config-storage-test config-reset-test config-connection-test config-filesystem-test mqtt-test mqtt-message-test ota-test cpplint python-format python-format-check python-lint python-typecheck python-test python-check docs-lint docs-fix docs-build docs-check
