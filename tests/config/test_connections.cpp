@@ -1,5 +1,9 @@
 // Run the production HTTP handlers and foreground loop with deterministic transports.
+// GCC 13 warns on ArduinoJson's zero-copy storage before startString initializes it.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wuninitialized"
 #include <ArduinoJson.h>
+#pragma GCC diagnostic pop
 #include <atomic>
 #include <cassert>
 #include <cstdint>
