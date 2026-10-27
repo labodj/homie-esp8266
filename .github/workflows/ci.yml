@@ -145,6 +145,7 @@ jobs:
         run: python -m pip install --upgrade platformio -r scripts/ota_updater/requirements-dev.txt
       - name: Test configuration UI, connection failures and recoverable storage
         run: |
+          mkdir -p "$RUNNER_TEMP/config-test-deps"
           pio pkg install --global --storage-dir "$RUNNER_TEMP/config-test-deps" --library "bblanchon/ArduinoJson@^6.21.6" --skip-dependencies
           make config-test ARDUINOJSON_DIR="$RUNNER_TEMP/config-test-deps/ArduinoJson"
       - name: Validate PlatformIO package
