@@ -1,14 +1,19 @@
 #include "HomieSetting.hpp"
+#include "Homie/Utils/Helpers.hpp"
 
 using namespace HomieInternals;
 
 std::vector<IHomieSetting*> __attribute__((init_priority(101))) IHomieSetting::settings;
 
 HomieInternals::IHomieSetting::IHomieSetting(const char * name, const char * description)
-  : _name(name)
-  , _description(description)
+  : _name()
+  , _descriptionOffset(SIZE_MAX)
   , _required(true)
-  , _provided(false) {
+  , _provided(false)
+  , _hasName(name != nullptr) {
+  const char* strings[] = { name, description };
+  _name = Helpers::cloneStrings(strings, strings, 2);
+  if (description) _descriptionOffset = name ? strlen(name) + 1 : 0;
 }
 
 bool IHomieSetting::isRequired() const {
@@ -16,11 +21,11 @@ bool IHomieSetting::isRequired() const {
 }
 
 const char* IHomieSetting::getName() const {
-  return _name;
+  return _hasName ? _name.get() : nullptr;
 }
 
 const char* IHomieSetting::getDescription() const {
-  return _description;
+  return _name && _descriptionOffset != SIZE_MAX ? _name.get() + _descriptionOffset : nullptr;
 }
 
 

@@ -1,4 +1,5 @@
 #include "SendingPromise.hpp"
+#include "Homie/Datatypes/Interface.hpp"
 
 #if HOMIE_STRICT_PROPERTY_VALIDATION
 #include "Homie/Utils/ConventionValidation.hpp"

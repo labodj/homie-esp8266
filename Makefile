@@ -5,7 +5,7 @@ OTA_CORE_DIR ?= $(HOME)/.platformio/packages/framework-arduinoespressif32/cores/
 MQTT_CLIENT_DIR ?=
 ARDUINOJSON_DIR ?=
 
-config-storage-test config-reset-test: config-%-test:
+config-storage-test config-reset-test config-scan-test: config-%-test:
 	@set -eu; tmp=$$(mktemp -d); trap 'rm -rf "$$tmp"' EXIT; \
 	$(CXX) -std=c++11 -O1 -g -Wall -Wextra -Werror \
 	  -fsanitize=address,undefined -fno-sanitize-recover=all -fno-omit-frame-pointer \
@@ -36,11 +36,26 @@ config-filesystem-test:
 config-ui-check:
 	$(PYTHON) tools/generate_config_ui.py --check
 
-config-test: config-ui-check config-storage-test config-reset-test config-connection-test config-filesystem-test
+config-test: config-ui-check config-storage-test config-reset-test config-connection-test config-filesystem-test config-scan-test
 	node --test tests/config/test_ui.mjs
 
+api-test:
+	@test -f "$(ARDUINOJSON_DIR)/src/ArduinoJson.h" || { echo "Set ARDUINOJSON_DIR to an installed ArduinoJson 6 directory"; exit 1; }
+	@set -eu; tmp=$$(mktemp -d); trap 'rm -rf "$$tmp"' EXIT; \
+	for test in metadata streaming; do \
+	for optimization in 0 s; do \
+	  $(CXX) -std=c++11 -O$$optimization -g -Wall -Wextra -Werror -Wno-unused-parameter \
+	    -fsanitize=address,undefined -fno-sanitize-recover=all -fno-omit-frame-pointer \
+	    -I tests/api -isystem "$(ARDUINOJSON_DIR)/src" "tests/api/test_$$test.cpp" -o "$$tmp/api-test"; \
+	  "$$tmp/api-test"; \
+	done; \
+	done; \
+	$(CXX) -std=c++11 -O0 -Wall -Wextra -Werror -Wno-unused-parameter \
+	  -I tests/api -isystem "$(ARDUINOJSON_DIR)/src" \
+	  -c tests/api/test_node_header.cpp -o "$$tmp/node-header.o"
+
 # Supply an installed espMqttClient checkout; CI installs the manifest's exact pin.
-mqtt-test: mqtt-message-test
+mqtt-test: mqtt-message-test mqtt-range-test
 	@test -f "$(MQTT_CLIENT_DIR)/src/MqttClient.cpp" || { echo "Set MQTT_CLIENT_DIR to the installed espMqttClient directory"; exit 1; }
 	@set -eu; tmp=$$(mktemp -d); trap 'rm -rf "$$tmp"' EXIT; \
 	for arch in ESP32 ESP8266; do \
@@ -69,6 +84,13 @@ mqtt-message-test:
 	  done; \
 	done; \
 	done
+
+mqtt-range-test:
+	@set -eu; tmp=$$(mktemp -d); trap 'rm -rf "$$tmp"' EXIT; \
+	$(CXX) -std=c++11 -O1 -g -Wall -Wextra -Werror \
+	  -fsanitize=address,undefined -fno-sanitize-recover=all \
+	  tests/mqtt/test_range_index.cpp -o "$$tmp/range-test"; \
+	"$$tmp/range-test"
 
 # Use Arduino's actual libb64 decoder, installed by the pioarduino firmware build.
 ota-test:
@@ -114,4 +136,4 @@ docs-build:
 
 docs-check: docs-lint docs-build
 
-.PHONY: config-test config-ui-check config-storage-test config-reset-test config-connection-test config-filesystem-test mqtt-test mqtt-message-test ota-test cpplint python-format python-format-check python-lint python-typecheck python-test python-check docs-lint docs-fix docs-build docs-check
+.PHONY: config-test config-ui-check config-storage-test config-reset-test config-connection-test config-filesystem-test config-scan-test api-test mqtt-test mqtt-message-test mqtt-range-test ota-test cpplint python-format python-format-check python-lint python-typecheck python-test python-check docs-lint docs-fix docs-build docs-check

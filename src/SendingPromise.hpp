@@ -2,7 +2,6 @@
 
 #include "Arduino.h"
 #include "StreamingOperator.hpp"
-#include "Homie/Datatypes/Interface.hpp"
 #include "HomieRange.hpp"
 
 class HomieNode;

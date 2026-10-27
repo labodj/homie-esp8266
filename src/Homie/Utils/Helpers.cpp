@@ -1,6 +1,8 @@
 #include "Helpers.hpp"
 #include "../Constants.hpp"
 
+#include <new>
+
 using namespace HomieInternals;
 
 namespace {
@@ -91,14 +93,7 @@ bool Helpers::validateMd5(const char* md5) {
   return true;
 }
 
-std::unique_ptr<char[]> Helpers::cloneString(const String& string) {
-  size_t length = string.length();
-  std::unique_ptr<char[]> copy(new char[length + 1]);
-  memcpy(copy.get(), string.c_str(), length);
-  copy.get()[length] = '\0';
-
-  return copy;
-}
+#include "HelpersStrings.ipp"
 
 void Helpers::ipToString(const IPAddress& ip, char * str) {
   snprintf(str, MAX_IP_STRING_LENGTH, "%d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]);

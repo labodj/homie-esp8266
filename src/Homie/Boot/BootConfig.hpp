@@ -74,6 +74,7 @@ class BootConfig : public Boot {
   void _onConfigTestRequest(AsyncWebServerRequest *request);
   void _onConfigStatusRequest(AsyncWebServerRequest *request);
   void _loopConfigTest();
+  void _loopWifiScan();
   void _generateNetworksJson();
   void _onWifiConnectRequest(AsyncWebServerRequest *request);
   void _onProxyControlRequest(AsyncWebServerRequest *request);

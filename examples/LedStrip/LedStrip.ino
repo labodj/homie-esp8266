@@ -10,9 +10,9 @@ bool stripLedHandler(const HomieRange& range, const String& value) {
 
   if (range.index < 1 || range.index > NUMBER_OF_LED) return false;  // if it's not a valid range
 
-  if (value != "on" && value != "off") return false;  // if the value is not valid
+  if (value != "true" && value != "false") return false;  // if the value is not valid
 
-  bool on = (value == "on");
+  bool on = (value == "true");
 
   digitalWrite(LED_PINS[range.index - 1], on ? HIGH : LOW);
   stripNode.setProperty("led").setRange(range).send(value);  // Update the state of the led

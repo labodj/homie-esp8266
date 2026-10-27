@@ -263,6 +263,15 @@ HomieNode(const char* id, const char* name, const char* type, bool range, uint16
 
 Constructor of a HomieNode object.
 
+The library copies the node ID, name and type. Property IDs and metadata passed
+to `advertise()`, `setName()`, `setUnit()`, `setDatatype()` and `setFormat()` are
+also copied, so the caller may release or change the source strings after the
+call. Each node and each property packs its strings into one owned allocation.
+Changing any property metadata can invalidate all pointers into that property's
+storage. Node getter pointers remain valid for the lifetime of the node.
+Registered nodes must still live for the lifetime of the firmware and cannot
+be copied.
+
 - **`id`**: ID of the node
 - **`type`**: Type of the node
 - **`handler`**: Optional. Input handler of the node
@@ -361,6 +370,10 @@ HomieSetting<T>(const char* name, const char* description);
 ```
 
 Constructor of a HomieSetting object.
+
+The name and description are copied into one library-owned allocation. The
+source strings may be released after construction. Registered settings must
+live for the lifetime of the firmware and cannot be copied.
 
 - **`T`**: Type of the setting. Either `bool`, `unsigned long`, `long`, `double`
   or `const char*`

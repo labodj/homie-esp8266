@@ -182,7 +182,7 @@ jobs:
         run: |
           mkdir -p "$RUNNER_TEMP/config-test-deps"
           pio pkg install --global --storage-dir "$RUNNER_TEMP/config-test-deps" --library "bblanchon/ArduinoJson@^6.21.6" --skip-dependencies
-          make config-test ARDUINOJSON_DIR="$RUNNER_TEMP/config-test-deps/ArduinoJson"
+          make config-test api-test ARDUINOJSON_DIR="$RUNNER_TEMP/config-test-deps/ArduinoJson"
       - name: Validate package and helpers
         run: |
           python -m json.tool library.json >/dev/null

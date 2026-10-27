@@ -10,6 +10,7 @@ using namespace HomieInternals;
 
 #include "BootConfigTest.ipp"
 #include "BootConfigBody.ipp"
+#include "BootConfigScan.ipp"
 
 BootConfig::BootConfig()
   : Boot("config")
@@ -111,34 +112,7 @@ void BootConfig::loop() {
   auto testPhase = _configTestPhase.load();
   if (testPhase == ConfigTestPhase::WIFI || testPhase == ConfigTestPhase::MQTT || testPhase == ConfigTestPhase::CLOSING) return;
 
-  if (!_lastWifiScanEnded) {
-    int8_t scanResult = WiFi.scanComplete();
-
-    switch (scanResult) {
-    case WIFI_SCAN_RUNNING:
-      return;
-    case WIFI_SCAN_FAILED:
-      Interface::get().getLogger() << F("✖ Wi-Fi scan failed") << endl;
-      _ssidCount = 0;
-      _wifiScanTimer.reset();
-      break;
-    default:
-      Interface::get().getLogger() << F("✔ Wi-Fi scan completed") << endl;
-      _ssidCount = scanResult;
-      _generateNetworksJson();
-      _wifiScanAvailable = true;
-      break;
-    }
-
-    _lastWifiScanEnded = true;
-  }
-
-  if (_lastWifiScanEnded && _wifiScanTimer.check()) {
-    Interface::get().getLogger() << F("Triggering Wi-Fi scan...") << endl;
-    WiFi.scanNetworks(true);
-    _wifiScanTimer.tick();
-    _lastWifiScanEnded = false;
-  }
+  _loopWifiScan();
 }
 
 void BootConfig::_onWifiConnectRequest(AsyncWebServerRequest *request) {

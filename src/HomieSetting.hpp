@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <functional>
+#include <memory>
 #include "Arduino.h"
 
 #include "./Homie/Datatypes/Callbacks.hpp"
@@ -29,10 +30,11 @@ class IHomieSetting {
 
  protected:
   explicit IHomieSetting(const char* name, const char* description);
-  const char* _name;
-  const char* _description;
+  std::unique_ptr<char[]> _name;
+  size_t _descriptionOffset;
   bool _required;
   bool _provided;
+  bool _hasName;
 };
 }  // namespace HomieInternals
 

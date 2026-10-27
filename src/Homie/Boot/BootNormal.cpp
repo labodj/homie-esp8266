@@ -1,6 +1,7 @@
 #include "BootNormal.hpp"
 
 #include "../Utils/ConventionValidation.hpp"
+#include "../Utils/RangeIndex.hpp"
 
 #include <climits>
 #include <new>
@@ -2407,38 +2408,24 @@ bool HomieInternals::BootNormal::__handleNodeProperty(char * topic, char * paylo
     }
 
     char* rangeIndexStr = node + nodeIdLength + 1;
-    String rangeIndexTest = String(rangeIndexStr);
-    for (uint8_t i = 0; i < rangeIndexTest.length(); i++) {
-      if (!isDigit(rangeIndexTest.charAt(i))) {
-        Interface::get().getLogger() << F("Range index ") << rangeIndexStr << F(" is not valid") << endl;
-        return true;
-      }
+    if (!parseRangeIndex(rangeIndexStr, range.index)) {
+      Interface::get().getLogger() << F("Range index ") << rangeIndexStr << F(" is not valid") << endl;
+      return true;
     }
     range.isRange = true;
-    range.index = rangeIndexTest.toInt();
     homieNode = iNode;
     break;
   }
 #else
-  int16_t rangeSeparator = -1;
-  for (uint16_t i = 0; i < strlen(node); i++) {
-    if (node[i] == '_') {
-      rangeSeparator = i;
-      break;
-    }
-  }
-  if (rangeSeparator != -1) {
+  char* rangeSeparator = strchr(node, '_');
+  if (rangeSeparator) {
     range.isRange = true;
-    node[rangeSeparator] = '\0';
-    char* rangeIndexStr = node + rangeSeparator + 1;
-    String rangeIndexTest = String(rangeIndexStr);
-    for (uint8_t i = 0; i < rangeIndexTest.length(); i++) {
-      if (!isDigit(rangeIndexTest.charAt(i))) {
-        Interface::get().getLogger() << F("Range index ") << rangeIndexStr << F(" is not valid") << endl;
-        return true;
-      }
+    *rangeSeparator = '\0';
+    char* rangeIndexStr = rangeSeparator + 1;
+    if (!parseRangeIndex(rangeIndexStr, range.index)) {
+      Interface::get().getLogger() << F("Range index ") << rangeIndexStr << F(" is not valid") << endl;
+      return true;
     }
-    range.index = rangeIndexTest.toInt();
   }
   homieNode = HomieNode::find(node);
 #endif
