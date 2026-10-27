@@ -14,7 +14,7 @@ lib_compat_mode = strict
 build_flags =
   -D EMC_ALLOW_NOT_CONNECTED_PUBLISH=0
 lib_deps =
-  labodj/homie-v5 @ ^4.0.1
+  labodj/homie-v5 @ ^4.1.0
 ```
 
 On 4 MiB ESP32 boards, `min_spiffs.csv` provides two 1.875 MiB application
@@ -39,7 +39,7 @@ build_flags =
   -D PIO_FRAMEWORK_ARDUINO_LWIP2_LOW_MEMORY
   -D EMC_ALLOW_NOT_CONNECTED_PUBLISH=0
 lib_deps =
-  labodj/homie-v5 @ ^4.0.1
+  labodj/homie-v5 @ ^4.1.0
 ```
 
 `lib_compat_mode = strict` is recommended because the async networking

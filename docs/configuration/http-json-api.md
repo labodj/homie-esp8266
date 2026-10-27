@@ -59,7 +59,8 @@ such as `500 Internal Server error`, `400 Bad request` and so on.
     {
       "hardware_device_id": "52a8fa5d",
       "device_id": "my-device",
-      "homie_esp8266_version": "4.0.1",
+      "homie_esp8266_version": "4.1.0",
+      "homie_convention_version": 3,
       "firmware": {
         "name": "awesome-device",
         "version": "1.0.0"
