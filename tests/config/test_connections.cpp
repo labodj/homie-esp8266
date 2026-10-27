@@ -24,10 +24,16 @@ const int WL_CONNECTED = 3;
 struct IPAddress { String address; void fromString(const char* p) { address = p; } };
 namespace Helpers { void stringToBytes(const char*, char, uint8_t*, size_t, int) {} }
 struct { bool connected = false; String ssid; int attempts = 0;
+  String appliedIp, appliedDns1, appliedDns2;
+  bool usedBssid = false; uint16_t appliedChannel = 0;
   void disconnect(bool) { connected = false; }
-  void begin(const char* name, const char*) { ssid = name; ++attempts; }
-  void begin(const char* name, const char* password, uint16_t, uint8_t*) { begin(name, password); }
-  bool config(IPAddress, IPAddress, IPAddress, IPAddress, IPAddress) { return true; }
+  void begin(const char* name, const char*) { ssid = name; usedBssid = false; ++attempts; }
+  void begin(const char* name, const char* password, uint16_t channel, uint8_t*) {
+    begin(name, password); usedBssid = true; appliedChannel = channel;
+  }
+  bool config(IPAddress ip, IPAddress, IPAddress, IPAddress dns1, IPAddress dns2) {
+    appliedIp = ip.address; appliedDns1 = dns1.address; appliedDns2 = dns2.address; return true;
+  }
   void setAutoReconnect(bool) {}
   int status() { return connected ? WL_CONNECTED : 0; }
   String SSID() { return ssid; }
@@ -49,10 +55,13 @@ struct Mqtt {
   void setCredentials(const char* user, const char*) { username = user; }
 };
 struct Config { bool writable = true; int writes = 0;
+  bool storageReady = true;
   bool _valid = false;
+  bool _recoveryFailed = false;
   bool prepare(JsonDocument&, const JsonObject);
   void _patchJsonObject(JsonObject, JsonObjectConst);
   bool isValid() const { return _valid; }
+  bool isStorageReady() const { return storageReady && !_recoveryFailed; }
   char* getSafeConfigFile() const;
   bool write(JsonObject) { ++writes; return writable; }
 };
@@ -133,6 +142,61 @@ void ready(BootConfig& b) {
   b._loopConfigTest(); assert(b._configTestPhase == Phase::READY);
 }
 int main() {
+  {
+    // All optional groups together must still fit the next boot's bounded parser.
+    reset(); DynamicJsonDocument full(4096); deserializeJson(full, candidate);
+    full["device_stats_interval"] = 300;
+    full["ota"]["enabled"] = true;
+    full["wifi"]["ip"] = "192.0.2.10"; full["wifi"]["mask"] = "255.255.255.0";
+    full["wifi"]["gw"] = "192.0.2.1"; full["wifi"]["dns1"] = "192.0.2.2"; full["wifi"]["dns2"] = "192.0.2.3";
+    full["wifi"]["bssid"] = "aa:bb:cc:dd:ee:ff"; full["wifi"]["channel"] = 6;
+    full["mqtt"]["port"] = 1883; full["mqtt"]["base_topic"] = "homie/";
+    full["mqtt"]["ssl"] = false; full["mqtt"]["ssl_fingerprint"] = "";
+    full["mqtt"]["effective_base_topic"] = "homie/5/";
+    for (int i = 0; i < 10; ++i) full["settings"]["s" + std::to_string(i)] = i;
+    String text; serializeJson(full, text); assert(text.size() < MAX_JSON_CONFIG_FILE_SIZE);
+    char buffer[MAX_JSON_CONFIG_FILE_SIZE]; memcpy(buffer, text.c_str(), text.size() + 1);
+    StaticJsonDocument<MAX_JSON_CONFIG_ARDUINOJSON_BUFFER_SIZE> boot;
+    assert(deserializeJson(boot, buffer) == DeserializationError::Ok);
+    assert(boot["settings"].size() == 10 && boot["device_stats_interval"] == 300);
+
+    BootConfig b; AsyncWebServerRequest r(text); b._onConfigTestRequest(&r); assert(r.code == 202);
+    b._loopConfigTest(); assert(WiFi.appliedIp == "192.0.2.10");
+    assert(WiFi.appliedDns1 == "192.0.2.2" && WiFi.appliedDns2 == "192.0.2.3");
+    assert(WiFi.usedBssid && WiFi.appliedChannel == 6);
+
+    reset(); Interface::get().config._valid = true; HOMIE_FS.stored = text; BootConfig dhcp;
+    const char* automatic = R"({"device_stats_interval":null,"wifi":{"ip":null,"mask":null,"gw":null,"dns1":null,"dns2":null,"bssid":null,"channel":null}})";
+    AsyncWebServerRequest clear(automatic); dhcp._onConfigTestRequest(&clear); assert(clear.code == 202);
+    dhcp._loopConfigTest(); assert(WiFi.appliedIp.empty() && WiFi.appliedDns1.empty() && WiFi.appliedDns2.empty());
+    assert(!WiFi.usedBssid && (*dhcp._testConfig)["device_id"] == "j4");
+    assert(!dhcp._testConfig->containsKey("device_stats_interval"));
+  }
+  {
+    reset(); BootConfig b; auto& config = Interface::get().config;
+    config._recoveryFailed = true; // Mounted filesystem, valid backup, failed promotion.
+    HOMIE_FS.stored = R"({"device_id":"j4"})";
+    AsyncWebServerRequest read; b._onStoredConfigRequest(&read); assert(read.code == 503);
+    AsyncWebServerRequest save(candidate); b._onConfigRequest(&save); assert(save.code == 503);
+    b._onConfigTestRequest(&save); assert(save.code == 503);
+    DynamicJsonDocument changes(1024), prepared(1024); deserializeJson(changes, candidate);
+    assert(!config.prepare(prepared, changes.as<JsonObject>()));
+    assert(config.writes == 0 && !b._flaggedForReboot && HOMIE_FS.stored.find("j4") != String::npos);
+  }
+  {
+    reset(); BootConfig b; auto& config = Interface::get().config;
+    config.storageReady = false;
+    AsyncWebServerRequest r; b._onStoredConfigRequest(&r);
+    assert(r.code == 503 && r.response.find("preserved") != String::npos);
+    assert(r.response.find("\"configured\":false") == String::npos);
+    assert(!b._flaggedForReboot && config.writes == 0);
+    AsyncWebServerRequest rejected(candidate);
+    b._onConfigRequest(&rejected); assert(rejected.code == 503);
+    b._onConfigTestRequest(&rejected); assert(rejected.code == 503);
+    assert(config.writes == 0 && Interface::get().mqtt.attempts == 0 && !b._flaggedForReboot);
+    config.storageReady = true; b._onStoredConfigRequest(&r);
+    assert(r.code == 200 && r.response.find("\"configured\":false") != String::npos);
+  }
   {
     AsyncWebServerRequest r;
     uint8_t part[] = {'{','}', 'x'};

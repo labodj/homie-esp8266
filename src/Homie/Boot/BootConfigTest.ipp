@@ -123,6 +123,10 @@ void BootConfig::_onConfigRequest(AsyncWebServerRequest *request) {
 }
 
 bool BootConfig::_parseConfig(AsyncWebServerRequest *request, JsonDocument& parseJsonDoc) {
+  if (!Interface::get().getConfig().isStorageReady()) {
+    __SendJSONError(request, F("Stored configuration is unavailable. Existing data was preserved. Restart to retry recovery; do not erase flash or change the device ID."), 503);
+    return false;
+  }
   if (request->_tempObject == nullptr) {
     __SendJSONError(request, F("✖ Empty or too large JSON"));
     return false;
@@ -156,6 +160,10 @@ bool BootConfig::_parseConfig(AsyncWebServerRequest *request, JsonDocument& pars
 }
 
 void BootConfig::_onStoredConfigRequest(AsyncWebServerRequest *request) {
+  if (!Interface::get().getConfig().isStorageReady()) {
+    __SendJSONError(request, F("Stored configuration is unavailable. Existing data was preserved. Restart to retry recovery; do not erase flash or change the device ID."), 503);
+    return;
+  }
   const bool configured = Interface::get().getConfig().isValid();
   std::unique_ptr<char[]> safe(configured ? Interface::get().getConfig().getSafeConfigFile() : nullptr);
   String output = configured ? "{\"configured\":true,\"config\":" : "{\"configured\":false,\"config\":";

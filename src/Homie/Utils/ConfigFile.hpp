@@ -5,7 +5,7 @@
 
 namespace HomieInternals {
 namespace ConfigFile {
-enum class LoadResult { INVALID, PRIMARY, RECOVERED };
+enum class LoadResult { INVALID, PRIMARY, RECOVERED, RECOVERY_FAILED };
 
 // Keep the previous file until a complete replacement has been read back.
 template <typename Filesystem>
@@ -17,8 +17,8 @@ template <typename Filesystem, typename Validate>
 LoadResult load(Filesystem& fs, const char* path, const char* backup, Validate validate) {
   if (validate(path)) return LoadResult::PRIMARY;
   if (!validate(backup)) return LoadResult::INVALID;
-  if (fs.exists(path) && !fs.remove(path)) return LoadResult::INVALID;
-  return fs.rename(backup, path) ? LoadResult::RECOVERED : LoadResult::INVALID;
+  if (fs.exists(path) && !fs.remove(path)) return LoadResult::RECOVERY_FAILED;
+  return fs.rename(backup, path) ? LoadResult::RECOVERED : LoadResult::RECOVERY_FAILED;
 }
 
 template <typename Filesystem>

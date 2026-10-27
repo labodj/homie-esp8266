@@ -59,7 +59,7 @@ int main() {
     fs.failRename = fault == 2 ? 1 : 0;
     auto validate = [&fs](const char* path) { return fs.exists(path) && fs.files.at(path) == "old"; };
     const auto loaded = HomieInternals::ConfigFile::load(fs, "config", "backup", validate);
-    assert(loaded == (fault == 0 ? LoadResult::RECOVERED : LoadResult::INVALID));
+    assert(loaded == (fault == 0 ? LoadResult::RECOVERED : fault == 2 ? LoadResult::RECOVERY_FAILED : LoadResult::INVALID));
     if (loaded == LoadResult::RECOVERED) assert(fs.files.at("config") == "old");
     if (fault == 2) assert(HomieInternals::ConfigFile::load(fs, "config", "backup", validate) == LoadResult::RECOVERED);
   }

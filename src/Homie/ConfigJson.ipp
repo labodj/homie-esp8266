@@ -28,6 +28,7 @@ char* Config::getSafeConfigFile() const {
 }
 
 bool Config::prepare(JsonDocument& document, const JsonObject changes) {
+  if (_recoveryFailed) return false;
   document.to<JsonObject>();
   if (_valid) {
     File file = HOMIE_FS.open(CONFIG_FILE_PATH, "r");

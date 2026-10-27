@@ -1,5 +1,10 @@
 #include "Config.hpp"
 #include "Utils/ConfigFile.hpp"
+#ifdef ESP32
+#include <esp_partition.h>
+#elif defined(ESP8266)
+#include <flash_hal.h>
+#endif
 
 using namespace HomieInternals;
 
@@ -9,53 +14,11 @@ Config::Config()
   : _configStruct()
   , _filesystemBegan(false)
   , _valid(false)
-  , _recovered(false) {
+  , _recovered(false)
+  , _recoveryFailed(false) {
 }
 
-bool Config::_filesystemBegin() {
-  if (!_filesystemBegan) {
-    // Always try a non-formatting mount first. In a LittleFS migration build a
-    // mount failure is the signal that a provisioned SPIFFS image may still
-    // exist on the same flash area and must be read before anything is erased.
-    if (!_mountSelectedFilesystem(false)) {
-      if (_migrateSpiffsToLittleFs()) {
-        return true;
-      }
-
-      const bool formatOnFail =
-#ifdef ESP32
-        true;
-#elif defined(ESP8266)
-        HOMIE_USE_LITTLEFS;
-#else
-        false;
-#endif
-      if (formatOnFail) {
-        Interface::get().getLogger() << F("! Formatting ") << HOMIE_FS_NAME << F(" after mount failure") << endl;
-        _mountSelectedFilesystem(true);
-      }
-    }
-
-    if (!_filesystemBegan) Interface::get().getLogger() << F("✖ Cannot mount ") << HOMIE_FS_NAME << endl;
-  }
-
-  return _filesystemBegan;
-}
-
-bool Config::_mountSelectedFilesystem(bool formatOnFail) {
-#ifdef ESP32
-  _filesystemBegan = HOMIE_FS.begin(formatOnFail);
-#elif defined(ESP8266)
-  _filesystemBegan = HOMIE_FS.begin();
-  if (!_filesystemBegan && formatOnFail) {
-    if (HOMIE_FS.format()) {
-      _filesystemBegan = HOMIE_FS.begin();
-    }
-  }
-#endif
-
-  return _filesystemBegan;
-}
+#include "ConfigFilesystem.ipp"
 
 bool Config::_ensureFilesystemDirectories() {
 #if HOMIE_USE_LITTLEFS
@@ -76,9 +39,11 @@ bool Config::_migrateSpiffsToLittleFs() {
   Interface::get().getLogger() << F("! ") << HOMIE_FS_NAME
                                << F(" mount failed; checking for a SPIFFS configuration to migrate") << endl;
 
-  // The migration path is deliberately gated by config.json. Without it there is
-  // no provisioned Homie state to preserve, so the normal mount/format fallback
-  // should handle the selected filesystem instead.
+  // Migration is opt-in; probing SPIFFS must never format an unreadable partition.
+#ifdef ESP8266
+  FSInfo spiffsInfo;
+  if (!SPIFFS.setConfig(SPIFFSConfig(false)) && !SPIFFS.info(spiffsInfo)) return false;
+#endif
   if (!SPIFFS.begin()) {
     Interface::get().getLogger() << F("! No mountable SPIFFS filesystem found for migration") << endl;
     return false;
@@ -179,11 +144,13 @@ bool Config::_migrateSpiffsToLittleFs() {
 bool Config::load() {
   _valid = false;
   _recovered = false;
+  _recoveryFailed = false;
   if (!_filesystemBegin()) { return false; }
   const auto result = ConfigFile::load(HOMIE_FS, CONFIG_FILE_PATH, CONFIG_BACKUP_FILE_PATH,
                                        [this](const char* path) { return _loadFile(path); });
-  _valid = result != ConfigFile::LoadResult::INVALID;
+  _valid = result == ConfigFile::LoadResult::PRIMARY || result == ConfigFile::LoadResult::RECOVERED;
   _recovered = result == ConfigFile::LoadResult::RECOVERED;
+  _recoveryFailed = result == ConfigFile::LoadResult::RECOVERY_FAILED;
   return _valid;
 }
 
@@ -352,6 +319,7 @@ HomieBootMode Config::getHomieBootModeOnNextBoot() {
 }
 
 bool Config::write(const JsonObject config) {
+  if (_recoveryFailed) return false;
   if (!_filesystemBegin() || !_ensureFilesystemDirectories()) return false;
   if (!Validation::validateConfig(config).valid || measureJson(config) >= MAX_JSON_CONFIG_FILE_SIZE) return false;
   String serialized;
@@ -362,6 +330,7 @@ bool Config::write(const JsonObject config) {
 }
 
 bool Config::patch(const char* patch) {
+  if (_recoveryFailed) return false;
   if (!_filesystemBegin()) { return false; }
 
   StaticJsonDocument<MAX_JSON_CONFIG_ARDUINOJSON_BUFFER_SIZE> patchJsonDoc;

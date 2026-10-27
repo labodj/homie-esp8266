@@ -30,16 +30,19 @@ class Config {
   void log() const;  // print the current config to log output
   bool isValid() const;
   bool wasRecovered() const { return _recovered; }
+  bool isStorageReady() const { return _filesystemBegan && !_recoveryFailed; }
 
  private:
   ConfigStruct _configStruct;
   bool _filesystemBegan;
   bool _valid;
   bool _recovered;
+  bool _recoveryFailed;
 
   bool _filesystemBegin();
   bool _loadFile(const char* path);
   bool _mountSelectedFilesystem(bool formatOnFail);
+  bool _filesystemIsErased();
   bool _ensureFilesystemDirectories();
   bool _migrateSpiffsToLittleFs();
   void _patchJsonObject(JsonObject object, JsonObjectConst patch);

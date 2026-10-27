@@ -7,10 +7,10 @@ namespace HomieInternals {
 
   // max setting elements
   const uint8_t MAX_CONFIG_SETTING_SIZE = 10;
-  // 6 elements at root, 9 elements at wifi, 7 elements at mqtt, 1 element at ota,
-  // max settings elements. The extra MQTT slot accepts the read-only
+  // 7 root fields, 9 Wi-Fi fields, 8 MQTT fields, 1 OTA field and max settings.
+  // The extra MQTT slot accepts the read-only
   // effective_base_topic diagnostic if a tool echoes the advertised config.
-  const uint16_t MAX_JSON_CONFIG_ARDUINOJSON_BUFFER_SIZE = JSON_OBJECT_SIZE(6) + JSON_OBJECT_SIZE(9) + JSON_OBJECT_SIZE(7) + JSON_OBJECT_SIZE(1) + JSON_OBJECT_SIZE(MAX_CONFIG_SETTING_SIZE);
+  const uint16_t MAX_JSON_CONFIG_ARDUINOJSON_BUFFER_SIZE = JSON_OBJECT_SIZE(7) + JSON_OBJECT_SIZE(9) + JSON_OBJECT_SIZE(9) + JSON_OBJECT_SIZE(1) + JSON_OBJECT_SIZE(MAX_CONFIG_SETTING_SIZE);
   // HTTP requests outlive their buffers during connection tests. Merging also
   // temporarily retains strings replaced in the previous configuration.
   const uint16_t MAX_JSON_CONFIG_OWNED_BUFFER_SIZE = MAX_JSON_CONFIG_ARDUINOJSON_BUFFER_SIZE + 2 * MAX_JSON_CONFIG_FILE_SIZE;
