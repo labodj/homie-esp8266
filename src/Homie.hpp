@@ -72,8 +72,12 @@ class HomieClass {
   static void prepareToSleep();
   #ifdef ESP32
   static void doDeepSleep(uint64_t time_us = 0);
+  #if SOC_PM_SUPPORT_EXT0_WAKEUP || SOC_PM_SUPPORT_EXT_WAKEUP || CONFIG_IDF_TARGET_ESP32
   static void doDeepSleep(gpio_num_t wakeupPin, int logicLevel);
+  #endif
+  #if SOC_PM_SUPPORT_EXT1_WAKEUP || SOC_PM_SUPPORT_EXT_WAKEUP || CONFIG_IDF_TARGET_ESP32
   static void doDeepSleep(uint64_t pinMask, esp_sleep_ext1_wakeup_mode_t mode);
+  #endif
   #elif defined(ESP8266)
   static void doDeepSleep(uint64_t time_us = 0, RFMode mode = RF_DEFAULT);
   #endif // ESP32

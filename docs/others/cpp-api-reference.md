@@ -206,10 +206,18 @@ Prepare the device for deep sleep. It ensures messages are sent and disconnects
 cleanly from the MQTT broker, triggering a `READY_TO_SLEEP` event when done.
 
 ```c++
+// ESP8266
 void doDeepSleep(uint64_t time_us = 0, RFMode mode = RF_DEFAULT);
+
+// ESP32
+void doDeepSleep(uint64_t time_us = 0);
+void doDeepSleep(gpio_num_t wakeupPin, int logicLevel); // Requires EXT0
+void doDeepSleep(uint64_t pinMask, esp_sleep_ext1_wakeup_mode_t mode); // Requires EXT1
 ```
 
-Put the device into deep sleep. It ensures the Serial is flushed.
+Flush the serial output and enter deep sleep. On ESP32, the chip determines
+which external wake-up sources are available. The classic ESP32 supports both
+EXT0 and EXT1, the C6 supports EXT1, and the C3 supports the timer overload only.
 
 ```c++
 bool isConfigured() const;

@@ -413,6 +413,7 @@ void HomieClass::doDeepSleep(uint64_t time_us) {
 
   esp_deep_sleep_start();
 }
+#if SOC_PM_SUPPORT_EXT0_WAKEUP || SOC_PM_SUPPORT_EXT_WAKEUP || CONFIG_IDF_TARGET_ESP32
 void HomieClass::doDeepSleep(gpio_num_t wakeupPin, int logicLevel) {
   Interface::get().getLogger() << F("💤 Device is deep sleeping...") << endl;
   Serial.flush();
@@ -421,6 +422,8 @@ void HomieClass::doDeepSleep(gpio_num_t wakeupPin, int logicLevel) {
 
   esp_deep_sleep_start();
 }
+#endif
+#if SOC_PM_SUPPORT_EXT1_WAKEUP || SOC_PM_SUPPORT_EXT_WAKEUP || CONFIG_IDF_TARGET_ESP32
 void HomieClass::doDeepSleep(uint64_t pinMask, esp_sleep_ext1_wakeup_mode_t mode) {
   Interface::get().getLogger() << F("💤 Device is deep sleeping...") << endl;
   Serial.flush();
@@ -429,6 +432,7 @@ void HomieClass::doDeepSleep(uint64_t pinMask, esp_sleep_ext1_wakeup_mode_t mode
 
   esp_deep_sleep_start();
 }
+#endif
 #elif defined(ESP8266)
 void HomieClass::doDeepSleep(uint64_t time_us, RFMode mode) {
   Interface::get().getLogger() << F("💤 Device is deep sleeping...") << endl;

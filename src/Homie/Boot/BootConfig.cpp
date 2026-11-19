@@ -262,13 +262,18 @@ void BootConfig::_generateNetworksJson() {
       break;
 #endif
 #if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 2, 0)
+#if ESP_IDF_VERSION < ESP_IDF_VERSION_VAL(6, 0, 0)
+    // ESP-IDF 6 replaced these deprecated modes with reserved values.
     case (WIFI_AUTH_WPA3_EXT_PSK):
     case (WIFI_AUTH_WPA3_EXT_PSK_MIXED_MODE):
+#endif
     case (WIFI_AUTH_WPA3_ENT_192):
       jsonNetwork["encryption"] = "wpa3";
       break;
-    case (WIFI_AUTH_WPA_ENTERPRISE):
-      jsonNetwork["encryption"] = "wpa";
+#endif
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 3, 0)
+    case (WIFI_AUTH_DPP):
+      jsonNetwork["encryption"] = "dpp";
       break;
 #endif
 #if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 4, 0)
@@ -278,8 +283,13 @@ void BootConfig::_generateNetworksJson() {
     case (WIFI_AUTH_WPA2_WPA3_ENTERPRISE):
       jsonNetwork["encryption"] = "auto";
       break;
-    case (WIFI_AUTH_DPP):
-      jsonNetwork["encryption"] = "dpp";
+#endif
+    // WPA-Enterprise was backported separately to each ESP-IDF 5.x branch.
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 4, 3) || \
+    (ESP_IDF_VERSION_MINOR == 3 && ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 3, 4)) || \
+    (ESP_IDF_VERSION_MINOR == 2 && ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 2, 6))
+    case (WIFI_AUTH_WPA_ENTERPRISE):
+      jsonNetwork["encryption"] = "wpa";
       break;
 #endif
 #endif
